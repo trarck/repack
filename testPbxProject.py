@@ -1,6 +1,6 @@
 from pbxproj import XcodeProject
 # open the project
-project = XcodeProject.load('Unity-iPhone.xcodeproj/project.pbxproj')
+project = XcodeProject.load('data/Unity-iPhone.xcodeproj/project.pbxproj')
 
 # add a file to it, force=false to not add it if it's already in the project
 #project.add_file('MyClass.swift', force=False)
