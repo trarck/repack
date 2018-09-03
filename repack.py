@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 from pbxproj import XcodeProject
 
 from path_crypt import PathCrypt
-from resource_obfuscator import ResourceObfuscator
+from resource_obfuscator import ResourceObfuscator,CryptInfo
 
 def generate_key():
     return ''.join(chr(random.randrange(ord('a'),ord('z'))) for _ in range(16))
@@ -28,9 +28,9 @@ def rename_project(new_project_name,package_id):
     print("==> rename project to %s package id %s" % (new_project_name,package_id))
 
     
-def rename_resources(res_folder_path,crypt_key,crypt_type):
+def rename_resources(res_folder_path,crypt_info):
     out_folder_path=res_folder_path
-    resObf=ResourceObfuscator(res_folder_path,out_folder_path,crypt_key,crypt_type,False)
+    resObf=ResourceObfuscator(res_folder_path,out_folder_path,crypt_info,False)
     resObf.start()
 
 def main():
@@ -55,8 +55,14 @@ def main():
     parser.add_argument('-c', '--crypt-key',dest='crypt_key',
                       help="crypt key")
                       
-    parser.add_argument('--crypt-type',dest='crypt_type',default="md5",
+    parser.add_argument('--crypt-type',dest='crypt_type',default='md5',
                       help="crypt type")
+    parser.add_argument('--crypt-out-length',dest='crypt_out_length',default=16,
+                      help="crypt out length",type=int)
+
+    parser.add_argument('--crypt-random-position',dest='crypt_random_position',default=8,
+                      help="crypt random postion",type=int)
+                      
     args = parser.parse_args()
 
     print("=======================================================")
@@ -69,7 +75,11 @@ def main():
     copy_project(args.src_project,args.dest_project)
     rename_project(args.project_name,args.package_id)
 
-    rename_resources(args.resource_dir,args.crypt_key,args.crypt_type)
+    crypt_info=CryptInfo(args.crypt_key,
+                         args.crypt_type,
+                         args.crypt_out_length,
+                         args.crypt_random_position)
+    rename_resources(args.resource_dir,crypt_info)
     
     print("======================crypt info========================")
     print("crypt type is %s"%args.crypt_type)
