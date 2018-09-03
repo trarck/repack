@@ -6,7 +6,7 @@ import shutil
 import base64
 import random
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 from pbxproj import XcodeProject
 
 from path_crypt import PathCrypt
@@ -37,43 +37,43 @@ def main():
     workpath = os.path.dirname(os.path.realpath(__file__))
 
 
-    parser = OptionParser()
-    parser.add_option('-s', '--src-project',dest='src_project',
+    parser = ArgumentParser()
+    parser.add_argument('-s', '--src-project',dest='src_project',
                       help="src project")
 
-    parser.add_option('-d', '--dest-project',dest='dest_project',
+    parser.add_argument('-d', '--dest-project',dest='dest_project',
                       help="dest project")
                       
-    parser.add_option('-n', '--project-name',dest='project_name',
+    parser.add_argument('-n', '--project-name',dest='project_name',
                       help="new project name")
 
-    parser.add_option('-p', '--package-id',dest='package_id',
+    parser.add_argument('-p', '--package-id',dest='package_id',
                       help="package id")
                       
-    parser.add_option('-r', '--resource-dir',dest='resource_dir',
+    parser.add_argument('-r', '--resource-dir',dest='resource_dir',
                       help="resource dir")
-    parser.add_option('-c', '--crypt-key',dest='crypt_key',
+    parser.add_argument('-c', '--crypt-key',dest='crypt_key',
                       help="crypt key")
                       
-    parser.add_option('--crypt-type',dest='crypt_type',default="md5",
+    parser.add_argument('--crypt-type',dest='crypt_type',default="md5",
                       help="crypt type")
-    (opts, args) = parser.parse_args()
+    args = parser.parse_args()
 
     print("=======================================================")
     #check crypt key
-    if not opts.crypt_key :
+    if not args.crypt_key :
         #crypt key is none random generate
-        opts.crypt_key=generate_key()
-        print("==> create crypt key %s"%opts.crypt_key)
+        args.crypt_key=generate_key()
+        print("==> create crypt key %s"%args.crypt_key)
         
-    copy_project(opts.src_project,opts.dest_project)
-    rename_project(opts.project_name,opts.package_id)
+    copy_project(args.src_project,args.dest_project)
+    rename_project(args.project_name,args.package_id)
 
-    rename_resources(opts.resource_dir,opts.crypt_key,opts.crypt_type)
+    rename_resources(args.resource_dir,args.crypt_key,args.crypt_type)
     
     print("======================crypt info========================")
-    print("crypt type is %s"%opts.crypt_type)
-    print("crypt key is %s"%opts.crypt_key)
+    print("crypt type is %s"%args.crypt_type)
+    print("crypt key is %s"%args.crypt_key)
 # -------------- main --------------
 if __name__ == '__main__':
     try:
