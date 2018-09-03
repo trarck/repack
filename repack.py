@@ -4,41 +4,16 @@ import traceback
 import json
 import shutil
 import base64
+import random
 
 from optparse import OptionParser
 from pbxproj import XcodeProject
 
-def xor_encrypt(tips,key):
-    ltips=len(tips)
-    lkey=len(key)
-    secret=[]
-    num=0
-    for each in tips:
-        if num>=lkey:
-            num=num%lkey
-        secret.append( chr( ord(each)^ord(key[num]) ) )
-        num+=1
+from path_crypt import PathCrypt
+from resource_obfuscator import ResourceObfuscator
 
-    return base64.b64encode( "".join( secret ).encode() ).decode()
-
-
-def xor_decrypt(secret,key):
-
-    tips = base64.b64decode( secret.encode() ).decode()
-
-    ltips=len(tips)
-    lkey=len(key)
-    secret=[]
-    num=0
-    for each in tips:
-        if num>=lkey:
-            num=num%lkey
-
-        secret.append( chr( ord(each)^ord(key[num]) ) )
-        num+=1
-
-    return "".join( secret )
-
+def generate_key():
+    return ''.join(chr(random.randrange(ord('a'),ord('z'))) for _ in range(16))
 
 def copy_project(src_folder_path,dst_folder_path):
     print("==> copy project from %s to %s" % (src_folder_path,dst_folder_path))
@@ -52,6 +27,11 @@ def copy_project(src_folder_path,dst_folder_path):
 def rename_project(new_project_name,package_id):
     print("==> rename project to %s package id %s" % (new_project_name,package_id))
 
+    
+def rename_resources(res_folder_path,crypt_key):
+    out_folder_path=res_folder_path
+    ro=ResourceObfuscator(res_folder_path,out_folder_path,crypt_key,True)
+    ro.start()
 def main():
     workpath = os.path.dirname(os.path.realpath(__file__))
 
@@ -68,20 +48,24 @@ def main():
 
     parser.add_option('-p', '--package-id',dest='package_id',
                       help="package id")
+                      
+    parser.add_option('-r', '--resource-dir',dest='resource_dir',
+                      help="resource dir")
+    parser.add_option('-c', '--crypt-key',dest='crypt_key',
+                      help="crypt key")
     (opts, args) = parser.parse_args()
 
     print("=======================================================")
     copy_project(opts.src_project,opts.dest_project)
     rename_project(opts.project_name,opts.package_id)
     
-    tips= "1234567"
-    key= "owen"
-    secret = xor_encrypt(tips,key)
-    print( "cipher_text:", secret )
-
-    plaintxt = xor_decrypt( secret, key )
-    print( "plain_text:",plaintxt )
-
+    #check crypt key
+    if not opts.crypt_key :
+        #crypt key is none random generate
+        opts.crypt_key=generate_key()
+        print("create crypt key %s"%opts.crypt_key)
+        
+    rename_resources(opts.resource_dir,opts.crypt_key)
 # -------------- main --------------
 if __name__ == '__main__':
     try:
