@@ -30,8 +30,9 @@ def rename_project(new_project_name,package_id):
     
 def rename_resources(res_folder_path,crypt_key,crypt_type):
     out_folder_path=res_folder_path
-    ro=ResourceObfuscator(res_folder_path,out_folder_path,crypt_key,crypt_type,False)
-    ro.start()
+    resObf=ResourceObfuscator(res_folder_path,out_folder_path,crypt_key,crypt_type,False)
+    resObf.start()
+
 def main():
     workpath = os.path.dirname(os.path.realpath(__file__))
 
@@ -59,16 +60,20 @@ def main():
     (opts, args) = parser.parse_args()
 
     print("=======================================================")
-    copy_project(opts.src_project,opts.dest_project)
-    rename_project(opts.project_name,opts.package_id)
-    
     #check crypt key
     if not opts.crypt_key :
         #crypt key is none random generate
         opts.crypt_key=generate_key()
-        print("create crypt key %s"%opts.crypt_key)
+        print("==> create crypt key %s"%opts.crypt_key)
         
+    copy_project(opts.src_project,opts.dest_project)
+    rename_project(opts.project_name,opts.package_id)
+
     rename_resources(opts.resource_dir,opts.crypt_key,opts.crypt_type)
+    
+    print("======================crypt info========================")
+    print("crypt type is %s"%opts.crypt_type)
+    print("crypt key is %s"%opts.crypt_key)
 # -------------- main --------------
 if __name__ == '__main__':
     try:
