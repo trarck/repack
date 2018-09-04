@@ -36,6 +36,9 @@ class ResourceObfuscator:
             plain_path=fes[0]
             file_ext=fes[1]        
         
+        #use unix path
+        plain_path=plain_path.replace("\\","/")
+        
         if self.crypt_info.type=="md5":
             crypt_path=PathCrypt.md5_path(plain_path,self.crypt_info.key)
         else:
