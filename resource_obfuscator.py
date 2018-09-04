@@ -4,11 +4,12 @@ import shutil
 from path_crypt import PathCrypt
 
 class CryptInfo:
-    def __init__(self, key,type,out_length,random_position):
+    def __init__(self, key,type,out_length,random_position,with_ext=False):
         self.key = key
         self.type=type
         self.out_length = out_length
         self.random_position=random_position
+        self.with_ext=with_ext
 
 
 class ResourceObfuscator:
@@ -26,21 +27,31 @@ class ResourceObfuscator:
         print("===>parse file %s" % src_file)
         rel_path=os.path.relpath(src_file,self.resource_folder_path)
         print("relative path %s = %s"%(rel_path,relative_path))
-        fes=os.path.splitext(rel_path)
-        file_path_without_ext=fes[0]
-        file_ext=fes[1]
+        
+        plain_path=rel_path
+        
+        print("****************%s"%self.crypt_info.with_ext)
+        if self.crypt_info.with_ext:
+            fes=os.path.splitext(rel_path)
+            plain_path=fes[0]
+            file_ext=fes[1]        
+        
         if self.crypt_info.type=="md5":
-            crypt_path=PathCrypt.md5_path(file_path_without_ext,self.crypt_info.key)
+            crypt_path=PathCrypt.md5_path(plain_path,self.crypt_info.key)
         else:
             crypt_path=PathCrypt.xor_path(
-                        file_path_without_ext,
+                        plain_path,
                         self.crypt_info.key,
                         self.crypt_info.out_length,
                         self.crypt_info.random_position)
         
-        print("crypt %s => %s"%(file_path_without_ext,crypt_path))
-        out_file=os.path.join(self.out_folder_path,crypt_path+file_ext)
+        print("crypt %s => %s"%(plain_path,crypt_path))
         
+        if self.crypt_info.with_ext:
+            crypt_path+=file_ext
+        
+        out_file=os.path.join(self.out_folder_path,crypt_path)
+            
         out_folder=os.path.dirname(out_file)
         if not os.path.exists(out_folder):
             os.makedirs(out_folder)

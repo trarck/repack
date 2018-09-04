@@ -63,6 +63,9 @@ def main():
     parser.add_argument('--crypt-random-position',dest='crypt_random_position',default=8,
                       help="crypt random postion",type=int)
                       
+    parser.add_argument('--crypt-with-ext',dest='crypt_with_ext',default=False,
+                      help="crypt file path keep ext",type=int, choices=[0, 1])
+                      
     args = parser.parse_args()
 
     print("=======================================================")
@@ -71,19 +74,23 @@ def main():
         #crypt key is none random generate
         args.crypt_key=generate_key()
         print("==> create crypt key %s"%args.crypt_key)
-        
+
+    args.crypt_with_ext=bool(args.crypt_with_ext)
+    
     copy_project(args.src_project,args.dest_project)
     rename_project(args.project_name,args.package_id)
 
     crypt_info=CryptInfo(args.crypt_key,
                          args.crypt_type,
                          args.crypt_out_length,
-                         args.crypt_random_position)
+                         args.crypt_random_position,
+                         args.crypt_with_ext)
     rename_resources(args.resource_dir,crypt_info)
     
     print("======================crypt info========================")
     print("crypt type is %s"%args.crypt_type)
     print("crypt key is %s"%args.crypt_key)
+    print("crypt withExt is %s"%args.crypt_with_ext)
 # -------------- main --------------
 if __name__ == '__main__':
     try:
