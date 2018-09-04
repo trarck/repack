@@ -28,9 +28,9 @@ def rename_project(new_project_name,package_id):
     print("==> rename project to %s package id %s" % (new_project_name,package_id))
 
     
-def rename_resources(res_folder_path,crypt_info):
+def rename_resources(res_folder_path,sub_dirs,crypt_info):
     out_folder_path=res_folder_path
-    resObf=ResourceObfuscator(res_folder_path,out_folder_path,crypt_info,False)
+    resObf=ResourceObfuscator(res_folder_path,out_folder_path,sub_dirs,crypt_info,False)
     resObf.start()
 
 def main():
@@ -52,6 +52,10 @@ def main():
                       
     parser.add_argument('-r', '--resource-dir',dest='resource_dir',
                       help="resource dir")
+
+    parser.add_argument('--sub-dir',dest='sub_dirs',default=[],action='append',
+                      help="resource sub dir use for search sub path")
+                      
     parser.add_argument('-c', '--crypt-key',dest='crypt_key',
                       help="crypt key")
                       
@@ -69,6 +73,7 @@ def main():
     args = parser.parse_args()
 
     print("=======================================================")
+    print(args.sub_dirs)
     #check crypt key
     if not args.crypt_key :
         #crypt key is none random generate
@@ -85,12 +90,13 @@ def main():
                          args.crypt_out_length,
                          args.crypt_random_position,
                          args.crypt_with_ext)
-    rename_resources(args.resource_dir,crypt_info)
+    rename_resources(args.resource_dir,args.sub_dirs,crypt_info)
     
     print("======================crypt info========================")
     print("crypt type is %s"%args.crypt_type)
     print("crypt key is %s"%args.crypt_key)
     print("crypt withExt is %s"%args.crypt_with_ext)
+
 # -------------- main --------------
 if __name__ == '__main__':
     try:

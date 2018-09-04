@@ -13,9 +13,13 @@ class CryptInfo:
 
 
 class ResourceObfuscator:
-    def __init__(self, resource_folder_path,out_folder_path,crypt_info,remove_source=False):
+    def __init__(self, resource_folder_path,out_folder_path,sub_folders,crypt_info,remove_source=False):
         self.resource_folder_path = resource_folder_path
         self.out_folder_path=out_folder_path
+        self.sub_folders=[];
+        for sub_path in sub_folders:
+            self.sub_folders.append(os.path.normpath(sub_path))
+        
         self.crypt_info = crypt_info
         self.remove_source=remove_source
         if not self.crypt_info.out_length:
@@ -23,16 +27,13 @@ class ResourceObfuscator:
         if not self.crypt_info.random_position:
             self.crypt_info.random_position=8
 
-    def parse_file(self,src_file,relative_path):
-        print("===>parse file %s" % src_file)
-        rel_path=os.path.relpath(src_file,self.resource_folder_path)
-        print("relative path %s = %s"%(rel_path,relative_path))
+    def parse_file(self,src_file,out_folder_path,relative_path):
+        print("===>parse file %s relative path %s" % (src_file,relative_path))
         
-        plain_path=rel_path
-        
-        print("****************%s"%self.crypt_info.with_ext)
+        plain_path=relative_path
+
         if self.crypt_info.with_ext:
-            fes=os.path.splitext(rel_path)
+            fes=os.path.splitext(relative_path)
             plain_path=fes[0]
             file_ext=fes[1]        
         
@@ -53,30 +54,33 @@ class ResourceObfuscator:
         if self.crypt_info.with_ext:
             crypt_path+=file_ext
         
-        out_file=os.path.join(self.out_folder_path,crypt_path)
+        out_file=os.path.join(out_folder_path,crypt_path)
             
-        out_folder=os.path.dirname(out_file)
-        if not os.path.exists(out_folder):
-            os.makedirs(out_folder)
+        parent_folder=os.path.dirname(out_file)
+        if not os.path.exists(parent_folder):
+            os.makedirs(parent_folder)
         
         if self.remove_source:
             os.rename(src_file,out_file)
         else:
             shutil.copyfile(src_file,out_file)
             
-    def parse_dir(self,src_folder,relative_path=""):
+    def parse_dir(self,src_folder_path,out_folder_path,relative_path=""):
         #get all files
-        print("===>parse dir %s" % src_folder)
-        files=os.listdir(src_folder)
+        print("===>parse dir %s" % src_folder_path)
+        files=os.listdir(src_folder_path)
         for filename in files:
-            file_path = os.path.join(src_folder, filename)
+            file_path = os.path.join(src_folder_path, filename)
             rel_path=os.path.join(relative_path,filename)
             if os.path.isdir(file_path):
-                self.parse_dir(file_path,rel_path)
-                if self.remove_source:
-                    os.rmdir(file_path)
+                if os.path.normpath(rel_path) in self.sub_folders:
+                    self.parse_dir(file_path,os.path.join(out_folder_path,filename),"")
+                else:
+                    self.parse_dir(file_path,out_folder_path,rel_path)
+                    if self.remove_source:
+                        os.rmdir(file_path)
             elif os.path.isfile(file_path):
-                self.parse_file(file_path,rel_path)
+                self.parse_file(file_path,out_folder_path,rel_path)
                 
     def start(self):
         if self.resource_folder_path==self.out_folder_path:
@@ -86,10 +90,10 @@ class ResourceObfuscator:
                 shutil.rmtree(bak_path)
             os.rename(resource_path,bak_path)
             self.resource_folder_path=bak_path
-            self.parse_dir(self.resource_folder_path,"")
+            self.parse_dir(self.resource_folder_path,self.out_folder_path,"")
             if self.remove_source:
                 shutil.rmtree(bak_path)
         else:
-            self.parse_dir(self.resource_folder_path,"")
+            self.parse_dir(self.resource_folder_path,self.out_folder_path,"")
         
     
