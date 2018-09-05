@@ -25,12 +25,13 @@ def copy_project(src_folder_path,dst_folder_path):
     else:
         print("copy project error no %s folder " % src_folder_path)
 
-def rename_project(project_root,target_name,package_id,project_name,product_name):
+def set_project(project_root,target_name,package_id,display_name,project_name,product_name,crypt_key):
     print("==> rename project to %s package id %s" % (project_name,package_id))
     ios_project=IosProject(project_root)
-    ios_project.rename(target_name,package_id,project_name,product_name)
-    
-def rename_resources(res_folder_path,sub_dirs,crypt_info):
+    ios_project.rename(target_name,package_id,display_name,project_name,product_name)
+    ios_project.set_resource_obfuscate_key(crypt_key)
+
+def obfuscate_resources(res_folder_path,sub_dirs,crypt_info):
     out_folder_path=res_folder_path
     resObf=ResourceObfuscator(res_folder_path,out_folder_path,sub_dirs,crypt_info,False)
     resObf.start()
@@ -45,18 +46,22 @@ def main():
 
     parser.add_argument('-d', '--dest-project',dest='dest_project',
                       help="dest project")
+    
+    parser.add_argument('-t','--target-name',dest='target_name',
+                      help="new target name")
                       
     parser.add_argument('--project-name',dest='project_name',
                       help="new project name")
 
-    parser.add_argument('-t','--target-name',dest='target_name',
-                      help="new target name")
                       
     parser.add_argument('--product-name',dest='product_name',
                       help="new product name")
 
     parser.add_argument('-p', '--package-id',dest='package_id',
                       help="package id")
+ 
+    parser.add_argument('--display-name',dest='display_name',
+                      help="display name")
                       
     parser.add_argument('-r', '--resource-dir',dest='resource_dir',
                       help="resource dir")
@@ -88,19 +93,28 @@ def main():
         print("==> create crypt key %s"%args.crypt_key)
 
     args.crypt_with_ext=bool(args.crypt_with_ext)
+    crypt_info=CryptInfo(args.crypt_key,
+                 args.crypt_type,
+                 args.crypt_out_length,
+                 args.crypt_random_position,
+                 args.crypt_with_ext)
 
+    #copy project
     if args.src_project:
         copy_project(args.src_project,args.dest_project)
     
-    rename_project(args.dest_project,args.target_name,args.package_id,args.project_name,args.product_name)
+    #set project
+    set_project(args.dest_project,
+                args.target_name,
+                args.package_id,
+                args.display_name,
+                args.project_name,
+                args.product_name,
+                args.crypt_key)
 
-    crypt_info=CryptInfo(args.crypt_key,
-                         args.crypt_type,
-                         args.crypt_out_length,
-                         args.crypt_random_position,
-                         args.crypt_with_ext)
+    #obfuscate resource
     if args.resource_dir:
-        rename_resources(args.resource_dir,args.sub_dirs,crypt_info)
+        obfuscate_resources(args.resource_dir,args.sub_dirs,crypt_info)
     
     print("======================crypt info========================")
     print("crypt type is %s"%args.crypt_type)
