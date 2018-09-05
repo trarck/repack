@@ -1,4 +1,6 @@
 import os
+import shutil
+
 from pbxproj import XcodeProject
 
 class IosProject:
@@ -17,7 +19,6 @@ class IosProject:
         
         ios_app_target=None
         for target in targets:
-            print(target.productType)
             if target.productType=="com.apple.product-type.application":
                 #check build config sdkroot
                 configuration_list = pbx_project.objects[target.buildConfigurationList]
@@ -29,10 +30,29 @@ class IosProject:
                 if build_configuration is None:
                     continue
                 if build_configuration.buildSettings.SDKROOT=="iphoneos":
-                    print("finded")
                     return target
         return None
-
+    
+    def rename_xcode_project(self,project_file_name):
+        xcode_project_file_path=self._get_xcode_project_file_path(self.project_root);
+        if not xcode_project_file_path:
+            raise "Can't find xocde project in "%self.project_root
+            
+        if project_file_name.find(".xcodeproj")==-1:
+            project_file_name+=".xcodeproj"
+        
+        if os.path.basename(xcode_project_file_path)==project_file_name:
+            #the project_file is same as old
+            return xcode_project_file_path
+        
+        #rename project_file to new
+        new_project_file_path=os.path.join(self.project_root,project_file_name)
+        print("===>rename project file %s to %s"%(xcode_project_file_path,new_project_file_path))
+        if os.path.exists(new_project_file_path):
+            shutil.rmtree(new_project_file_path)
+        os.rename(xcode_project_file_path,new_project_file_path)
+        return new_project_file_path#xcode_project_file_path#
+    
     def rename_target(self,pbx_project,target_name,product_name=None,fore=False):
         ios_app_target=self._get_ios_app_target(pbx_project)
         if ios_app_target:
@@ -57,23 +77,7 @@ class IosProject:
                     if "PRODUCT_NAME" in build_configuration.buildSettings or fore:
                         build_configuration.buildSettings.PRODUCT_NAME=product_name
     
-    def rename_xcode_project(self,project_file_name):
-        xcode_project_file_path=self._get_xcode_project_file_path(self.project_root);
-        if not xcode_project_file_path:
-            raise "Can't find xocde project in "%self.project_root
-            
-        if project_file_name.find(".xcodeproj")==-1:
-            project_file_name+=".xcodeproj"
-        
-        if os.path.basename(xcode_project_file_path)==project_file_name:
-            #the project_file is same as old
-            return xcode_project_file_path
-        
-        #rename project_file to new
-        new_project_file_path=os.path.join(self.project_root,project_file_name)
-        print("===>rename project file %s to %s"%(xcode_project_file_path,new_project_file_path))
-        os.rename(xcode_project_file_path,new_project_file_path)
-        return new_project_file_path#xcode_project_file_path#
+
 
     def rename(self,target_name,package_id,project_file_name=None,product_name=None):
         if not project_file_name:

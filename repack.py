@@ -81,7 +81,6 @@ def main():
     args = parser.parse_args()
 
     print("=======================================================")
-    print(args.sub_dirs)
     #check crypt key
     if not args.crypt_key :
         #crypt key is none random generate
@@ -89,8 +88,10 @@ def main():
         print("==> create crypt key %s"%args.crypt_key)
 
     args.crypt_with_ext=bool(args.crypt_with_ext)
+
+    if args.src_project:
+        copy_project(args.src_project,args.dest_project)
     
-    #copy_project(args.src_project,args.dest_project)
     rename_project(args.dest_project,args.target_name,args.package_id,args.project_name,args.product_name)
 
     crypt_info=CryptInfo(args.crypt_key,
@@ -98,7 +99,8 @@ def main():
                          args.crypt_out_length,
                          args.crypt_random_position,
                          args.crypt_with_ext)
-    #rename_resources(args.resource_dir,args.sub_dirs,crypt_info)
+    if args.resource_dir:
+        rename_resources(args.resource_dir,args.sub_dirs,crypt_info)
     
     print("======================crypt info========================")
     print("crypt type is %s"%args.crypt_type)
