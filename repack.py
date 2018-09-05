@@ -11,6 +11,7 @@ from pbxproj import XcodeProject
 
 from path_crypt import PathCrypt
 from resource_obfuscator import ResourceObfuscator,CryptInfo
+from project import IosProject
 
 def generate_key():
     return ''.join(chr(random.randrange(ord('a'),ord('z'))) for _ in range(16))
@@ -24,9 +25,10 @@ def copy_project(src_folder_path,dst_folder_path):
     else:
         print("copy project error no %s folder " % src_folder_path)
 
-def rename_project(new_project_name,package_id):
-    print("==> rename project to %s package id %s" % (new_project_name,package_id))
-
+def rename_project(project_root,target_name,package_id,project_name,product_name):
+    print("==> rename project to %s package id %s" % (project_name,package_id))
+    ios_project=IosProject(project_root)
+    ios_project.rename(target_name,package_id,project_name,product_name)
     
 def rename_resources(res_folder_path,sub_dirs,crypt_info):
     out_folder_path=res_folder_path
@@ -44,8 +46,14 @@ def main():
     parser.add_argument('-d', '--dest-project',dest='dest_project',
                       help="dest project")
                       
-    parser.add_argument('-n', '--project-name',dest='project_name',
+    parser.add_argument('--project-name',dest='project_name',
                       help="new project name")
+
+    parser.add_argument('-t','--target-name',dest='target_name',
+                      help="new target name")
+                      
+    parser.add_argument('--product-name',dest='product_name',
+                      help="new product name")
 
     parser.add_argument('-p', '--package-id',dest='package_id',
                       help="package id")
@@ -82,15 +90,15 @@ def main():
 
     args.crypt_with_ext=bool(args.crypt_with_ext)
     
-    copy_project(args.src_project,args.dest_project)
-    rename_project(args.project_name,args.package_id)
+    #copy_project(args.src_project,args.dest_project)
+    rename_project(args.dest_project,args.target_name,args.package_id,args.project_name,args.product_name)
 
     crypt_info=CryptInfo(args.crypt_key,
                          args.crypt_type,
                          args.crypt_out_length,
                          args.crypt_random_position,
                          args.crypt_with_ext)
-    rename_resources(args.resource_dir,args.sub_dirs,crypt_info)
+    #rename_resources(args.resource_dir,args.sub_dirs,crypt_info)
     
     print("======================crypt info========================")
     print("crypt type is %s"%args.crypt_type)
