@@ -65,6 +65,7 @@ class IosProject:
         return new_project_file_path
 
     def rename_target(self, pbx_project, target_name, product_name=None, fore=False):
+        print("===> rename target target_name=%s,product_name=%s" % (target_name, product_name))
         ios_app_target = self._get_ios_app_target(pbx_project)
         if ios_app_target:
 
@@ -89,10 +90,10 @@ class IosProject:
 
     def set_plist(self, pbx_project, package_id, display_name):
         # get plist file
+        print("===>set plist packgage_id=%s,display_name=%s" % (package_id, display_name))
         info_plist_file_path = self._get_ios_info_plist_file_path(pbx_project)
         if info_plist_file_path:
             root_obj = plistlib.readPlist(os.path.join(self.project_root, info_plist_file_path))
-            print(root_obj)
             root_obj['CFBundleIdentifier'] = package_id
             root_obj['CFBundleDisplayName'] = display_name
             plistlib.writePlist(root_obj, os.path.join(self.project_root, info_plist_file_path))
@@ -118,7 +119,10 @@ class IosProject:
             pbx_project.add_other_cflags('-DUSE_RESOURCE_OBFUSCATE -DRESOURCE_OBFUSCATE_KEY=%s' % crypt_key,
                                          ios_app_target.name)
 
-    def set_code_sign(self, code_sign_identity, provisioning_profile, development_team=None, provisioning_profile_uuid=None):
+    def set_code_sign(self, code_sign_identity, provisioning_profile, development_team=None,
+                      provisioning_profile_uuid=None):
+        print("===> set code sign identity=%s,profile=%s,team=%s,profile_uuid=%s" %
+              (code_sign_identity, provisioning_profile_uuid, development_team, provisioning_profile_uuid))
         xcode_project_file_path = self._get_xcode_project_file_path(self.project_root)
         pbx_proj_file_path = os.path.join(xcode_project_file_path, "project.pbxproj")
         pbx_project = XcodeProject.load(pbx_proj_file_path)

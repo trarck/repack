@@ -5,21 +5,38 @@ from path_crypt import PathCrypt
 
 
 class CryptInfo:
-    def __init__(self, key, type, out_length, random_position, with_ext=False):
+    def __init__(self, key, type="md5", out_length=0, random_position=0, with_ext=False):
         self.key = key
         self.type = type
         self.out_length = out_length
         self.random_position = random_position
         self.with_ext = with_ext
 
+    def parse_config(self, crypt_data):
+        if "key" in crypt_data:
+            self.key = crypt_data["key"]
+
+        if "type" in crypt_data:
+            self.type = crypt_data["type"]
+
+        if "out_length" in crypt_data:
+            self.out_length = crypt_data["out_length"]
+
+        if "random_position" in crypt_data:
+            self.random_position = crypt_data["random_position"]
+
+        if "with_ext" in crypt_data:
+            self.with_ext = crypt_data["with_ext"]
 
 class ResourceObfuscator:
     def __init__(self, resource_folder_path, out_folder_path, sub_folders, crypt_info, remove_source=False):
         self.resource_folder_path = resource_folder_path
         self.out_folder_path = out_folder_path
         self.sub_folders = []
-        for sub_path in sub_folders:
-            self.sub_folders.append(os.path.normpath(sub_path))
+
+        if sub_folders:
+            for sub_path in sub_folders:
+                self.sub_folders.append(os.path.normpath(sub_path))
 
         self.crypt_info = crypt_info
         self.remove_source = remove_source
@@ -50,7 +67,7 @@ class ResourceObfuscator:
                 self.crypt_info.out_length,
                 self.crypt_info.random_position)
 
-        print("crypt %s => %s" % (plain_path, crypt_path))
+        print("===>crypt %s => %s" % (plain_path, crypt_path))
 
         if self.crypt_info.with_ext:
             crypt_path += file_ext
@@ -84,6 +101,7 @@ class ResourceObfuscator:
                 self.parse_file(file_path, out_folder_path, rel_path)
 
     def start(self):
+        print("===>obfuscate %s,%s"%(self.resource_folder_path,self.out_folder_path))
         if self.resource_folder_path == self.out_folder_path:
             resource_path = self.resource_folder_path
             bak_path = resource_path + "_bak"

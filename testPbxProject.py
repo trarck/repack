@@ -1,6 +1,5 @@
 import os
-from source_file import SourceFile
-sf=SourceFile("data/temp/t.txt")
-sf.open()
-sf.replace_after(["dd","bb"],["bb"],"cccc")
-sf.save()
+import utils
+
+utils.copy_files_with_rules("data/temp/aaa","data/temp/aaa","data/temp/ddd",exclude=utils.convert_rules(["*.txt"]))
+

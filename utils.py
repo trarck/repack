@@ -1,7 +1,7 @@
 import os
 import shutil
 import re
-
+import random
 
 def _in_rules(rel_path, rules):
     ret = False
@@ -96,3 +96,8 @@ def copy_files_with_rules(src_root, src, dst, include=None, exclude=None):
                         os.makedirs(dst)
 
                     shutil.copy(abs_path, dst)
+
+
+
+def generate_key(self):
+    return ''.join(chr(random.randrange(ord('a'), ord('z'))) for _ in range(16))
