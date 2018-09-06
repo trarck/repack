@@ -1,99 +1,98 @@
 import os
-import shutil 
+import shutil
 
 from path_crypt import PathCrypt
 
+
 class CryptInfo:
-    def __init__(self, key,type,out_length,random_position,with_ext=False):
+    def __init__(self, key, type, out_length, random_position, with_ext=False):
         self.key = key
-        self.type=type
+        self.type = type
         self.out_length = out_length
-        self.random_position=random_position
-        self.with_ext=with_ext
+        self.random_position = random_position
+        self.with_ext = with_ext
 
 
 class ResourceObfuscator:
-    def __init__(self, resource_folder_path,out_folder_path,sub_folders,crypt_info,remove_source=False):
+    def __init__(self, resource_folder_path, out_folder_path, sub_folders, crypt_info, remove_source=False):
         self.resource_folder_path = resource_folder_path
-        self.out_folder_path=out_folder_path
-        self.sub_folders=[];
+        self.out_folder_path = out_folder_path
+        self.sub_folders = []
         for sub_path in sub_folders:
             self.sub_folders.append(os.path.normpath(sub_path))
-        
+
         self.crypt_info = crypt_info
-        self.remove_source=remove_source
+        self.remove_source = remove_source
         if not self.crypt_info.out_length:
-            self.crypt_info.out_length=16
+            self.crypt_info.out_length = 16
         if not self.crypt_info.random_position:
-            self.crypt_info.random_position=8
+            self.crypt_info.random_position = 8
 
-    def parse_file(self,src_file,out_folder_path,relative_path):
-        print("===>parse file %s relative path %s" % (src_file,relative_path))
-        
-        plain_path=relative_path
+    def parse_file(self, src_file, out_folder_path, relative_path):
+        print("===>parse file %s relative path %s" % (src_file, relative_path))
+
+        plain_path = relative_path
 
         if self.crypt_info.with_ext:
-            fes=os.path.splitext(relative_path)
-            plain_path=fes[0]
-            file_ext=fes[1]        
-        
-        #use unix path
-        plain_path=plain_path.replace("\\","/")
-        
-        if self.crypt_info.type=="md5":
-            crypt_path=PathCrypt.md5_path(plain_path,self.crypt_info.key)
+            fes = os.path.splitext(relative_path)
+            plain_path = fes[0]
+            file_ext = fes[1]
+
+            # use unix path
+        plain_path = plain_path.replace("\\", "/")
+
+        if self.crypt_info.type == "md5":
+            crypt_path = PathCrypt.md5_path(plain_path, self.crypt_info.key)
         else:
-            crypt_path=PathCrypt.xor_path(
-                        plain_path,
-                        self.crypt_info.key,
-                        self.crypt_info.out_length,
-                        self.crypt_info.random_position)
-        
-        print("crypt %s => %s"%(plain_path,crypt_path))
-        
+            crypt_path = PathCrypt.xor_path(
+                plain_path,
+                self.crypt_info.key,
+                self.crypt_info.out_length,
+                self.crypt_info.random_position)
+
+        print("crypt %s => %s" % (plain_path, crypt_path))
+
         if self.crypt_info.with_ext:
-            crypt_path+=file_ext
-        
-        out_file=os.path.join(out_folder_path,crypt_path)
-            
-        parent_folder=os.path.dirname(out_file)
+            crypt_path += file_ext
+
+        out_file = os.path.join(out_folder_path, crypt_path)
+
+        parent_folder = os.path.dirname(out_file)
         if not os.path.exists(parent_folder):
             os.makedirs(parent_folder)
-        
+
         if self.remove_source:
-            os.rename(src_file,out_file)
+            os.rename(src_file, out_file)
         else:
-            shutil.copyfile(src_file,out_file)
-            
-    def parse_dir(self,src_folder_path,out_folder_path,relative_path=""):
-        #get all files
+            shutil.copyfile(src_file, out_file)
+
+    def parse_dir(self, src_folder_path, out_folder_path, relative_path=""):
+        # get all files
         print("===>parse dir %s" % src_folder_path)
-        files=os.listdir(src_folder_path)
+        files = os.listdir(src_folder_path)
         for filename in files:
             file_path = os.path.join(src_folder_path, filename)
-            rel_path=os.path.join(relative_path,filename)
+            rel_path = os.path.join(relative_path, filename)
             if os.path.isdir(file_path):
                 if os.path.normpath(rel_path) in self.sub_folders:
-                    self.parse_dir(file_path,os.path.join(out_folder_path,filename),"")
+                    self.parse_dir(file_path, os.path.join(out_folder_path, filename), "")
                 else:
-                    self.parse_dir(file_path,out_folder_path,rel_path)
+                    self.parse_dir(file_path, out_folder_path, rel_path)
                     if self.remove_source:
                         os.rmdir(file_path)
             elif os.path.isfile(file_path):
-                self.parse_file(file_path,out_folder_path,rel_path)
-                
+                self.parse_file(file_path, out_folder_path, rel_path)
+
     def start(self):
-        if self.resource_folder_path==self.out_folder_path:
-            resource_path=self.resource_folder_path
-            bak_path=resource_path+"_bak"
+        if self.resource_folder_path == self.out_folder_path:
+            resource_path = self.resource_folder_path
+            bak_path = resource_path + "_bak"
             if os.path.exists(bak_path):
                 shutil.rmtree(bak_path)
-            os.rename(resource_path,bak_path)
-            self.resource_folder_path=bak_path
-            self.parse_dir(self.resource_folder_path,self.out_folder_path,"")
+            os.rename(resource_path, bak_path)
+            self.resource_folder_path = bak_path
+            self.parse_dir(self.resource_folder_path, self.out_folder_path, "")
             if self.remove_source:
                 shutil.rmtree(bak_path)
         else:
-            self.parse_dir(self.resource_folder_path,self.out_folder_path,"")
-        
-    
+            self.parse_dir(self.resource_folder_path, self.out_folder_path, "")
