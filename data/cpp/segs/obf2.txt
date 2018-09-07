@@ -1,0 +1,15 @@
+	
+    if (path.empty()) {
+		//use obfuscate path
+		path = searchPath;
+
+		file_path += resolutionDirectory;
+		if (file_path.size() && file_path[file_path.size() - 1] != '/') {
+			file_path += '/';
+		}
+		file_path += file;
+
+		file_path = getObfuscatePath(file_path);
+		path = getFullPathForDirectoryAndFilename(path, file_path);
+	}
+    

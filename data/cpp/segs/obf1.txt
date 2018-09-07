@@ -1,0 +1,10 @@
+std::string FileUtils::getObfuscatePath(const std::string& filepath) const
+{
+	static std::string ObfuscatorKey = "${PROJECT_CRYPT_KEY}";
+	std::string obfFilepath = ObfuscatorKey + "_" + filepath;
+	Data data;
+	data.copy((const unsigned char*)(obfFilepath.c_str()), obfFilepath.length());
+	std::string crypt= utils::getDataMD5Hash(data);
+	return crypt.substr(0, 1) + "/" + crypt;
+}
+
