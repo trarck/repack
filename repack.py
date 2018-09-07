@@ -4,23 +4,50 @@ import traceback
 import shutil
 import random
 import json
+from string import Template
 
 from argparse import ArgumentParser
 from resource_obfuscator import ResourceObfuscator, CryptInfo
 from project import IosProject
+from source_file import SourceFile
 import utils
 
 
 class Repack:
-    def __init__(self, matrix_project_root_path, project_root_path, pack_resource_path, name):
+    def __init__(self, matrix_project_root_path, project_root_path, pack_resource_path, global_data_dir, name):
         self.matrix_project_root_path = matrix_project_root_path
         self.project_root_path = project_root_path
         self.pack_resource_path = pack_resource_path
+        self.global_data_dir = global_data_dir
         self.name = name
         self.crypt_info = CryptInfo(None, "md5")
         self.need_copy_project = True
 
         self._config_data = None
+
+        self._environment = {
+            "PROJECT_ROOT": self.project_root_path,
+            "PACK_RESOURCE_ROOT": self.pack_resource_path,
+            "GLOBAL_DATA_DIR": self.global_data_dir
+        }
+
+    def _merge_environment(self, conf_data, parent_key=None):
+        for key, value in conf_data.items():
+            if parent_key:
+                new_key = parent_key + '_' + key.upper()
+            else:
+                new_key = key.upper()
+
+            if isinstance(value, (dict)):
+                self._merge_environment(value, new_key)
+            elif isinstance(value, (list)):
+                print("ignore list for %s" % key)
+            else:
+                self._environment[new_key] = value
+
+    def translate_string(self, value):
+        t = Template(value)
+        return t.substitute(self._environment)
 
     def _parse_config(self, conf_data):
         self._config_data = conf_data
@@ -42,6 +69,8 @@ class Repack:
 
         if not self.crypt_info.key:
             self.crypt_info.key = utils.generate_key()
+
+        self._merge_environment(conf_data, "PROJECT")
 
     def run(self, config, steps):
         self._parse_config(config)
@@ -74,7 +103,7 @@ class Repack:
         fun(action_data)
 
     def copy_project(self):
-        print("copy project from %s to %s"%(self.matrix_project_root_path,self.project_root_path))
+        print("copy project from %s to %s" % (self.matrix_project_root_path, self.project_root_path))
         if os.path.exists(self.matrix_project_root_path):
             if os.path.exists(self.project_root_path):
                 shutil.rmtree(self.project_root_path)
@@ -83,8 +112,42 @@ class Repack:
             print("copy project error no %s folder " % self.matrix_project_root_path)
 
     def copy_files(self, config):
-        print("===>copy file from %s to %s"%(config["from"],config["to"]))
+        print("===>copy file from %s to %s" % (config["from"], config["to"]))
         utils.copy_files_with_config(config, self.pack_resource_path, self.project_root_path)
+
+    def modify_files(self, config):
+        if "files" in config:
+            for modify_config in config["files"]:
+                file_path = modify_config["file_path"]
+                if not os.path.isabs(file_path):
+                    file_path = os.path.join(self.project_root_path, file_path)
+                    source = SourceFile(file_path)
+                    source.open()
+                    operation = modify_config["operation"]
+
+                    words = None
+                    if "words" in modify_config:
+                        words = modify_config["words"]
+                        words = self.translate_string(words)
+
+                    if "words_file" in modify_config:
+                        words_file_path = self.translate_string(modify_config["words_file"])
+                        if not os.path.isabs(words_file_path):
+                            words_file_path = os.path.join(self.pack_resource_path, words_file_path)
+                        fp = open(words_file_path)
+                        words = fp.read()
+                        fp.close()
+                        words = self.translate_string(words)
+
+                    if operation == "insert":
+                        source.insert(modify_config["keys"], words)
+                    elif operation == "insert_before":
+                        source.insert_before(modify_config["keys"], words)
+                    elif operation == "replace":
+                        source.replace(modify_config["froms"], modify_config["tos"], words)
+                    elif operation == "remove":
+                        source.remove(modify_config["froms"], modify_config["tos"])
+                    source.save()
 
     def set_xcode_project(self, config):
         xcode_project_path = self._config_data["xcode_project_path"]
@@ -102,7 +165,7 @@ class Repack:
         if "display_name" in self._config_data:
             display_name = self._config_data["display_name"]
         else:
-            display_name=target_name
+            display_name = target_name
 
         xcode_project_name = None
         if "xcode_project_name" in self._config_data:
@@ -141,7 +204,9 @@ class Repack:
 
 
 def main():
-    workpath = os.path.dirname(os.path.realpath(__file__))
+    workpath = os.getcwd()  # os.path.dirname(os.path.realpath(__file__))
+
+    print("workpath:%s" % workpath)
 
     parser = ArgumentParser()
     parser.add_argument('-s', '--src-project', dest='src_project',
@@ -156,9 +221,24 @@ def main():
     parser.add_argument('-c', '--config-file', dest='config_file',
                         help="config file about run pack")
 
+    parser.add_argument('-d', '--data-dir', dest='data_dir',
+                        help="global data files dir")
+
     args = parser.parse_args()
 
     print("=======================================================")
+
+    if not os.path.isabs(args.src_project):
+        args.src_project = os.path.join(workpath, args.src_project)
+
+    if not os.path.isabs(args.resource_dir):
+        args.resource_dir = os.path.join(workpath, args.resource_dir)
+
+    if not args.data_dir:
+        args.data_dir = args.resource_dir
+    else:
+        if not os.path.isabs(args.data_dir):
+            args.data_dir = os.path.join(workpath, args.resource_dir)
 
     # get pack info
     fp = open(args.config_file)
@@ -178,7 +258,7 @@ def main():
             else:
                 resource_path = os.path.join(args.resource_dir, project_config["name"])
 
-            repack = Repack(args.src_project, project_path, resource_path,project_config["name"])
+            repack = Repack(args.src_project, project_path, resource_path, args.data_dir, project_config["name"])
 
             repack.run(project_config, config_data["steps"])
 
