@@ -114,6 +114,8 @@ class Repack:
 
     def copy_files(self, config):
         print("===>copy file from %s to %s" % (config["from"], config["to"]))
+        config["from"] = self.translate_string(config["from"])
+        config["to"] = self.translate_string(config["to"])
         utils.copy_files_with_config(config, self.pack_resource_path, self.project_root_path)
 
     def modify_files(self, config):
@@ -146,6 +148,8 @@ class Repack:
                         source.insert_before(modify_config["keys"], words)
                     elif operation == "replace":
                         source.replace(modify_config["froms"], modify_config["tos"], words)
+                    elif operation == "replace_after":
+                        source.replace_after(modify_config["froms"], modify_config["tos"], words)
                     elif operation == "remove":
                         source.remove(modify_config["froms"], modify_config["tos"])
                     source.save()

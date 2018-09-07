@@ -40,8 +40,11 @@ def copy_files_with_config(config, src_root, dst_root):
     src_dir = config["from"]
     dst_dir = config["to"]
 
-    src_dir = os.path.join(src_root, src_dir)
-    dst_dir = os.path.join(dst_root, dst_dir)
+    if not os.path.isabs(src_dir):
+        src_dir = os.path.join(src_root, src_dir)
+
+    if not os.path.isabs(dst_dir):
+        dst_dir = os.path.join(dst_root, dst_dir)
 
     include_rules = None
     if "include" in config:
