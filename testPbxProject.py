@@ -1,5 +1,8 @@
 import os
-import utils
+from file_crypt import FileCrypt
 
-utils.copy_files_with_rules("data/temp/aaa","data/temp/aaa","data/temp/ddd",exclude=utils.convert_rules(["*.txt"]))
-
+#FileCrypt.encrypt("data/temp/p.png","data/temp/p.bin","newkey","XXTEAXX")
+#FileCrypt.decrypt("data/temp/p.bin","data/temp/p1.png","test","xxtea")
+fc=FileCrypt("newkey","XXTEAXX")
+fc.encrypt_dir("data/temp/res_","data/temp/res",[".*\.png"])
+#fc.decrypt_dir("data/temp/projects/game1/res","data/temp/tttt",[".*\.png"])

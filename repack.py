@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from resource_obfuscator import ResourceObfuscator, CryptInfo
 from project import IosProject
 from source_file import SourceFile
+from file_crypt import FileCrypt
 import utils
 
 
@@ -47,7 +48,7 @@ class Repack:
 
     def translate_string(self, value):
         t = Template(value)
-        return t.substitute(self._environment)
+        return t.substitute(self._environment).encode('utf-8')
 
     def _parse_config(self, conf_data):
         self._config_data = conf_data
@@ -178,6 +179,35 @@ class Repack:
         ios_project = IosProject(xcode_project_path)
         ios_project.rename(target_name, package_id, display_name, xcode_project_name, product_name)
         ios_project.set_resource_obfuscate_key(self.crypt_info.key)
+
+    def crypt_files(self, config):
+        from_dir = self.translate_string(config["from"])
+        if not os.path.isabs(from_dir):
+            from_dir = os.path.join(self.project_root_path, from_dir)
+
+        if "to" in config:
+            to_dir = self.translate_string(config["to"])
+            if not os.path.isabs(from_dir):
+                to_dir = os.path.join(self.project_root_path, to_dir)
+        else:
+            to_dir = from_dir
+
+        if "key" in config:
+            key = self.translate_string(config["key"])
+        else:
+            key = self._config_data["xxtea_key"]
+
+        if "sign" in config:
+            sign = self.translate_string(config["sign"])
+        else:
+            sign = self._config_data["xxtea_sign"]
+
+        include = None
+        if "include" in config:
+            include = utils.convert_rules(config["include"])
+
+        fcrypt = FileCrypt(key, sign)
+        fcrypt.encrypt_dir(from_dir, to_dir, include)
 
     def obfuscate_resources(self, config):
         res_path = config["res_path"]

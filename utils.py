@@ -3,7 +3,7 @@ import shutil
 import re
 import random
 
-def _in_rules(rel_path, rules):
+def in_rules(rel_path, rules):
     ret = False
     path_str = rel_path.replace("\\", "/")
     for rule in rules:
@@ -76,7 +76,7 @@ def copy_files_with_rules(src_root, src, dst, include=None, exclude=None):
                 copy_files_with_rules(
                     src_root, abs_path, sub_dst, include=include)
             elif os.path.isfile(abs_path):
-                if _in_rules(rel_path, include):
+                if in_rules(rel_path, include):
                     if not os.path.exists(dst):
                         os.makedirs(dst)
 
@@ -91,7 +91,7 @@ def copy_files_with_rules(src_root, src, dst, include=None, exclude=None):
                 copy_files_with_rules(
                     src_root, abs_path, sub_dst, exclude=exclude)
             elif os.path.isfile(abs_path):
-                if not _in_rules(rel_path, exclude):
+                if not in_rules(rel_path, exclude):
                     if not os.path.exists(dst):
                         os.makedirs(dst)
 
