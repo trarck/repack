@@ -92,6 +92,7 @@ class IosProject:
         # get plist file
         print("===>set plist packgage_id=%s,display_name=%s" % (package_id, display_name))
         info_plist_file_path = self._get_ios_info_plist_file_path(pbx_project)
+        print("===>get info_plist_file_path %s" % os.path.join(self.project_root, info_plist_file_path))
         if info_plist_file_path:
             root_obj = plistlib.readPlist(os.path.join(self.project_root, info_plist_file_path))
             root_obj['CFBundleIdentifier'] = package_id
@@ -108,6 +109,12 @@ class IosProject:
         pbx_project = XcodeProject.load(pbx_proj_file_path)
         self.rename_target(pbx_project, target_name, product_name)
         self.set_plist(pbx_project, package_id, display_name)
+        ios_app_target = self._get_ios_app_target(pbx_project)
+        if ios_app_target:
+            for configuration in pbx_project.objects.get_configurations_on_targets(ios_app_target.name):
+                print(configuration.buildSettings[u"PRODUCT_BUNDLE_IDENTIFIER"])
+                if u"PRODUCT_BUNDLE_IDENTIFIER" in configuration.buildSettings:
+                    configuration.set_flags(u"PRODUCT_BUNDLE_IDENTIFIER", package_id)
         pbx_project.save()
 
     def set_resource_obfuscate_key(self, crypt_key):
@@ -120,21 +127,28 @@ class IosProject:
                                          ios_app_target.name)
 
     def set_code_sign(self, code_sign_identity, provisioning_profile, development_team=None,
-                      provisioning_profile_uuid=None):
-        print("===> set code sign identity=%s,profile=%s,team=%s,profile_uuid=%s" %
-              (code_sign_identity, provisioning_profile_uuid, development_team, provisioning_profile_uuid))
+                      provisioning_profile_uuid=None,code_sign_entitlements=None):
+        print("===> set code sign identity=%s,profile=%s,team=%s,profile_uuid=%s,entitlements=%s" %
+              (code_sign_identity, provisioning_profile, development_team, provisioning_profile_uuid,code_sign_entitlements))
         xcode_project_file_path = self._get_xcode_project_file_path(self.project_root)
         pbx_proj_file_path = os.path.join(xcode_project_file_path, "project.pbxproj")
         pbx_project = XcodeProject.load(pbx_proj_file_path)
         ios_app_target = self._get_ios_app_target(pbx_project)
         if ios_app_target:
             target_name = ios_app_target.name
+            pbx_project.set_flags(u'CODE_SIGN_IDENTITY', code_sign_identity, target_name)
             pbx_project.set_flags(u'CODE_SIGN_IDENTITY[sdk=iphoneos*]', code_sign_identity, target_name)
             pbx_project.set_flags(u'PROVISIONING_PROFILE_SPECIFIER', provisioning_profile, target_name)
             if development_team:
                 pbx_project.set_flags(u'DEVELOPMENT_TEAM', development_team, target_name)
+            
             if provisioning_profile_uuid:
                 pbx_project.set_flags(u'PROVISIONING_PROFILE', provisioning_profile_uuid, target_name)
-
-            for target in self.objects.get_targets(target_name):
-                self.objects[self.rootObject].set_provisioning_style(PBXProvioningTypes.MANUAL, target)
+            
+            if code_sign_entitlements:
+                pbx_project.set_flags(u'CODE_SIGN_ENTITLEMENTS', code_sign_entitlements, target_name)
+                
+            for target in pbx_project.objects.get_targets(target_name):
+                pbx_project.objects[pbx_project.rootObject].set_provisioning_style(PBXProvioningTypes.MANUAL, target)
+            
+            pbx_project.save()

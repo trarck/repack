@@ -27,9 +27,10 @@ class Repack:
         self._config_data = None
 
         self._environment = {
-            "PROJECT_ROOT": self.project_root_path,
-            "PACK_RESOURCE_ROOT": self.pack_resource_path,
-            "GLOBAL_DATA_DIR": self.global_data_dir
+            u"MATRIX_PROJECT_ROOT": self.matrix_project_root_path,
+            u"PROJECT_ROOT": self.project_root_path,
+            u"PACK_RESOURCE_ROOT": self.pack_resource_path,
+            u"GLOBAL_DATA_DIR": self.global_data_dir
         }
 
     def _merge_environment(self, conf_data, parent_key=None):
@@ -48,7 +49,7 @@ class Repack:
 
     def translate_string(self, value):
         t = Template(value)
-        return t.substitute(self._environment).encode('utf-8')
+        return t.substitute(self._environment)
 
     def _parse_config(self, conf_data):
         self._config_data = conf_data
@@ -82,17 +83,17 @@ class Repack:
         self.do_steps(steps)
 
     def do_steps(self, steps):
-        for action_data in steps:
-            self.do_action(action_data)
+        for step_data in steps:
+            self.do_step(step_data)
 
-    # def do_step(self, step_data):
-    #     print("===> do step %s" % step_data["name"])
-    #     self.current_step = step_data
-    #     self.do_actions(step_data["actions"])
-    #
-    # def do_actions(self, actions):
-    #     for action in actions:
-    #         self.do_action(action)
+    def do_step(self, step_data):
+        print("===> do step %s" % step_data["name"])
+        if "actions" in step_data:
+            self.do_actions(step_data["actions"])
+
+    def do_actions(self, actions):
+        for action_data in actions:
+            self.do_action(action_data)
 
     def do_action(self, action_data):
         print("===> do action %s" % action_data["name"])
@@ -113,7 +114,7 @@ class Repack:
             print("copy project error no %s folder " % self.matrix_project_root_path)
 
     def copy_files(self, config):
-        print("===>copy file from %s to %s" % (config["from"], config["to"]))
+        print("===>copy file from %s to %s" % (self.translate_string(config["from"]), self.translate_string(config["to"])))
         config["from"] = self.translate_string(config["from"])
         config["to"] = self.translate_string(config["to"])
         utils.copy_files_with_config(config, self.pack_resource_path, self.project_root_path)
@@ -155,35 +156,51 @@ class Repack:
                     source.save()
 
     def set_xcode_project(self, config):
-        xcode_project_path = self._config_data["xcode_project_path"]
+        xcode_project_path = self.translate_string(config["xcode_project_path"])
         if not os.path.isabs(xcode_project_path):
             xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
 
-        package_id = self._config_data["package_id"]
+        package_id = self.translate_string(config["package_id"])
 
-        if "target_name" in self._config_data:
-            target_name = self._config_data["target_name"]
+        if "target_name" in config:
+            target_name = self.translate_string(config["target_name"])
 
         else:
             target_name = self.name
 
-        if "display_name" in self._config_data:
-            display_name = self._config_data["display_name"]
+        if "display_name" in config:
+            display_name = self.translate_string(config["display_name"])
         else:
             display_name = target_name
 
         xcode_project_name = None
-        if "xcode_project_name" in self._config_data:
-            xcode_project_name = self._config_data["xcode_project_name"]
+        if "xcode_project_name" in config:
+            xcode_project_name = self.translate_string(config["xcode_project_name"])
 
         product_name = None
-        if "product_name" in self._config_data:
-            product_name = self._config_data["product_name"]
-
+        if "product_name" in config:
+            product_name = self.translate_string(config["product_name"])
+            
+        code_sign_identity=self.translate_string(config["code_sign_identity"])
+        provisioning_profile=self.translate_string(config["provisioning_profile"])
+        
+        development_team=None
+        if "development_team" in config:
+            development_team=self.translate_string(config["development_team"])
+            
+        provisioning_profile_uuid=None
+        if "provisioning_profile_uuid" in config:
+            provisioning_profile_uuid=self.translate_string(config["provisioning_profile_uuid"])
+        
+        code_sign_entitlements=None
+        if "code_sign_entitlements" in config:
+            code_sign_entitlements=self.translate_string(config["code_sign_entitlements"])
+        
         ios_project = IosProject(xcode_project_path)
         ios_project.rename(target_name, package_id, display_name, xcode_project_name, product_name)
-        ios_project.set_resource_obfuscate_key(self.crypt_info.key)
-
+        #ios_project.set_resource_obfuscate_key(self.crypt_info.key)
+        ios_project.set_code_sign(code_sign_identity,provisioning_profile,development_team,provisioning_profile_uuid,code_sign_entitlements)
+    
     def crypt_files(self, config):
         from_dir = self.translate_string(config["from"])
         if not os.path.isabs(from_dir):
@@ -268,6 +285,9 @@ def main():
     if not os.path.isabs(args.resource_dir):
         args.resource_dir = os.path.join(workpath, args.resource_dir)
 
+    if not os.path.isabs(args.out_dir):
+        args.out_dir = os.path.join(workpath, args.out_dir)
+        
     if not args.data_dir:
         args.data_dir = args.resource_dir
     else:

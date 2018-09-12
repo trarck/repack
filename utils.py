@@ -25,6 +25,9 @@ def convert_rules(rules):
 
 
 def copy_files(src, dst):
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+    
     for item in os.listdir(src):
         path = os.path.join(src, item)
         if os.path.isfile(path):
