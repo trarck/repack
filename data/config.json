@@ -22,83 +22,88 @@
     
     "steps":[
         {
-            "name":"copy_files",
-            "from":"${GLOBAL_DATA_DIR}/cpp/cocos2d-x",
-            "to":"frameworks/cocos2d-x"
-        },
-        {
-            "name":"modify_files",
-            "files":[
+            "name":"just a test",
+            "actions":[
                 {
-                    "operation":"insert",
-                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.h",
-                    "keys":["virtual bool isDirectoryExistInternal(const std::string& dirPath) const;"],
-                    "words":"\n\n    std::string getObfuscatePath(const std::string& filepath) const;"
+                    "name":"copy_files",
+                    "from":"${GLOBAL_DATA_DIR}/cpp/cocos2d-x",
+                    "to":"frameworks/cocos2d-x"
                 },
                 {
-                    "operation":"insert_before",
-                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
-                    "keys":["std::string FileUtils::getPathForFilename"],
-                    "words_file":"${GLOBAL_DATA_DIR}/obf1.txt"
+                    "name":"modify_files",
+                    "files":[
+                        {
+                            "operation":"insert",
+                            "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.h",
+                            "keys":["virtual bool isDirectoryExistInternal(const std::string& dirPath) const;"],
+                            "words":"\n\n    std::string getObfuscatePath(const std::string& filepath) const;"
+                        },
+                        {
+                            "operation":"insert_before",
+                            "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
+                            "keys":["std::string FileUtils::getPathForFilename"],
+                            "words_file":"${GLOBAL_DATA_DIR}/obf1.txt"
+                        },
+                        {
+                            "operation":"insert",
+                            "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
+                            "keys":["std::string FileUtils::getPathForFilename","getFullPathForDirectoryAndFilename(path, file);"],
+                            "words_file":"${GLOBAL_DATA_DIR}/obf2.txt"
+                        },
+                        {
+                            "operation":"insert_before",
+                            "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
+                            "keys":["#include \"tinyxml2/tinyxml2.h\""],
+                            "words":"\n#include \"platform/CCFileCrypt.h\"\n"
+                        },
+                        {
+                            "operation":"insert",
+                            "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
+                            "keys":["NS_CC_END"],
+                            "words":"\n#include \"platform/CCFileCrypt.cpp\"\n"
+                        },
+                        {
+                            "operation":"insert",
+                            "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+                            "keys":["#include \"cocos2d.h\""],
+                            "words":"\n#include \"platform/CCFileCrypt.h\"\n"
+                        },                
+                        {
+                            "operation":"replace_after",
+                            "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+                            "froms":["register_all_packages();"],
+                            "tos":["));"],
+                            "words":"\nFileCrypt::getInstance()->setXXTEAKeyAndSign(\"${PROJECT_XXTEA_KEY}\", strlen(\"${PROJECT_XXTEA_KEY}\"), \"${PROJECT_XXTEA_SIGN}\", strlen(\"${PROJECT_XXTEA_SIGN}\"));\n"
+                        }                
+                    ]
                 },
                 {
-                    "operation":"insert",
-                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
-                    "keys":["std::string FileUtils::getPathForFilename","getFullPathForDirectoryAndFilename(path, file);"],
-                    "words_file":"${GLOBAL_DATA_DIR}/obf2.txt"
+                    "name":"crypt_files",
+                    "from":"res",
+                    "key":"${PROJECT_XXTEA_KEY}",
+                    "sign":"${PROJECT_XXTEA_SIGN}",
+                    "include":["*.png"]
                 },
                 {
-                    "operation":"insert_before",
-                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
-                    "keys":["#include \"tinyxml2/tinyxml2.h\""],
-                    "words":"\n#include \"platform/CCFileCrypt.h\"\n"
+                    "name":"set_xcode_project"
                 },
                 {
-                    "operation":"insert",
-                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
-                    "keys":["NS_CC_END"],
-                    "words":"\n#include \"platform/CCFileCrypt.cpp\"\n"
+                    "name":"copy_files",
+                    "from":"icons",
+                    "to":"frameworks/runtime-src/proj.ios_mac/ios/Images.xcassets/AppIcon.appiconset"
                 },
                 {
-                    "operation":"insert",
-                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                    "keys":["#include \"cocos2d.h\""],
-                    "words":"\n#include \"platform/CCFileCrypt.h\"\n"
-                },                
+                    "name":"obfuscate_resources",
+                    "res_path":"res",
+                    "sub_dirs":["cocosbuilderRes","hd","ccs-res","ccs-res/hd"],
+                    "remove_source":true
+                },
                 {
-                    "operation":"replace_after",
-                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                    "froms":["register_all_packages();"],
-                    "tos":["));"],
-                    "words":"\nFileCrypt::getInstance()->setXXTEAKeyAndSign(\"${PROJECT_XXTEA_KEY}\", strlen(\"${PROJECT_XXTEA_KEY}\"), \"${PROJECT_XXTEA_SIGN}\", strlen(\"${PROJECT_XXTEA_SIGN}\"));\n"
-                }                
+                    "name":"obfuscate_resources",
+                    "res_path":"src",
+                    "remove_source":false
+                }
             ]
-        },
-        {
-            "name":"crypt_files",
-            "from":"res",
-            "key":"${PROJECT_XXTEA_KEY}",
-            "sign":"${PROJECT_XXTEA_SIGN}",
-            "include":["*.png"]
-        },
-        {
-            "name":"set_xcode_project"
-        },
-        {
-            "name":"copy_files",
-            "from":"icons",
-            "to":"frameworks/runtime-src/proj.ios_mac/ios/Images.xcassets/AppIcon.appiconset"
-        },
-        {
-            "name":"obfuscate_resources",
-            "res_path":"res",
-            "sub_dirs":["cocosbuilderRes","hd","ccs-res","ccs-res/hd"],
-            "remove_source":true
-        },
-        {
-            "name":"obfuscate_resources",
-            "res_path":"src",
-            "remove_source":false
         }
     ]
 }
