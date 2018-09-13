@@ -92,7 +92,7 @@ class ResourceObfuscator:
             rel_path = os.path.join(relative_path, filename)
             if os.path.isdir(file_path):
                 if os.path.normpath(rel_path) in self.sub_folders:
-                    self.parse_dir(file_path, os.path.join(out_folder_path, filename), "")
+                    self.parse_dir(file_path, os.path.join(out_folder_path, rel_path), "")
                 else:
                     self.parse_dir(file_path, out_folder_path, rel_path)
                     if self.remove_source:

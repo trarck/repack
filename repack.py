@@ -122,39 +122,39 @@ class Repack:
     def modify_files(self, config):
         if "files" in config:
             for modify_config in config["files"]:
-                file_path = modify_config["file_path"]
+                file_path = self.translate_string(modify_config["file_path"])
                 if not os.path.isabs(file_path):
                     file_path = os.path.join(self.project_root_path, file_path)
-                    source = SourceFile(file_path)
-                    source.open()
-                    operation = modify_config["operation"]
-
-                    words = None
-                    if "words" in modify_config:
-                        words = modify_config["words"]
-                        words = self.translate_string(words)
-
-                    if "words_file" in modify_config:
-                        words_file_path = self.translate_string(modify_config["words_file"])
-                        if not os.path.isabs(words_file_path):
-                            words_file_path = os.path.join(self.pack_resource_path, words_file_path)
-                        fp = open(words_file_path)
-                        words = fp.read()
-                        fp.close()
-                        words = self.translate_string(words)
-
-                    if operation == "insert":
-                        source.insert(modify_config["keys"], words)
-                    elif operation == "insert_before":
-                        source.insert_before(modify_config["keys"], words)
-                    elif operation == "replace":
-                        source.replace(modify_config["froms"], modify_config["tos"], words)
-                    elif operation == "replace_after":
-                        source.replace_after(modify_config["froms"], modify_config["tos"], words)
-                    elif operation == "remove":
-                        source.remove(modify_config["froms"], modify_config["tos"])
-                    source.save()
-
+                source = SourceFile(file_path)
+                source.open()
+                operation = modify_config["operation"]
+                
+                words = None
+                if "words" in modify_config:
+                    words = modify_config["words"]
+                    words = self.translate_string(words)
+                    
+                if "words_file" in modify_config:
+                    words_file_path = self.translate_string(modify_config["words_file"])
+                    if not os.path.isabs(words_file_path):
+                        words_file_path = os.path.join(self.pack_resource_path, words_file_path)
+                    fp = open(words_file_path)
+                    words = fp.read()
+                    fp.close()
+                    words = self.translate_string(words)
+                    
+                if operation == "insert":
+                    source.insert(modify_config["keys"], words)
+                elif operation == "insert_before":
+                    source.insert_before(modify_config["keys"], words)
+                elif operation == "replace":
+                    source.replace(modify_config["froms"], modify_config["tos"], words)
+                elif operation == "replace_after":
+                    source.replace_after(modify_config["froms"], modify_config["tos"], words)
+                elif operation == "remove":
+                    source.remove(modify_config["froms"], modify_config["tos"])
+                source.save()
+                
     def set_xcode_project(self, config):
         xcode_project_path = self.translate_string(config["xcode_project_path"])
         if not os.path.isabs(xcode_project_path):

@@ -10,7 +10,7 @@ class SourceFile:
 
     def save(self):
         fp = open(self.file_path, 'w')
-        fp.write(self.content)
+        fp.write(self.content.encode("utf-8"))
         fp.close()
 
     def insert(self, keys, words):
@@ -34,7 +34,12 @@ class SourceFile:
 
     def replace(self, froms, tos, words):
         from_pos = 0
+        from path_crypt import PathCrypt
+        print(PathCrypt.byte_to_hex(self.content))
+        self.content=self.content.decode("utf-8")
+        print(PathCrypt.byte_to_hex(self.content))
         for k in froms:
+            print(self.content)
             from_pos = self.content.find(k, from_pos)
             if from_pos == -1:
                 return False
