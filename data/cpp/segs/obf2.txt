@@ -8,7 +8,6 @@
 		}
 		obf_file_path += file;
 
-		obf_file_path = getObfuscatePath(obf_file_path, searchPath);
-		path = getFullPathForDirectoryAndFilename(path, obf_file_path);
+		path = getObfuscatePath(obf_file_path, searchPath);
 	}
     
