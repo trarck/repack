@@ -1,15 +1,14 @@
 	
-    if (path.empty()) {
+
+	if (path.empty()) {
 		//use obfuscate path
-		path = searchPath;
-
-		file_path += resolutionDirectory;
-		if (file_path.size() && file_path[file_path.size() - 1] != '/') {
-			file_path += '/';
+		std::string obf_file_path = file_path+ resolutionDirectory;
+		if (obf_file_path.size() && obf_file_path[obf_file_path.size() - 1] != '/') {
+			obf_file_path += '/';
 		}
-		file_path += file;
+		obf_file_path += file;
 
-		file_path = getObfuscatePath(file_path);
-		path = getFullPathForDirectoryAndFilename(path, file_path);
+		obf_file_path = getObfuscatePath(obf_file_path, searchPath);
+		path = getFullPathForDirectoryAndFilename(path, obf_file_path);
 	}
     
