@@ -119,6 +119,18 @@ class Repack:
         config["to"] = self.translate_string(config["to"])
         utils.copy_files_with_config(config, self.pack_resource_path, self.project_root_path)
 
+    def delete_files(self,config):
+        print("===>delete files ")
+        for file_path in config[files]:
+            file_path=self.translate_string(file_path)
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(self.project_root_path, file_path)
+            
+            if os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+            elif os.path.isfile(file_path):
+                os.remove(file_path)
+            
     def modify_files(self, config):
         if "files" in config:
             for modify_config in config["files"]:
