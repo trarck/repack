@@ -105,5 +105,23 @@ def copy_files_with_rules(src_root, src, dst, include=None, exclude=None):
 
 
 
-def generate_key(self):
+def generate_key():
     return ''.join(chr(random.randrange(ord('a'), ord('z'))) for _ in range(16))
+
+words="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+words_length=len(words)
+def generate_name(min_length=6,max_length=64):
+    length=random.randint(min_length,max_length)
+    return ''.join( words[random.randint(0,words_length-1)] for _ in range(length))
+
+def pad(size):
+    return ''.join( ' ' for _ in range(size))
+
+def generate_int(max_value=999999):
+    return random.randint(0,max_value)
+
+def generate_float(max_value=999999):
+    return random.uniform(0,max_value)
+
+def generate_string(min_length=6,max_length=64):
+    return generate_name(min_length,max_length)

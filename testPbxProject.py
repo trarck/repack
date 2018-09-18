@@ -1,11 +1,9 @@
 import os
 import shutil
+import random
 import utils
 
+print("%s%s%s"%("aaa",intern()))
 
 
-s="中国"
-# s1=unicode(s, "utf-8")
-# print(s)
-# print(s1)
-print("s .len=%d"len(s))
+print(utils.generate_name())

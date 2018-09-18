@@ -1,0 +1,20 @@
+#include "${HEAD_FILE_PATH}"
+
+${SOURCE_INCLUDES}
+
+${NAMESPACE_BEGIN}
+
+${CLASS_NAME}::${CLASS_NAME}()
+${PROPERTY_INIT}
+{
+    
+}
+
+${CLASS_NAME}::~${CLASS_NAME}()
+{
+	${CLEANUP}
+}
+
+${METHOD_DEFINES}
+
+${NAMESPACE_END}
