@@ -5,7 +5,7 @@ class SourceFile:
 
     def open(self):
         fp = open(self.file_path, 'r')
-        self.content = fp.read()
+        self.content = fp.read().decode("utf-8")
         fp.close()
 
     def save(self):
@@ -35,9 +35,9 @@ class SourceFile:
     def replace(self, froms, tos, words):
         from_pos = 0
         from path_crypt import PathCrypt
-        print(PathCrypt.byte_to_hex(self.content))
-        self.content=self.content.decode("utf-8")
-        print(PathCrypt.byte_to_hex(self.content))
+        # print(PathCrypt.byte_to_hex(self.content))
+        # self.content=self.content.decode("utf-8")
+        # print(PathCrypt.byte_to_hex(self.content))
         for k in froms:
             print(self.content)
             from_pos = self.content.find(k, from_pos)

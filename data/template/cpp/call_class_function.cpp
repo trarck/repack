@@ -1,6 +1,6 @@
 ##======call a class function======
-    ${get_full_class_name()} aa;
-    aa.${method.name}(#slurp
+    ${get_full_class_name()} ${class_name.lower()}_${index};
+    ${class_name.lower()}_${index}.${method.name}(#slurp
         ## ===== parameters values
         #set $param_len = len($method.parameters)
         #if $param_len > 0

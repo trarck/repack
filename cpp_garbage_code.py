@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import utils
 import random
@@ -74,7 +75,7 @@ class NativeFunction:
         generator.source_fp.write(str(function_c))
 
     def to_string(self, current_class, generator):
-        function_h = Template(file=self.tpl_folder_path, searchList=[current_class, self])
+        function_h = Template(file=self.head_tpl_file, searchList=[current_class, self])
 
         function_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
 
@@ -199,9 +200,9 @@ class NativeClass:
             source_str += c_str
         return head_str, source_str
 
-    def get_function_call_code(self, method, generator):
+    def get_function_call_code(self, method,generator,index=1):
         call_tpl = Template(file=os.path.join(generator.tpl_folder_path, "call_class_function.cpp"),
-                            searchList=[{"method": method}, self])
+                            searchList=[{"method": method,"index":index}, self])
         return str(call_tpl)
 
 
@@ -225,7 +226,8 @@ class CppFile:
 
         if "namespace" in config:
             self.namespace = config["namespace"]
-
+        else:
+            self.namespace = None
         self.config = config
 
         self.generated_methods = []
@@ -253,7 +255,6 @@ class CppFile:
 
     @staticmethod
     def generate_field(tpl_folder_path):
-        print("generate field")
         field_name = utils.generate_name()
         field_type = NativeType(CppFile.generate_type())
         head_tpl_file = os.path.join(tpl_folder_path, "field.h")
@@ -262,14 +263,12 @@ class CppFile:
 
     @staticmethod
     def generate_parameter():
-        print("generate field")
         param_name = utils.generate_name()
         param_type = NativeType(CppFile.generate_type())
         return NativeParameter(param_name, param_type)
 
     @staticmethod
     def generate_function(tpl_folder_path, max_parameter_count=0):
-        print("generate function")
         method_name = utils.generate_name()
         parameters = []
         if max_parameter_count > 0:
@@ -327,7 +326,6 @@ class CppFile:
     def generate_code(self):
         self.head_fp = open(self.head_file_path, "w+")
         self.source_fp = open(self.source_file_path, "w+")
-
         # gen head
         layout_h = Template(file=os.path.join(self.tpl_folder_path, "layout_head.h"),
                             searchList=[self])
@@ -351,8 +349,6 @@ class CppFile:
 
         self.head_fp.close()
         self.source_fp.close()
-
-        return self.native_class.get_function_call_code(self.native_class.methods[0], self)
 
     def to_string(self):
         head_str = ""
@@ -380,7 +376,7 @@ class CppFile:
         head_str += str(layout_h)
         source_str += str(layout_c)
 
-        return head_str, source_str, self.native_class.get_function_call_code(self.native_class.methods[0], self)
+        return head_str, source_str
 
 
 class CppFileInject(CppFile):
@@ -425,8 +421,9 @@ class CppFileInject(CppFile):
         line_index = 0
         impl = "%s::" % class_name
         for line in lines:
-            if line.find(impl):
+            if line.find(impl)>-1:
                 find_position = line_index
+                print(find_position)
             line_index += 1
         return find_position
 
@@ -436,22 +433,29 @@ class CppFileInject(CppFile):
             if parent_position > 0:
                 class_define = line[5:parent_position].strip()
             else:
-                class_define = line[5:].strip()
+                b_position=line.find("{")
+                if b_position>0:
+                    class_define = line[5:b_position].strip()    
+                else:
+                    class_define = line[5:].strip()
             cs = class_define.split(" ")
             return cs[-1]
         return None
 
     def inject_code(self):
-        head_str, source_str = self.native_class.get_generated_field_method(self)
-
-        # insert head
+        #check class info
         fp = open(self.head_file_path, "r+")
         lines = fp.readlines()
         fp.close()
+        
         class_define_line, end_line = self.get_head_class_define_position(lines)
         class_name = self.get_class_name(lines[class_define_line])
         print("get class %s from %d to %d" % (class_name, class_define_line, end_line))
+        self.native_class.class_name=class_name
+        
+        head_str, source_str = self.native_class.get_generated_field_method(self)
 
+        #insert header
         lines.insert(end_line, head_str)
         # this is before the head declare
         lines.insert(end_line, "public:\n")
@@ -473,7 +477,7 @@ class CppFileInject(CppFile):
 
 class CppGarbageCode:
     def __init__(self, tpl_folder_path):
-        self.tpl_folder_path = tpl_folder_path
+        self.tpl_folder_path = tpl_folder_path.encode("utf-8")
         self.generate_config = None
         self.inject_config = None
         self._injected_files = None
@@ -497,7 +501,14 @@ class CppGarbageCode:
             max_value = min_value
         return random.randint(min_value, max_value)
 
-    def generate_cpp_file(self, out_folder_path, xcode_project_file_path, exec_code_file_path, generate_config):
+    def _get_xcode_project_file_path(self, project_dir):
+        files = os.listdir(project_dir)
+        for filename in files:
+            if filename.find(".xcodeproj") > -1:
+                return os.path.join(project_dir, filename)
+        return None
+    
+    def generate_cpp_file(self, out_folder_path, xcode_project_path, exec_code_file_path, generate_config):
         self.generate_config = generate_config
 
         gen_file_count = self._parse_range_count("generate_file_count", generate_config, 6)
@@ -513,13 +524,18 @@ class CppGarbageCode:
         else:
             group_name = utils.generate_string(6, 10)
 
+        call_others=True 
+        if "call_others" in self.generate_config:
+            call_others=self.generate_config["call_others"]
+        
         generated_files = []
         generated_head_files = []
 
         namespace = utils.generate_name(5, 8).lower()
 
         call_generate_codes = []
-
+        
+        class_index=1
         for i in range(gen_file_count):
             class_name = utils.generate_name_first_upper(8, 16)
             head_file_name = os.path.join(out_folder_path, class_name + ".h")
@@ -537,13 +553,15 @@ class CppGarbageCode:
                 "generate_field": generate_field_count,
                 "generate_method": generate_method_count,
                 "max_parameter": parameter_count,
-                "call_others": self.generate_config["call_others"]
+                "call_others": call_others
             })
             generator.prepare()
-            call_generate_func = generator.generate_code()
+            generator.generate_code()
+            call_generate_func = generator.native_class.get_function_call_code(generator.native_class.methods[0], self,class_index)
             call_generate_codes.append(call_generate_func)
+            class_index+=1
 
-        # 调用生成的代码
+        # generate call generated code prevent delete by link optimization
         exec_once_tpl = Template(file=os.path.join(self.tpl_folder_path, "exec_code_once.cpp"),
                                 searchList=[{"code": "".join(call_generate_codes)}])
         exec_once = str(exec_once_tpl)
@@ -554,9 +572,9 @@ class CppGarbageCode:
             print("insert into execute file")
             include_heads = "\n"
             for head_file in generated_head_files:
-                include_heads += "#include %s\n" % head_file
+                include_heads += "#include \"%s\"\n" % head_file
 
-        #生成action,返回给repack执行
+        #create action execute in repack
         insert_head_action = {
             "operation": "insert",
             "file_path": exec_code_file_path,
@@ -575,7 +593,8 @@ class CppGarbageCode:
         }
 
         # add generated files to xcode project
-        pbx_proj_file_path = os.path.join(xcode_project_file_path, "project.pbxproj")
+        
+        pbx_proj_file_path = os.path.join(self._get_xcode_project_file_path(xcode_project_path), "project.pbxproj")
         pbx_project = XcodeProject.load(pbx_proj_file_path)
         # add out dir to head search path
         pbx_project.add_header_search_paths(out_folder_path)
@@ -596,7 +615,7 @@ class CppGarbageCode:
 
         if not force:
             probability = self.inject_config["probability"]
-            need_inject = random.randint(100) <= probability
+            need_inject = random.randint(0,100) <= probability
         else:
             need_inject = True
 
@@ -612,6 +631,11 @@ class CppGarbageCode:
                 a_file_inject_config = self.inject_config.copy()
                 a_file_inject_config["head_file"] = head_file_path
                 a_file_inject_config["source_file"] = source_file_path
+                call_others=True
+                
+                if "call_others" in self.inject_config:
+                    call_others=self.inject_config["call_others"]
+                    
                 cpp_inject = CppFileInject({
                     "head_file": head_file_path,
                     "source_file": source_file_path,
@@ -619,7 +643,7 @@ class CppGarbageCode:
                     "generate_field": generate_field_count,
                     "generate_method": generate_method_count,
                     "max_parameter": parameter_count,
-                    "call_others": self.inject_config["call_others"]
+                    "call_others": call_others
                 })
                 cpp_inject.prepare()
                 cpp_inject.inject_code()
@@ -632,7 +656,8 @@ class CppGarbageCode:
 
     def _inject_dir(self, folder_path, include_rules=None):
         for file_name in os.listdir(folder_path):
-            file_path = os.path.join((folder_path, file_name))
+            file_path = os.path.join(folder_path, file_name)
+            print(file_path)
             if os.path.isdir(file_path):
                 self._inject_dir(file_path, include_rules)
             elif os.path.isfile(file_path):
@@ -647,9 +672,8 @@ class CppGarbageCode:
             include_rules = "*.h"
         self._injected_files = {}
         include_rules = utils.convert_rules(include_rules)
-
         for file_path in files:
-            if os.path.isdir(file_path, include_rules):
+            if os.path.isdir(file_path):
                 self._inject_dir(file_path, include_rules)
             elif os.path.isfile(file_path):
                 # config file force inject

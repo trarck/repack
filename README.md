@@ -1,5 +1,8 @@
 # repack
-
+	依赖python库,pbxproj,Cheetah
+	安装:
+	pip install pbxproj
+	pip install Cheetah
 #cocos2dx
 
 ##拷贝工程 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 import traceback
@@ -14,6 +15,8 @@ from file_crypt import FileCrypt
 from cpp_garbage_code import CppGarbageCode
 import utils
 
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class Repack:
     def __init__(self, matrix_project_root_path, project_root_path, pack_resource_path, global_data_dir, name):
@@ -276,17 +279,18 @@ class Repack:
         tpl_folder_path = self.translate_string(config["tpl_dir"])
         if not os.path.isabs(tpl_folder_path):
             tpl_folder_path = os.path.join(self.global_data_dir, tpl_folder_path)
+        tpl_folder_path=tpl_folder_path.encode("utf-8")
 
-        xcode_project_file_path = self.translate_string(config["xcode_project_file_path"])
-        if not os.path.isabs(xcode_project_file_path):
-            xcode_project_file_path = os.path.join(self.project_root_path, xcode_project_file_path)
+        xcode_project_path = self.translate_string(config["xcode_project_path"])
+        if not os.path.isabs(xcode_project_path):
+            xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
 
         exec_code_file_path = self.translate_string(config["exec_code_file_path"])
         if not os.path.isabs(exec_code_file_path):
             exec_code_file_path = os.path.join(self.project_root_path, exec_code_file_path)
 
         cpp_code = CppGarbageCode(tpl_folder_path)
-        action=cpp_code.generate_cpp_file(out_folder_path, xcode_project_file_path, exec_code_file_path, config)
+        action=cpp_code.generate_cpp_file(out_folder_path, xcode_project_path, exec_code_file_path, config)
         self.do_action(action)
 
     def inject_code(self, config):
@@ -302,7 +306,9 @@ class Repack:
         tpl_folder_path = self.translate_string(config["tpl_dir"])
         if not os.path.isabs(tpl_folder_path):
             tpl_folder_path = os.path.join(self.global_data_dir, tpl_folder_path)
-
+    
+        tpl_folder_path=tpl_folder_path.encode("utf-8")
+        
         cpp_code = CppGarbageCode(tpl_folder_path)
         cpp_code.inject_files(checked_files, config)
 
