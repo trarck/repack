@@ -379,21 +379,42 @@ class CppFileInject(CppFile):
 
 
 class CppGarbageCode:
-    def __init__(self):
+    def __init__(self,tpl_folder_path):
+        self.tpl_folder_path=tpl_folder_path
         self.generate_config = None
         self.inject_config = None
         self._injected_files = None
 
-    def generate_cpp_file(self, generate_config):
+    def _parse_range_count(self, name, config, default_min=1):
+        if name in config:
+            return config[name]
+
+        max_key = "max_" + name
+        min_key = "min_" + name
+
+        if max_key in config:
+            max_value = config[max_key]
+
+        if min_key in config:
+            min_value = config[min_key]
+        else:
+            min_value = default_min
+
+        if min_value > max_value:
+            max_value = min_value
+        return random.randint(min_value, max_value)
+
+    def generate_cpp_file(self, out_folder_path, xcode_project_file_path, generate_config):
         self.generate_config = generate_config
 
-        gen_file_count = self.generate_config["generate_count"]
-        out_dir = self.generate_config["out_dir"]
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
+        gen_file_count = self._parse_range_count("generate_file_count",generate_config,6)
+        generate_field_count=self._parse_range_count("generate_field_count",generate_config)
+        generate_method_count = self._parse_range_count("generate_method_count", generate_config)
+        parameter_count = self._parse_range_count("parameter_count", generate_config)
 
-        tpl_dir = self.generate_config["tpl_folder"]
-        xcode_project_file_path = self.generate_config["xcode_project_file_path"]
+        if not os.path.exists(out_folder_path):
+            os.makedirs(out_folder_path)
+
         if "group_name" in self.generate_config:
             group_name = self.generate_config["group_name"]
         else:
@@ -404,27 +425,26 @@ class CppGarbageCode:
 
         for i in range(gen_file_count):
             class_name = utils.generate_name_first_upper(8, 16)
-            head_file_name = os.path.join(out_dir, class_name + ".h")
-            source_file_name = os.path.join(out_dir, class_name + ".cpp")
+            head_file_name = os.path.join(out_folder_path, class_name + ".h")
+            source_file_name = os.path.join(out_folder_path, class_name + ".cpp")
             generated_files.append(head_file_name)
             generated_files.append(source_file_name)
             generator = CppFile({
                 "head_file": head_file_name,
                 "source_file": source_file_name,
-                "tpl_folder": tpl_dir,
+                "tpl_folder": self.tpl_folder_path,
                 "namespace": namespace,
-                "generate_field": self.generate_config["generate_field"],
-                "generate_method": self.generate_config["generate_method"],
-                "max_parameter": self.generate_config["max_parameter"],
+                "generate_field": generate_field_count,
+                "generate_method":generate_method_count,
+                "max_parameter": parameter_count,
                 "call_others": self.generate_config["call_others"]
             })
-
             generator.generate_code()
         # add generated files to xcode project
         pbx_proj_file_path = os.path.join(xcode_project_file_path, "project.pbxproj")
         pbx_project = XcodeProject.load(pbx_proj_file_path)
         # add out dir to head search path
-        pbx_project.add_header_search_paths(out_dir)
+        pbx_project.add_header_search_paths(out_folder_path)
         # add a group
         group = pbx_project.add_group(group_name)
         # add files
@@ -449,10 +469,22 @@ class CppGarbageCode:
             source_file_path = file_path_without_ext + ".cpp"
             if os.path.exists(head_file_path) and os.path.exists(source_file_path):
                 print("===>cpp code inject basefile %s" % file_path_without_ext)
+                generate_field_count = self._parse_range_count("generate_field_count", self.inject_config)
+                generate_method_count = self._parse_range_count("generate_method_count", self.inject_config)
+                parameter_count = self._parse_range_count("parameter_count", self.inject_config)
+
                 a_file_inject_config = self.inject_config.copy()
                 a_file_inject_config["head_file"] = head_file_path
                 a_file_inject_config["source_file"] = source_file_path
-                cpp_inject = CppFileInject(a_file_inject_config)
+                cpp_inject = CppFileInject({
+                    "head_file": head_file_path,
+                    "source_file": source_file_path,
+                    "tpl_folder": self.tpl_folder_path,
+                    "generate_field": generate_field_count,
+                    "generate_method":generate_method_count,
+                    "max_parameter": parameter_count,
+                    "call_others": self.inject_config["call_others"]
+                })
                 cpp_inject.inject_code()
                 return True
             else:
@@ -470,9 +502,8 @@ class CppGarbageCode:
                 if utils.in_rules(file_path, include_rules):
                     self._inject_file(file_path)
 
-    def inject_files(self, inject_config):
+    def inject_files(self,files, inject_config):
         self.inject_config = inject_config
-        files = self.inject_config["files"]
         if "include" in self.inject_config:
             include_rules = self.inject_config["include"]
         else:

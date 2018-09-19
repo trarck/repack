@@ -104,6 +104,33 @@
                     "remove_source":false
                 }
             ]
+        },
+        {
+            "name":"test generate",
+            "actions":[
+                {
+                    "name":"generate_code",
+                    "max_generate_count":20,
+                    "out_dir":"${PROJECT_XCODE_PROJECT_PATH}/generate",
+                    "tpl_dir":"${GLOBAL_DATA_DIR}/template",
+                    "xcode_project_file_path":"${PROJECT_XCODE_PROJECT_PATH}",
+                    "max_generate_file_count":20,
+                    "min_generate_file_count":10,
+                    "generate_field_count":4,
+                    "generate_method_count":5,
+                    "parameter_count":3
+                },
+                {
+                    "name":"inject_code",
+                    "max_generate_count":20,
+                    "out_dir":"${PROJECT_XCODE_PROJECT_PATH}/generate",
+                    "tpl_dir":"${GLOBAL_DATA_DIR}/template",
+                    "xcode_project_file_path":"${PROJECT_XCODE_PROJECT_PATH}",
+                    "generate_field_count":4,
+                    "generate_method_count":5,
+                    "parameter_count":3
+                }
+            ]
         }
     ]
 }

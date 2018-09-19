@@ -11,6 +11,7 @@ from resource_obfuscator import ResourceObfuscator, CryptInfo
 from project import IosProject
 from source_file import SourceFile
 from file_crypt import FileCrypt
+from cpp_garbage_code import CppGarbageCode
 import utils
 
 
@@ -114,23 +115,24 @@ class Repack:
             print("copy project error no %s folder " % self.matrix_project_root_path)
 
     def copy_files(self, config):
-        print("===>copy file from %s to %s" % (self.translate_string(config["from"]), self.translate_string(config["to"])))
+        print("===>copy file from %s to %s" % (
+            self.translate_string(config["from"]), self.translate_string(config["to"])))
         config["from"] = self.translate_string(config["from"])
         config["to"] = self.translate_string(config["to"])
         utils.copy_files_with_config(config, self.pack_resource_path, self.project_root_path)
 
-    def delete_files(self,config):
+    def delete_files(self, config):
         print("===>delete files ")
         for file_path in config[files]:
-            file_path=self.translate_string(file_path)
+            file_path = self.translate_string(file_path)
             if not os.path.isabs(file_path):
                 file_path = os.path.join(self.project_root_path, file_path)
-            
+
             if os.path.isdir(file_path):
                 shutil.rmtree(file_path)
             elif os.path.isfile(file_path):
                 os.remove(file_path)
-            
+
     def modify_files(self, config):
         if "files" in config:
             for modify_config in config["files"]:
@@ -140,12 +142,12 @@ class Repack:
                 source = SourceFile(file_path)
                 source.open()
                 operation = modify_config["operation"]
-                
+
                 words = None
                 if "words" in modify_config:
                     words = modify_config["words"]
                     words = self.translate_string(words)
-                    
+
                 if "words_file" in modify_config:
                     words_file_path = self.translate_string(modify_config["words_file"])
                     if not os.path.isabs(words_file_path):
@@ -154,7 +156,7 @@ class Repack:
                     words = fp.read()
                     fp.close()
                     words = self.translate_string(words)
-                    
+
                 if operation == "insert":
                     source.insert(modify_config["keys"], words)
                 elif operation == "insert_before":
@@ -166,7 +168,7 @@ class Repack:
                 elif operation == "remove":
                     source.remove(modify_config["froms"], modify_config["tos"])
                 source.save()
-                
+
     def set_xcode_project(self, config):
         xcode_project_path = self.translate_string(config["xcode_project_path"])
         if not os.path.isabs(xcode_project_path):
@@ -192,27 +194,28 @@ class Repack:
         product_name = None
         if "product_name" in config:
             product_name = self.translate_string(config["product_name"])
-            
-        code_sign_identity=self.translate_string(config["code_sign_identity"])
-        provisioning_profile=self.translate_string(config["provisioning_profile"])
-        
-        development_team=None
+
+        code_sign_identity = self.translate_string(config["code_sign_identity"])
+        provisioning_profile = self.translate_string(config["provisioning_profile"])
+
+        development_team = None
         if "development_team" in config:
-            development_team=self.translate_string(config["development_team"])
-            
-        provisioning_profile_uuid=None
+            development_team = self.translate_string(config["development_team"])
+
+        provisioning_profile_uuid = None
         if "provisioning_profile_uuid" in config:
-            provisioning_profile_uuid=self.translate_string(config["provisioning_profile_uuid"])
-        
-        code_sign_entitlements=None
+            provisioning_profile_uuid = self.translate_string(config["provisioning_profile_uuid"])
+
+        code_sign_entitlements = None
         if "code_sign_entitlements" in config:
-            code_sign_entitlements=self.translate_string(config["code_sign_entitlements"])
-        
+            code_sign_entitlements = self.translate_string(config["code_sign_entitlements"])
+
         ios_project = IosProject(xcode_project_path)
         ios_project.rename(target_name, package_id, display_name, xcode_project_name, product_name)
-        #ios_project.set_resource_obfuscate_key(self.crypt_info.key)
-        ios_project.set_code_sign(code_sign_identity,provisioning_profile,development_team,provisioning_profile_uuid,code_sign_entitlements)
-    
+        # ios_project.set_resource_obfuscate_key(self.crypt_info.key)
+        ios_project.set_code_sign(code_sign_identity, provisioning_profile, development_team, provisioning_profile_uuid,
+                                  code_sign_entitlements)
+
     def crypt_files(self, config):
         from_dir = self.translate_string(config["from"])
         if not os.path.isabs(from_dir):
@@ -265,6 +268,37 @@ class Repack:
         res_obf = ResourceObfuscator(res_path, out_path, sub_dirs, self.crypt_info, remove_source)
         res_obf.start()
 
+    def generate_code(self, config):
+        out_folder_path = self.translate_string(config["out_dir"])
+        if not os.path.isabs(out_folder_path):
+            out_folder_path = os.path.join(self.project_root_path, out_folder_path)
+
+        tpl_folder_path = self.translate_string(config["tpl_dir"])
+        if not os.path.isabs(tpl_folder_path):
+            tpl_folder_path = os.path.join(self.global_data_dir, tpl_folder_path)
+
+        xcode_project_file_path = self.translate_string(config["xcode_project_file_path"])
+        if not os.path.isabs(xcode_project_file_path):
+            xcode_project_file_path = os.path.join(self.global_data_dir, xcode_project_file_path)
+        cpp_code = CppGarbageCode(tpl_folder_path)
+        cpp_code.generate_cpp_file(out_folder_path, xcode_project_file_path, config)
+
+    def inject_code(self, config):
+        files = config["files"]
+        del config["files"]
+        checked_files = []
+        for file_path in files:
+            file_path = self.translate_string(file_path)
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(self.project_root_path, file_path)
+            checked_files.append(file_path)
+
+        tpl_folder_path = self.translate_string(config["tpl_dir"])
+        if not os.path.isabs(tpl_folder_path):
+            tpl_folder_path = os.path.join(self.global_data_dir, tpl_folder_path)
+
+        cpp_code = CppGarbageCode(tpl_folder_path)
+        cpp_code.inject_files(checked_files, config)
 
 def main():
     workpath = os.getcwd()  # os.path.dirname(os.path.realpath(__file__))
@@ -299,7 +333,7 @@ def main():
 
     if not os.path.isabs(args.out_dir):
         args.out_dir = os.path.join(workpath, args.out_dir)
-        
+
     if not args.data_dir:
         args.data_dir = args.resource_dir
     else:
