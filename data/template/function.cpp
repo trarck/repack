@@ -33,6 +33,11 @@ ${generator.generate_value(param.native_type.name)}#slurp
 );
     #end for
 #end if
+##======base code======
+#if $base_code 
+    ${base_code}
+#end if
+##======return======
 #if $return_type.name 
     return ret;
 #end if

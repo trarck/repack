@@ -123,7 +123,7 @@ class Repack:
 
     def delete_files(self, config):
         print("===>delete files ")
-        for file_path in config[files]:
+        for file_path in config["files"]:
             file_path = self.translate_string(file_path)
             if not os.path.isabs(file_path):
                 file_path = os.path.join(self.project_root_path, file_path)
@@ -279,9 +279,15 @@ class Repack:
 
         xcode_project_file_path = self.translate_string(config["xcode_project_file_path"])
         if not os.path.isabs(xcode_project_file_path):
-            xcode_project_file_path = os.path.join(self.global_data_dir, xcode_project_file_path)
+            xcode_project_file_path = os.path.join(self.project_root_path, xcode_project_file_path)
+
+        exec_code_file_path = self.translate_string(config["exec_code_file_path"])
+        if not os.path.isabs(exec_code_file_path):
+            exec_code_file_path = os.path.join(self.project_root_path, exec_code_file_path)
+
         cpp_code = CppGarbageCode(tpl_folder_path)
-        cpp_code.generate_cpp_file(out_folder_path, xcode_project_file_path, config)
+        action=cpp_code.generate_cpp_file(out_folder_path, xcode_project_file_path, exec_code_file_path, config)
+        self.do_action(action)
 
     def inject_code(self, config):
         files = config["files"]
@@ -299,6 +305,7 @@ class Repack:
 
         cpp_code = CppGarbageCode(tpl_folder_path)
         cpp_code.inject_files(checked_files, config)
+
 
 def main():
     workpath = os.getcwd()  # os.path.dirname(os.path.realpath(__file__))

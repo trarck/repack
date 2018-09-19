@@ -4,6 +4,7 @@ import random
 
 from pbxproj import XcodeProject, PBXProvioningTypes
 from Cheetah.Template import Template
+from source_file import SourceFile
 
 import utils
 
@@ -12,7 +13,7 @@ cpp_types_length = len(cpp_types)
 
 
 class NativeType:
-    def __init__(self, name):
+    def __init__(self, name=None):
         self.name = name
 
     def to_string(self, generator):
@@ -23,26 +24,24 @@ class NativeType:
 
 
 class NativeField:
-    def __init__(self, name, field_type):
+    def __init__(self, name, field_type, head_tpl_file, source_tpl_file, ):
         self.name = name
         self.native_type = field_type
+        self.head_tpl_file = head_tpl_file
+        self.source_tpl_file = source_tpl_file
 
     def generate_code(self, current_class, generator):
-        field_h = Template(file=os.path.join(generator.tpl_folder_path, "field.h"),
-                           searchList=[current_class, self])
+        field_h = Template(file=self.head_tpl_file, searchList=[current_class, self])
 
-        field_c = Template(file=os.path.join(generator.tpl_folder_path, "field.cpp"),
-                           searchList=[current_class, self])
+        field_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
 
         generator.head_fp.write(str(field_h))
         generator.source_fp.write(str(field_c))
 
     def to_string(self, current_class, generator):
-        field_h = Template(file=os.path.join(generator.tpl_folder_path, "field.h"),
-                           searchList=[current_class, self])
+        field_h = Template(file=self.head_tpl_file, searchList=[current_class, self])
 
-        field_c = Template(file=os.path.join(generator.tpl_folder_path, "field.cpp"),
-                           searchList=[current_class, self])
+        field_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
 
         return str(field_h), str(field_c)
 
@@ -57,28 +56,27 @@ class NativeParameter:
 
 
 class NativeFunction:
-    def __init__(self, name, parameters, return_type):
+    def __init__(self, name, parameters, return_type, head_tpl_file, source_tpl_file, base_code=None):
         self.name = name
         self.parameters = parameters
         self.return_type = return_type
         self.call_others = []
+        self.base_code = base_code
+        self.head_tpl_file = head_tpl_file
+        self.source_tpl_file = source_tpl_file
 
     def generate_code(self, current_class, generator):
-        function_h = Template(file=os.path.join(generator.tpl_folder_path, "function.h"),
-                              searchList=[current_class, self])
+        function_h = Template(file=self.head_tpl_file, searchList=[current_class, self])
 
-        function_c = Template(file=os.path.join(generator.tpl_folder_path, "function.cpp"),
-                              searchList=[current_class, self])
+        function_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
 
         generator.head_fp.write(str(function_h))
         generator.source_fp.write(str(function_c))
 
     def to_string(self, current_class, generator):
-        function_h = Template(file=os.path.join(generator.tpl_folder_path, "function.h"),
-                              searchList=[current_class, self])
+        function_h = Template(file=self.tpl_folder_path, searchList=[current_class, self])
 
-        function_c = Template(file=os.path.join(generator.tpl_folder_path, "function.cpp"),
-                              searchList=[current_class, self])
+        function_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
 
         return str(function_h), str(function_c)
 
@@ -87,13 +85,17 @@ class NativeFunction:
 
 
 class NativeClass:
-    def __init__(self, name, namespace, generator, fields, methods):
+    def __init__(self, name, namespace, generator, fields, methods,
+                 head_head_tpl_file, head_foot_tpl_file, source_head_tpl_file, source_foot_tpl_file):
         self.class_name = name
         self.namespace = namespace
         self.generator = generator
-        self.fields = fields
-        self.methods = methods
-
+        self.fields = fields if fields else []
+        self.methods = methods if methods else []
+        self.head_head_tpl_file = head_head_tpl_file
+        self.head_foot_tpl_file = head_foot_tpl_file
+        self.source_head_tpl_file = source_head_tpl_file
+        self.source_foot_tpl_file = source_foot_tpl_file
         self.namespace_begin = None
         self.namespace_end = None
 
@@ -109,13 +111,21 @@ class NativeClass:
                 self.namespace_begin += "namespace %s {" % name
                 self.namespace_end += "}"
 
+    def get_full_class_name(self):
+        if self.namespace:
+            if isinstance(self.namespace, (str)):
+                return self.namespace.replace(".", "::") + "::" + self.class_name
+            else:
+                return "::".join(self.namespace) + "::" + self.class_name
+        return self.class_name
+
     def generate_code(self, generator):
         self.prepare_namespace()
         # gen head
-        class_h = Template(file=os.path.join(generator.tpl_folder_path, "class_head.h"),
+        class_h = Template(file=self.head_head_tpl_file,
                            searchList=[self])
 
-        class_c = Template(file=os.path.join(generator.tpl_folder_path, "class_head.cpp"),
+        class_c = Template(file=self.source_head_tpl_file,
                            searchList=[self])
 
         generator.head_fp.write(str(class_h))
@@ -129,16 +139,52 @@ class NativeClass:
             method.generate_code(self, generator)
 
         # gen foot
-        class_h = Template(file=os.path.join(generator.tpl_folder_path, "class_foot.h"),
+        class_h = Template(file=self.head_foot_tpl_file,
                            searchList=[self])
 
-        class_c = Template(file=os.path.join(generator.tpl_folder_path, "class_foot.cpp"),
+        class_c = Template(file=self.source_foot_tpl_file,
                            searchList=[self])
 
         generator.head_fp.write(str(class_h))
         generator.source_fp.write(str(class_c))
 
-    def to_generated_string(self, generator):
+    def to_string(self, generator):
+        self.prepare_namespace()
+        head_str = ""
+        source_str = ""
+        # gen head
+        class_h = Template(file=self.head_head_tpl_file,
+                           searchList=[self])
+
+        class_c = Template(file=self.source_head_tpl_file,
+                           searchList=[self])
+
+        head_str += str(class_h)
+        source_str += str(class_c)
+
+        # gen fileds
+        for filed in self.fields:
+            filed_head_str, filed_source_str = filed.to_string(self, generator)
+            head_str += filed_head_str
+            source_str += filed_source_str
+
+        for method in self.methods:
+            method_head_str, method_source_str = method.to_string(self, generator)
+            head_str += method_head_str
+            head_str += method_source_str
+
+            # gen foot
+        class_h = Template(file=self.head_foot_tpl_file,
+                           searchList=[self])
+
+        class_c = Template(file=self.source_foot_tpl_file,
+                           searchList=[self])
+
+        head_str += str(class_h)
+        source_str += str(class_c)
+        return head_str, source_str
+
+    def get_generated_field_method(self, generator):
         head_str = ""
         source_str = ""
         # generated fileds
@@ -153,6 +199,11 @@ class NativeClass:
             source_str += c_str
         return head_str, source_str
 
+    def get_function_call_code(self, method, generator):
+        call_tpl = Template(file=os.path.join(generator.tpl_folder_path, "call_class_function.cpp"),
+                            searchList=[{"method": method}, self])
+        return str(call_tpl)
+
 
 class CppFile:
     def __init__(self, config):
@@ -161,10 +212,12 @@ class CppFile:
         self.tpl_folder_path = config["tpl_folder"]
         if "search_path" in config:
             self.search_path = config["search_path"]
+        else:
+            self.search_path = ""
 
         self.class_name = None
         if "class_name" in config:
-            class_name = config["file_path"]
+            class_name = config["class_name"]
             cs = class_name.split('.')
             self.class_name = cs[-1]
             del cs[-1]
@@ -199,11 +252,13 @@ class CppFile:
             return "\"%s\"" % utils.generate_string()
 
     @staticmethod
-    def generate_field():
+    def generate_field(tpl_folder_path):
         print("generate field")
         field_name = utils.generate_name()
         field_type = NativeType(CppFile.generate_type())
-        return NativeField(field_name, field_type)
+        head_tpl_file = os.path.join(tpl_folder_path, "field.h")
+        source_tpl_file = os.path.join(tpl_folder_path, "field.cpp")
+        return NativeField(field_name, field_type, head_tpl_file, source_tpl_file)
 
     @staticmethod
     def generate_parameter():
@@ -213,7 +268,7 @@ class CppFile:
         return NativeParameter(param_name, param_type)
 
     @staticmethod
-    def generate_function(max_parameter_count=0):
+    def generate_function(tpl_folder_path, max_parameter_count=0):
         print("generate function")
         method_name = utils.generate_name()
         parameters = []
@@ -227,7 +282,9 @@ class CppFile:
         if random.randint(0, 10) > 7:
             return_type = NativeType(CppFile.generate_type())
 
-        return NativeFunction(method_name, parameters, return_type)
+        head_tpl_file = os.path.join(tpl_folder_path, "function.h")
+        source_tpl_file = os.path.join(tpl_folder_path, "function.cpp")
+        return NativeFunction(method_name, parameters, return_type, head_tpl_file, source_tpl_file)
 
     def prepare(self):
         # check class name
@@ -240,7 +297,7 @@ class CppFile:
         if "generate_field" in self.config:
             fields = []
             for i in range(self.config["generate_field"]):
-                fields.append(self.generate_field())
+                fields.append(self.generate_field(self.tpl_folder_path))
 
         # gen mthod
         methods = None
@@ -248,19 +305,26 @@ class CppFile:
             methods = []
             if "max_parameter" in self.config:
                 max_parameter = self.config["max_parameter"]
+            else:
+                max_parameter = 1
 
             for i in range(self.config["generate_method"]):
-                methods.append(self.generate_function(max_parameter))
+                methods.append(self.generate_function(self.tpl_folder_path, max_parameter))
 
         if "call_others" in self.config and self.config["call_others"]:
             for i in range(len(methods) - 1):
                 methods[i].call_other(methods[i + 1])
 
-        self.native_class = NativeClass(self.class_name, self.namespace, self, fields, methods)
+        head_head_tpl_file = os.path.join(self.tpl_folder_path, "class_head.h")
+        head_foot_tpl_file = os.path.join(self.tpl_folder_path, "class_foot.h")
+        source_head_tpl_file = os.path.join(self.tpl_folder_path, "class_head.cpp")
+        source_foot_tpl_file = os.path.join(self.tpl_folder_path, "class_foot.cpp")
+
+        self.native_class = NativeClass(self.class_name, self.namespace, self, fields, methods,
+                                        head_head_tpl_file, head_foot_tpl_file, source_head_tpl_file,
+                                        source_foot_tpl_file)
 
     def generate_code(self):
-        self.prepare()
-
         self.head_fp = open(self.head_file_path, "w+")
         self.source_fp = open(self.source_file_path, "w+")
 
@@ -287,6 +351,36 @@ class CppFile:
 
         self.head_fp.close()
         self.source_fp.close()
+
+        return self.native_class.get_function_call_code(self.native_class.methods[0], self)
+
+    def to_string(self):
+        head_str = ""
+        source_str = ""
+
+        # gen head
+        layout_h = Template(file=os.path.join(self.tpl_folder_path, "layout_head.h"),
+                            searchList=[self])
+
+        layout_c = Template(file=os.path.join(self.tpl_folder_path, "layout_head.cpp"),
+                            searchList=[self])
+
+        head_str += str(layout_h)
+        source_str += str(layout_c)
+        # gen body
+
+        class_head_str, class_source_str = self.native_class.to_string(self)
+        head_str += class_head_str
+        source_str += class_source_str
+        # gen foot
+        layout_h = Template(file=os.path.join(self.tpl_folder_path, "layout_foot.h"),
+                            searchList=[self])
+        layout_c = Template(file=os.path.join(self.tpl_folder_path, "layout_foot.cpp"),
+                            searchList=[self])
+        head_str += str(layout_h)
+        source_str += str(layout_c)
+
+        return head_str, source_str, self.native_class.get_function_call_code(self.native_class.methods[0], self)
 
 
 class CppFileInject(CppFile):
@@ -348,8 +442,7 @@ class CppFileInject(CppFile):
         return None
 
     def inject_code(self):
-        self.prepare()
-        head_str, source_str = self.native_class.to_generated_string(self)
+        head_str, source_str = self.native_class.get_generated_field_method(self)
 
         # insert head
         fp = open(self.head_file_path, "r+")
@@ -379,8 +472,8 @@ class CppFileInject(CppFile):
 
 
 class CppGarbageCode:
-    def __init__(self,tpl_folder_path):
-        self.tpl_folder_path=tpl_folder_path
+    def __init__(self, tpl_folder_path):
+        self.tpl_folder_path = tpl_folder_path
         self.generate_config = None
         self.inject_config = None
         self._injected_files = None
@@ -404,11 +497,11 @@ class CppGarbageCode:
             max_value = min_value
         return random.randint(min_value, max_value)
 
-    def generate_cpp_file(self, out_folder_path, xcode_project_file_path, generate_config):
+    def generate_cpp_file(self, out_folder_path, xcode_project_file_path, exec_code_file_path, generate_config):
         self.generate_config = generate_config
 
-        gen_file_count = self._parse_range_count("generate_file_count",generate_config,6)
-        generate_field_count=self._parse_range_count("generate_field_count",generate_config)
+        gen_file_count = self._parse_range_count("generate_file_count", generate_config, 6)
+        generate_field_count = self._parse_range_count("generate_field_count", generate_config)
         generate_method_count = self._parse_range_count("generate_method_count", generate_config)
         parameter_count = self._parse_range_count("parameter_count", generate_config)
 
@@ -421,7 +514,11 @@ class CppGarbageCode:
             group_name = utils.generate_string(6, 10)
 
         generated_files = []
+        generated_head_files = []
+
         namespace = utils.generate_name(5, 8).lower()
+
+        call_generate_codes = []
 
         for i in range(gen_file_count):
             class_name = utils.generate_name_first_upper(8, 16)
@@ -429,17 +526,54 @@ class CppGarbageCode:
             source_file_name = os.path.join(out_folder_path, class_name + ".cpp")
             generated_files.append(head_file_name)
             generated_files.append(source_file_name)
+            generated_head_files.append(class_name + ".h")
+
             generator = CppFile({
                 "head_file": head_file_name,
                 "source_file": source_file_name,
                 "tpl_folder": self.tpl_folder_path,
+                "class_name": class_name,
                 "namespace": namespace,
                 "generate_field": generate_field_count,
-                "generate_method":generate_method_count,
+                "generate_method": generate_method_count,
                 "max_parameter": parameter_count,
                 "call_others": self.generate_config["call_others"]
             })
-            generator.generate_code()
+            generator.prepare()
+            call_generate_func = generator.generate_code()
+            call_generate_codes.append(call_generate_func)
+
+        # 调用生成的代码
+        exec_once_tpl = Template(file=os.path.join(self.tpl_folder_path, "exec_code_once.cpp"),
+                                searchList=[{"code": "".join(call_generate_codes)}])
+        exec_once = str(exec_once_tpl)
+
+        if "generate_executor" in generate_config and generate_config["generate_executor"]:
+            print("generate a executor")
+        else:
+            print("insert into execute file")
+            include_heads = "\n"
+            for head_file in generated_head_files:
+                include_heads += "#include %s\n" % head_file
+
+        #生成action,返回给repack执行
+        insert_head_action = {
+            "operation": "insert",
+            "file_path": exec_code_file_path,
+            "keys": generate_config["include_insert_keys"],
+            "words": include_heads
+        }
+        insert_code_action = {
+            "operation": "insert",
+            "file_path": exec_code_file_path,
+            "keys": generate_config["code_insert_keys"],
+            "words": exec_once
+        }
+        modify_exec_code_actions = {
+            "name": "modify_files",
+            "files": [insert_head_action, insert_code_action]
+        }
+
         # add generated files to xcode project
         pbx_proj_file_path = os.path.join(xcode_project_file_path, "project.pbxproj")
         pbx_project = XcodeProject.load(pbx_proj_file_path)
@@ -451,6 +585,8 @@ class CppGarbageCode:
         for file_path in generated_files:
             pbx_project.add_file(file_path, group)
         pbx_project.save()
+
+        return modify_exec_code_actions
 
     def _inject_file(self, file_path, force=False):
         file_path_without_ext = os.path.splitext(file_path)[0]
@@ -481,10 +617,11 @@ class CppGarbageCode:
                     "source_file": source_file_path,
                     "tpl_folder": self.tpl_folder_path,
                     "generate_field": generate_field_count,
-                    "generate_method":generate_method_count,
+                    "generate_method": generate_method_count,
                     "max_parameter": parameter_count,
                     "call_others": self.inject_config["call_others"]
                 })
+                cpp_inject.prepare()
                 cpp_inject.inject_code()
                 return True
             else:
@@ -502,7 +639,7 @@ class CppGarbageCode:
                 if utils.in_rules(file_path, include_rules):
                     self._inject_file(file_path)
 
-    def inject_files(self,files, inject_config):
+    def inject_files(self, files, inject_config):
         self.inject_config = inject_config
         if "include" in self.inject_config:
             include_rules = self.inject_config["include"]
