@@ -114,6 +114,10 @@ def generate_name(min_length=6,max_length=64):
     length=random.randint(min_length,max_length)
     return ''.join( words[random.randint(0,words_length-1)] for _ in range(length))
 
+def generate_name_first_upper(min_length=6,max_length=64):
+    name=generate_name(min_length,max_length)
+    return name[0].upper()+name[1:]
+
 def pad(size):
     return ''.join( ' ' for _ in range(size))
 

@@ -13,6 +13,26 @@ ${return_type.to_string($generator)} ${class_name}::${name}(#slurp
     ${field.name}=${generator.generate_value(field.native_type.name)};
     #end for
 #end if
+##======call ohters======
+#set $length = len($call_others)
+#if $length > 0
+    #for $func in $call_others
+    ${func.name}(#slurp
+        ## ===== parameters values
+        #set $param_len = len($func.parameters)
+        #if $param_len > 0
+            #set $param_index = 0
+            #for $param in $func.parameters
+${generator.generate_value(param.native_type.name)}#slurp
+                #if $param_index < $param_len - 1 
+,#slurp
+                #end if
+            #set $param_index = $param_index + 1
+            #end for
+        #end if
+);
+    #end for
+#end if
 #if $return_type.name 
     return ret;
 #end if

@@ -1,1 +1,1 @@
-${native_type.to_string($generator)} ${name}; 
+    ${native_type.to_string($generator)} ${name}; 
