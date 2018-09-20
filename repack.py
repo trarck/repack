@@ -18,6 +18,7 @@ import utils
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+
 class Repack:
     def __init__(self, matrix_project_root_path, project_root_path, pack_resource_path, global_data_dir, name):
         self.matrix_project_root_path = matrix_project_root_path
@@ -279,7 +280,7 @@ class Repack:
         tpl_folder_path = self.translate_string(config["tpl_dir"])
         if not os.path.isabs(tpl_folder_path):
             tpl_folder_path = os.path.join(self.global_data_dir, tpl_folder_path)
-        tpl_folder_path=tpl_folder_path.encode("utf-8")
+        tpl_folder_path = tpl_folder_path.encode("utf-8")
 
         xcode_project_path = self.translate_string(config["xcode_project_path"])
         if not os.path.isabs(xcode_project_path):
@@ -290,7 +291,7 @@ class Repack:
             exec_code_file_path = os.path.join(self.project_root_path, exec_code_file_path)
 
         cpp_code = CppGarbageCode(tpl_folder_path)
-        action=cpp_code.generate_cpp_file(out_folder_path, xcode_project_path, exec_code_file_path, config)
+        action = cpp_code.generate_cpp_file(out_folder_path, xcode_project_path, exec_code_file_path, config)
         self.do_action(action)
 
     def inject_code(self, config):
@@ -306,11 +307,33 @@ class Repack:
         tpl_folder_path = self.translate_string(config["tpl_dir"])
         if not os.path.isabs(tpl_folder_path):
             tpl_folder_path = os.path.join(self.global_data_dir, tpl_folder_path)
-    
-        tpl_folder_path=tpl_folder_path.encode("utf-8")
-        
+
+        tpl_folder_path = tpl_folder_path.encode("utf-8")
+
         cpp_code = CppGarbageCode(tpl_folder_path)
         cpp_code.inject_files(checked_files, config)
+
+
+def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config):
+    if "project_path" in project_config:
+        if os.path.isabs(project_config["project_path"]):
+            project_path = project_config["project_path"]
+        else:
+            project_path = os.path.join(out_dir, project_config["project_path"])
+    else:
+        project_path = os.path.join(out_dir, project_config["name"])
+
+    if "resource_path" in project_config:
+        if os.path.isabs(project_config["resource_path"]):
+            resource_path = project_config["resource_path"]
+        else:
+            resource_path = os.path.join(resource_dir, project_config["resource_path"])
+    else:
+        resource_path = os.path.join(resource_dir, project_config["name"])
+
+    repack = Repack(src_project, project_path, resource_path, data_dir, project_config["name"])
+
+    repack.run(project_config, step_config)
 
 
 def main():
@@ -334,6 +357,9 @@ def main():
     parser.add_argument('-d', '--data-dir', dest='data_dir',
                         help="global data files dir")
 
+    parser.add_argument('--step-config', dest='step_config',
+                        help="step config contains actions")
+
     args = parser.parse_args()
 
     print("=======================================================")
@@ -353,27 +379,31 @@ def main():
         if not os.path.isabs(args.data_dir):
             args.data_dir = os.path.join(workpath, args.resource_dir)
 
-    # get pack info
+    # load config info
     fp = open(args.config_file)
     config_data = json.load(fp)
     fp.close()
 
+    # check step config
+    if "steps" in config_data:
+        step_config = config_data["steps"]
+    else:
+        if args.step_config:
+            scfp = open(args.config_file)
+            step_config = json.load(scfp)
+            scfp.close()
+            if "steps" in step_config:
+                step_config = step_config["steps"]
+        else:
+            raise "no step config"
+
     if "projects" in config_data:
         for project_config in config_data["projects"]:
-
-            if "project_path" in project_config:
-                project_path = os.path.join(args.out_dir, project_config["project_path"])
-            else:
-                project_path = os.path.join(args.out_dir, project_config["name"])
-
-            if "resource_path" in project_config:
-                resource_path = os.path.join(args.resource_dir, project_config["resource_path"])
-            else:
-                resource_path = os.path.join(args.resource_dir, project_config["name"])
-
-            repack = Repack(args.src_project, project_path, resource_path, args.data_dir, project_config["name"])
-
-            repack.run(project_config, config_data["steps"])
+            repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, project_config,
+                           step_config)
+    elif "project" in config_data:
+        repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, config_data["project"],
+                       step_config)
 
 
 # -------------- main --------------
