@@ -183,6 +183,9 @@ class CppFile:
 
         return head_str, source_str
 
+    def get_class_execute_chain(self, class_index):
+        return self.native_class.get_function_call_code(self.native_class.methods[0], self, class_index)
+
 
 class CppFileInject(CppFile):
     def __init__(self, config):
@@ -228,7 +231,6 @@ class CppFileInject(CppFile):
         for line in lines:
             if line.find(impl) > -1:
                 find_position = line_index
-                print(find_position)
             line_index += 1
         return find_position
 
@@ -362,8 +364,7 @@ class CppGarbageCode:
             })
             generator.prepare()
             generator.generate_code()
-            call_generate_func = generator.native_class.get_function_call_code(generator.native_class.methods[0], self,
-                                                                               class_index)
+            call_generate_func = generator.get_class_execute_chain(class_index)
             call_generate_codes.append(call_generate_func)
             class_index += 1
 
@@ -463,7 +464,6 @@ class CppGarbageCode:
     def _inject_dir(self, folder_path, include_rules=None):
         for file_name in os.listdir(folder_path):
             file_path = os.path.join(folder_path, file_name)
-            print(file_path)
             if os.path.isdir(file_path):
                 self._inject_dir(file_path, include_rules)
             elif os.path.isfile(file_path):
