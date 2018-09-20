@@ -1,209 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
-import utils
 import random
 
-from pbxproj import XcodeProject, PBXProvioningTypes
+from pbxproj import XcodeProject
 from Cheetah.Template import Template
-from source_file import SourceFile
-
+from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 import utils
 
 cpp_types = ["int", "long long", "float", "double", "std::string"]
 cpp_types_length = len(cpp_types)
-
-
-class NativeType:
-    def __init__(self, name=None):
-        self.name = name
-
-    def to_string(self, generator):
-        if self.name:
-            return self.name
-        else:
-            return "void"
-
-
-class NativeField:
-    def __init__(self, name, field_type, head_tpl_file, source_tpl_file, ):
-        self.name = name
-        self.native_type = field_type
-        self.head_tpl_file = head_tpl_file
-        self.source_tpl_file = source_tpl_file
-
-    def generate_code(self, current_class, generator):
-        field_h = Template(file=self.head_tpl_file, searchList=[current_class, self])
-
-        field_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
-
-        generator.head_fp.write(str(field_h))
-        generator.source_fp.write(str(field_c))
-
-    def to_string(self, current_class, generator):
-        field_h = Template(file=self.head_tpl_file, searchList=[current_class, self])
-
-        field_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
-
-        return str(field_h), str(field_c)
-
-
-class NativeParameter:
-    def __init__(self, name, param_type):
-        self.name = name
-        self.native_type = param_type
-
-    def to_string(self, generator):
-        return self.native_type.to_string(generator) + " " + self.name
-
-
-class NativeFunction:
-    def __init__(self, name, parameters, return_type, head_tpl_file, source_tpl_file, base_code=None):
-        self.name = name
-        self.parameters = parameters
-        self.return_type = return_type
-        self.call_others = []
-        self.base_code = base_code
-        self.head_tpl_file = head_tpl_file
-        self.source_tpl_file = source_tpl_file
-
-    def generate_code(self, current_class, generator):
-        function_h = Template(file=self.head_tpl_file, searchList=[current_class, self])
-
-        function_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
-
-        generator.head_fp.write(str(function_h))
-        generator.source_fp.write(str(function_c))
-
-    def to_string(self, current_class, generator):
-        function_h = Template(file=self.head_tpl_file, searchList=[current_class, self])
-
-        function_c = Template(file=self.source_tpl_file, searchList=[current_class, self])
-
-        return str(function_h), str(function_c)
-
-    def call_other(self, func):
-        self.call_others.append(func)
-
-
-class NativeClass:
-    def __init__(self, name, namespace, generator, fields, methods,
-                 head_head_tpl_file, head_foot_tpl_file, source_head_tpl_file, source_foot_tpl_file):
-        self.class_name = name
-        self.namespace = namespace
-        self.generator = generator
-        self.fields = fields if fields else []
-        self.methods = methods if methods else []
-        self.head_head_tpl_file = head_head_tpl_file
-        self.head_foot_tpl_file = head_foot_tpl_file
-        self.source_head_tpl_file = source_head_tpl_file
-        self.source_foot_tpl_file = source_foot_tpl_file
-        self.namespace_begin = None
-        self.namespace_end = None
-
-    def prepare_namespace(self):
-        if self.namespace:
-            if isinstance(self.namespace, (str)):
-                ns = self.namespace.split('.')
-            else:
-                ns = self.namespace
-            self.namespace_begin = ""
-            self.namespace_end = ""
-            for name in ns:
-                self.namespace_begin += "namespace %s {" % name
-                self.namespace_end += "}"
-
-    def get_full_class_name(self):
-        if self.namespace:
-            if isinstance(self.namespace, (str)):
-                return self.namespace.replace(".", "::") + "::" + self.class_name
-            else:
-                return "::".join(self.namespace) + "::" + self.class_name
-        return self.class_name
-
-    def generate_code(self, generator):
-        self.prepare_namespace()
-        # gen head
-        class_h = Template(file=self.head_head_tpl_file,
-                           searchList=[self])
-
-        class_c = Template(file=self.source_head_tpl_file,
-                           searchList=[self])
-
-        generator.head_fp.write(str(class_h))
-        generator.source_fp.write(str(class_c))
-
-        # gen fileds
-        for filed in self.fields:
-            filed.generate_code(self, generator)
-
-        for method in self.methods:
-            method.generate_code(self, generator)
-
-        # gen foot
-        class_h = Template(file=self.head_foot_tpl_file,
-                           searchList=[self])
-
-        class_c = Template(file=self.source_foot_tpl_file,
-                           searchList=[self])
-
-        generator.head_fp.write(str(class_h))
-        generator.source_fp.write(str(class_c))
-
-    def to_string(self, generator):
-        self.prepare_namespace()
-        head_str = ""
-        source_str = ""
-        # gen head
-        class_h = Template(file=self.head_head_tpl_file,
-                           searchList=[self])
-
-        class_c = Template(file=self.source_head_tpl_file,
-                           searchList=[self])
-
-        head_str += str(class_h)
-        source_str += str(class_c)
-
-        # gen fileds
-        for filed in self.fields:
-            filed_head_str, filed_source_str = filed.to_string(self, generator)
-            head_str += filed_head_str
-            source_str += filed_source_str
-
-        for method in self.methods:
-            method_head_str, method_source_str = method.to_string(self, generator)
-            head_str += method_head_str
-            head_str += method_source_str
-
-            # gen foot
-        class_h = Template(file=self.head_foot_tpl_file,
-                           searchList=[self])
-
-        class_c = Template(file=self.source_foot_tpl_file,
-                           searchList=[self])
-
-        head_str += str(class_h)
-        source_str += str(class_c)
-        return head_str, source_str
-
-    def get_generated_field_method(self, generator):
-        head_str = ""
-        source_str = ""
-        # generated fileds
-        for filed in self.fields:
-            h_str, c_str = filed.to_string(self, generator)
-            head_str += h_str
-            source_str += c_str
-        # generated methods
-        for method in self.methods:
-            h_str, c_str = method.to_string(self, generator)
-            head_str += h_str
-            source_str += c_str
-        return head_str, source_str
-
-    def get_function_call_code(self, method,generator,index=1):
-        call_tpl = Template(file=os.path.join(generator.tpl_folder_path, "call_class_function.cpp"),
-                            searchList=[{"method": method,"index":index}, self])
-        return str(call_tpl)
 
 
 class CppFile:
@@ -421,7 +226,7 @@ class CppFileInject(CppFile):
         line_index = 0
         impl = "%s::" % class_name
         for line in lines:
-            if line.find(impl)>-1:
+            if line.find(impl) > -1:
                 find_position = line_index
                 print(find_position)
             line_index += 1
@@ -433,9 +238,9 @@ class CppFileInject(CppFile):
             if parent_position > 0:
                 class_define = line[5:parent_position].strip()
             else:
-                b_position=line.find("{")
-                if b_position>0:
-                    class_define = line[5:b_position].strip()    
+                b_position = line.find("{")
+                if b_position > 0:
+                    class_define = line[5:b_position].strip()
                 else:
                     class_define = line[5:].strip()
             cs = class_define.split(" ")
@@ -443,19 +248,19 @@ class CppFileInject(CppFile):
         return None
 
     def inject_code(self):
-        #check class info
+        # check class info
         fp = open(self.head_file_path, "r+")
         lines = fp.readlines()
         fp.close()
-        
+
         class_define_line, end_line = self.get_head_class_define_position(lines)
         class_name = self.get_class_name(lines[class_define_line])
         print("get class %s from %d to %d" % (class_name, class_define_line, end_line))
-        self.native_class.class_name=class_name
-        
+        self.native_class.class_name = class_name
+
         head_str, source_str = self.native_class.get_generated_field_method(self)
 
-        #insert header
+        # insert header
         lines.insert(end_line, head_str)
         # this is before the head declare
         lines.insert(end_line, "public:\n")
@@ -507,7 +312,7 @@ class CppGarbageCode:
             if filename.find(".xcodeproj") > -1:
                 return os.path.join(project_dir, filename)
         return None
-    
+
     def generate_cpp_file(self, out_folder_path, xcode_project_path, exec_code_file_path, generate_config):
         self.generate_config = generate_config
 
@@ -524,18 +329,18 @@ class CppGarbageCode:
         else:
             group_name = utils.generate_string(6, 10)
 
-        call_others=True 
+        call_others = True
         if "call_others" in self.generate_config:
-            call_others=self.generate_config["call_others"]
-        
+            call_others = self.generate_config["call_others"]
+
         generated_files = []
         generated_head_files = []
 
         namespace = utils.generate_name(5, 8).lower()
 
         call_generate_codes = []
-        
-        class_index=1
+
+        class_index = 1
         for i in range(gen_file_count):
             class_name = utils.generate_name_first_upper(8, 16)
             head_file_name = os.path.join(out_folder_path, class_name + ".h")
@@ -557,13 +362,14 @@ class CppGarbageCode:
             })
             generator.prepare()
             generator.generate_code()
-            call_generate_func = generator.native_class.get_function_call_code(generator.native_class.methods[0], self,class_index)
+            call_generate_func = generator.native_class.get_function_call_code(generator.native_class.methods[0], self,
+                                                                               class_index)
             call_generate_codes.append(call_generate_func)
-            class_index+=1
+            class_index += 1
 
         # generate call generated code prevent delete by link optimization
         exec_once_tpl = Template(file=os.path.join(self.tpl_folder_path, "exec_code_once.cpp"),
-                                searchList=[{"code": "".join(call_generate_codes)}])
+                                 searchList=[{"code": "".join(call_generate_codes)}])
         exec_once = str(exec_once_tpl)
 
         if "generate_executor" in generate_config and generate_config["generate_executor"]:
@@ -574,7 +380,7 @@ class CppGarbageCode:
             for head_file in generated_head_files:
                 include_heads += "#include \"%s\"\n" % head_file
 
-        #create action execute in repack
+        # create action execute in repack
         insert_head_action = {
             "operation": "insert",
             "file_path": exec_code_file_path,
@@ -593,7 +399,7 @@ class CppGarbageCode:
         }
 
         # add generated files to xcode project
-        
+
         pbx_proj_file_path = os.path.join(self._get_xcode_project_file_path(xcode_project_path), "project.pbxproj")
         pbx_project = XcodeProject.load(pbx_proj_file_path)
         # add out dir to head search path
@@ -615,7 +421,7 @@ class CppGarbageCode:
 
         if not force:
             probability = self.inject_config["probability"]
-            need_inject = random.randint(0,100) <= probability
+            need_inject = random.randint(0, 100) <= probability
         else:
             need_inject = True
 
@@ -631,11 +437,11 @@ class CppGarbageCode:
                 a_file_inject_config = self.inject_config.copy()
                 a_file_inject_config["head_file"] = head_file_path
                 a_file_inject_config["source_file"] = source_file_path
-                call_others=True
-                
+                call_others = True
+
                 if "call_others" in self.inject_config:
-                    call_others=self.inject_config["call_others"]
-                    
+                    call_others = self.inject_config["call_others"]
+
                 cpp_inject = CppFileInject({
                     "head_file": head_file_path,
                     "source_file": source_file_path,
