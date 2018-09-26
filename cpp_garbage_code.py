@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import random
+import re
 
 from pbxproj import XcodeProject
 from Cheetah.Template import Template
@@ -202,8 +203,10 @@ class CppFileInject(CppFile):
 
         # get max class start end
         for line in lines:
+            line = line.strip()
             if line.startswith("class"):
                 start_line = line_index
+                print("start:%d" % start_line)
             if line.startswith("};"):
                 end_line = line_index
                 line_count = end_line - start_line
@@ -211,6 +214,7 @@ class CppFileInject(CppFile):
                     current_class_line_count = line_count
                     find_start = start_line
                     find_end = end_line
+                    print("end:%d" % end_line)
             line_index += 1
 
         return find_start, find_end
@@ -227,14 +231,16 @@ class CppFileInject(CppFile):
     def get_source_last_impl_position(self, class_name, lines):
         find_position = -1
         line_index = 0
-        impl = "%s::" % class_name
         for line in lines:
-            if line.find(impl) > -1:
+            m = re.search(r'\s+(.*)::(.*)\s*\(', line, re.I)
+            if m and m.group(1) == class_name and (
+                    line.find("{") > -1 or lines[line_index + 1].strip().startswith("{")):
                 find_position = line_index
             line_index += 1
         return find_position
 
     def get_class_name(self, line):
+        line = line.strip()
         if line.startswith("class"):
             parent_position = line.find(":")
             if parent_position > 0:
@@ -252,33 +258,81 @@ class CppFileInject(CppFile):
     def inject_code(self):
         # check class info
         fp = open(self.head_file_path, "r+")
-        lines = fp.readlines()
+        head_lines = fp.readlines()
         fp.close()
 
-        class_define_line, end_line = self.get_head_class_define_position(lines)
-        class_name = self.get_class_name(lines[class_define_line])
-        print("get class %s from %d to %d" % (class_name, class_define_line, end_line))
+        class_define_line, class_end_line = self.get_head_class_define_position(head_lines)
+        if class_define_line == -1:
+            print("no class find ")
+            return
+        class_name = self.get_class_name(head_lines[class_define_line])
+        print("get class %s from %d to %d" % (class_name, class_define_line, class_end_line))
+        if not class_name:
+            print("can't get class name ")
+            return
+
         self.native_class.class_name = class_name
+
+        # check have source implement
+        fp = open(self.source_file_path, "r+")
+        source_lines = fp.readlines()
+        fp.close()
+
+        impl_end_line = self.get_source_last_impl_position(class_name, source_lines)
+
+        if impl_end_line == -1:
+            # no in source,add implement in head
+            for method in self.native_class.methods:
+                method.head_tpl_file = os.path.join(self.tpl_folder_path, "function_with_impl.h")
 
         head_str, source_str = self.native_class.get_generated_field_method(self)
 
         # insert header
-        lines.insert(end_line, head_str)
+        head_lines.insert(class_end_line, head_str)
         # this is before the head declare
-        lines.insert(end_line, "public:\n")
+        head_lines.insert(class_end_line, "public:\n")
 
         fp = open(self.head_file_path, "w+")
-        fp.writelines(lines)
+        fp.writelines(head_lines)
         fp.close()
 
         # insert source
-        fp = open(self.source_file_path, "r+")
-        lines = fp.readlines()
+        if impl_end_line > -1:
+            source_lines.insert(impl_end_line, source_str)
+            fp = open(self.source_file_path, "w+")
+            fp.writelines(source_lines)
+            fp.close()
+
+    def inject_head(self):
+        # check class info
+        fp = open(self.head_file_path, "r+")
+        head_lines = fp.readlines()
         fp.close()
-        end_line = self.get_source_last_impl_position(class_name, lines)
-        lines.insert(end_line, source_str)
-        fp = open(self.source_file_path, "w+")
-        fp.writelines(lines)
+
+        class_define_line, class_end_line = self.get_head_class_define_position(head_lines)
+        if class_define_line == -1:
+            print("no class find ")
+            return
+        class_name = self.get_class_name(head_lines[class_define_line])
+        print("get class %s from %d to %d" % (class_name, class_define_line, class_end_line))
+        if not class_name:
+            print("can't get class name ")
+            return
+
+        self.native_class.class_name = class_name
+
+        for method in self.native_class.methods:
+            method.head_tpl_file = os.path.join(self.tpl_folder_path, "function_with_impl.h")
+
+        head_str = self.native_class.get_generated_field_method(self)
+
+        # insert header
+        head_lines.insert(class_end_line, head_str)
+        # this is before the head declare
+        head_lines.insert(class_end_line, "public:\n")
+
+        fp = open(self.head_file_path, "w+")
+        fp.writelines(head_lines)
         fp.close()
 
 
@@ -287,6 +341,7 @@ class CppGarbageCode:
         self.tpl_folder_path = tpl_folder_path.encode("utf-8")
         self.generate_config = None
         self.inject_config = None
+        self._inject_checked_files = None
         self._injected_files = None
 
     def _parse_range_count(self, name, config, default_min=1):
@@ -416,9 +471,9 @@ class CppGarbageCode:
 
     def _inject_file(self, file_path, force=False):
         file_path_without_ext = os.path.splitext(file_path)[0]
-        if file_path_without_ext in self._injected_files:
+        if file_path_without_ext in self._inject_checked_files:
             return False
-        self._injected_files[file_path_without_ext] = True
+        self._inject_checked_files[file_path_without_ext] = True
 
         if not force:
             probability = self.inject_config["probability"]
@@ -431,6 +486,7 @@ class CppGarbageCode:
             source_file_path = file_path_without_ext + ".cpp"
             if os.path.exists(head_file_path) and os.path.exists(source_file_path):
                 print("===>cpp code inject basefile %s" % file_path_without_ext)
+                self._injected_files.append(file_path_without_ext)
                 generate_field_count = self._parse_range_count("generate_field_count", self.inject_config)
                 generate_method_count = self._parse_range_count("generate_method_count", self.inject_config)
                 parameter_count = self._parse_range_count("parameter_count", self.inject_config)
@@ -476,7 +532,9 @@ class CppGarbageCode:
             include_rules = self.inject_config["include"]
         else:
             include_rules = "*.h"
-        self._injected_files = {}
+        self._inject_checked_files = {}
+        self._injected_files = []
+
         include_rules = utils.convert_rules(include_rules)
         for file_path in files:
             if os.path.isdir(file_path):
@@ -484,3 +542,7 @@ class CppGarbageCode:
             elif os.path.isfile(file_path):
                 # config file force inject
                 self._inject_file(file_path, True)
+
+        print("inject %d files" % len(self._injected_files))
+        for injected_file in self._injected_files:
+            print("==> inject %s" % injected_file)

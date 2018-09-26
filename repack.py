@@ -250,6 +250,7 @@ class Repack:
         fcrypt.encrypt_dir(from_dir, to_dir, include)
 
     def obfuscate_resources(self, config):
+        crypt_info = self.crypt_info.copy()
         res_path = config["res_path"]
         if not os.path.isabs(res_path):
             res_path = os.path.join(self.project_root_path, res_path)
@@ -257,6 +258,10 @@ class Repack:
         sub_dirs = None
         if "sub_dirs" in config:
             sub_dirs = config["sub_dirs"]
+
+        ignore_dirs = None
+        if "ignore_dirs" in config:
+            ignore_dirs = config["ignore_dirs"]
 
         remove_source = True
         if "remove_source" in config:
@@ -269,7 +274,19 @@ class Repack:
         else:
             out_path = res_path
 
-        res_obf = ResourceObfuscator(res_path, out_path, sub_dirs, self.crypt_info, remove_source)
+        if "with_ext" in config:
+            crypt_info.with_ext = config["with_ext"]
+
+        include_rules = None
+        if "include_rules" in config:
+            include_rules = utils.convert_rules(config["include_rules"])
+
+        exclude_rules = None
+        if "exclude_rules" in config:
+            exclude_rules = utils.convert_rules(config["exclude_rules"])
+
+        res_obf = ResourceObfuscator(res_path, out_path, sub_dirs, ignore_dirs, crypt_info, include_rules,
+                                     exclude_rules, remove_source)
         res_obf.start()
 
     def generate_code(self, config):

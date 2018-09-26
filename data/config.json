@@ -23,7 +23,7 @@
     "steps":[
         {
             "name":"just a test",
-            "actions":[
+            "_actions":[
                 {
                     "name":"copy_files",
                     "from":"${GLOBAL_DATA_DIR}/cpp/cocos2d-x",
