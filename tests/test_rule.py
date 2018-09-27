@@ -1,50 +1,52 @@
 import re
-from cpp_garbage_code import CppFile, CppFileInject, NativeFunction, NativeType, CppGarbageCode
+from rules import *
 
-# cf=CppFile({
-#     "head_file":"../data/temp/a.h",
-#     "source_file":"../data/temp/a.cpp",
-#     "tpl_folder":"../data/template/cpp",
-#     "namespace":"my",
-#     "generate_field":2,
-#     "generate_method":3
-# })
-#
-# call_str=cf.generate_code()
-# print(call_str)
+eq = EqualRule(1)
+print(eq.test(1))
+print(eq.test(2))
+print(eq.test("2"))
 
-# cf=CppFileInject({
-#     "head_file":"../data/temp/cpp/CCLabelTextFormatter.h",
-#     "source_file":"../data/temp/cpp/CCLabelTextFormatter.cpp",
-#     "tpl_folder":"../data/template/cpp",
-#     "namespace":"my",
-#     "generate_field":2,
-#     "generate_method":3,
-#     "max_parameter":4,
-#     "call_others":True
-# })
-# cf.prepare()
-# cf.inject_code()
+bg = BigRule("2")
+print(bg.test("1"))
+print(bg.test(2))
+print(bg.test("3"))
 
-# cf=CppFile({
-#     "head_file":"../data/temp/b.h",
-#     "source_file":"../data/temp/b.cpp",
-#     "tpl_folder":"../data/template/cpp",
-#     "class_name":"GenerateExecutor",
-#     "namespace":"my"
-# })
-# cf.prepare()
-#
-# method_code="BB bb;\nbb.a();\nCC cc;\ncc.ma();\n"
-# method=NativeFunction("execGeneratedCode",[],NativeType(None),"../data/template/cpp/function.h","../data/template/cpp/function.cpp",method_code)
-# cf.native_class.methods.append(method)
-# cf.headers=["a.h","b.h","c.h"]
-# cf.generate_code()
-# call_str=cf.get_class_execute_chain(1)
-# print(call_str)
+n = NotRule(eq)
+print(n.test(1))
+print(n.test(2))
+print(n.test("2"))
 
-# cpp_code = CppGarbageCode("../data/template/cpp")
-# cpp_code.inject_files(["../data/temp/cocos"], {"probability": 100,
-#                                                "generate_field_count": 4,
-#                                                "generate_method_count": 5,
-#                                                "parameter_count": 3})
+bg = BigRule(1)
+less = LessRule(5)
+and_rule = AndRule(less, bg)
+print(and_rule.test(3))
+print(and_rule.test(6))
+
+bg = BigRule(5)
+less = LessRule(1)
+or_rule = OrRule(less, bg)
+print(or_rule.test(3))
+print(or_rule.test(0))
+
+print "--------"
+reg_math_text = RegexpMatchRule(r'.*\.txt')
+print(reg_math_text.test("aa.txt"))
+print(reg_math_text.test("aa.jpg"))
+
+reg_math_jpg = RegexpMatchRule(r'.*\.jpg')
+reg_math_png = RegexpMatchRule(r'.*\.png')
+
+print "--------"
+pic_rule = OrRule(reg_math_jpg, reg_math_png)
+print(pic_rule.test("aa.txt"))
+print(pic_rule.test("aa.jpg"))
+
+print "--------"
+all_rule = OrRule(reg_math_text, OrRule(reg_math_jpg, reg_math_png))
+print(all_rule.test("aa.txt"))
+print(all_rule.test("aa.jpg"))
+
+print "--------"
+any_rule = AnyRule(reg_math_text, reg_math_jpg, reg_math_png)
+print(any_rule.test("aa.txt"))
+print(any_rule.test("aa.jpg"))

@@ -39,7 +39,6 @@ class SourceFile:
         # self.content=self.content.decode("utf-8")
         # print(PathCrypt.byte_to_hex(self.content))
         for k in froms:
-            print(self.content)
             from_pos = self.content.find(k, from_pos)
             if from_pos == -1:
                 return False

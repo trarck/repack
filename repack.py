@@ -227,18 +227,18 @@ class Repack:
 
         if "to" in config:
             to_dir = self.translate_string(config["to"])
-            if not os.path.isabs(from_dir):
+            if not os.path.isabs(to_dir):
                 to_dir = os.path.join(self.project_root_path, to_dir)
         else:
             to_dir = from_dir
 
         if "key" in config:
-            key = self.translate_string(config["key"])
+            key = self.translate_string(config["key"]).encode("utf8")
         else:
             key = self._config_data["xxtea_key"]
 
         if "sign" in config:
-            sign = self.translate_string(config["sign"])
+            sign = self.translate_string(config["sign"]).encode("utf8")
         else:
             sign = self._config_data["xxtea_sign"]
 
@@ -246,8 +246,12 @@ class Repack:
         if "include" in config:
             include = utils.convert_rules(config["include"])
 
+        remove_source = True
+        if "remove_source" in config:
+            remove_source = config["remove_source"]
+
         fcrypt = FileCrypt(key, sign)
-        fcrypt.encrypt_dir(from_dir, to_dir, include)
+        fcrypt.start_encrypt(from_dir, to_dir, include, remove_source)
 
     def obfuscate_resources(self, config):
         crypt_info = self.crypt_info.copy()
