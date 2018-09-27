@@ -110,3 +110,14 @@ class AnyRule(BaseRule):
             if rule.test(value):
                 return True
         return False
+
+
+class AllRule(BaseRule):
+    def __init__(self, *rules):
+        self.rules = rules
+
+    def test(self, value):
+        for rule in self.rules:
+            if not rule.test(value):
+                return False
+        return True

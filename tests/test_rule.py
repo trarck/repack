@@ -50,3 +50,8 @@ print "--------"
 any_rule = AnyRule(reg_math_text, reg_math_jpg, reg_math_png)
 print(any_rule.test("aa.txt"))
 print(any_rule.test("aa.jpg"))
+
+print "--------"
+all_rule = AllRule(BigRule(2), BigRule(5), LessRule(10))
+print(all_rule.test(4))
+print(all_rule.test(7))
