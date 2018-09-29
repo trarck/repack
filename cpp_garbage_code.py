@@ -230,16 +230,12 @@ class CppFileInject(CppFile):
             line_index += 1
         return -1
 
-    def get_source_last_impl_position(self, class_name, lines):
-        find_position = -1
-        line_index = 0
-        for line in lines:
-            m = re.search(r'\s+(.*)::(.*)\s*\(', line, re.I)
-            if m and m.group(1) == class_name and (
-                    line.find("{") > -1 or lines[line_index + 1].strip().startswith("{")):
-                find_position = line_index
-            line_index += 1
-        return find_position
+    def get_source_insert_position(self, class_info, source_namespaces):
+        if len(source_namespaces) > 0:
+            for namespace_info in source_namespaces:
+                if class_info.namespace == namespace_info.name:
+                    return namespace_info.end_line
+        return -1
 
     def get_class_name(self, line):
         line = line.strip()
@@ -268,14 +264,20 @@ class CppFileInject(CppFile):
         head_lines = fp.readlines()
         fp.close()
 
-        class_define_line, class_end_line = self.get_head_class_define_position(head_lines)
-        if class_define_line == -1:
+        macros = None
+        if "macros" in self.config:
+            macros = self.config["macros"]
+        head_file_parser = CppHeadFileParser(macros)
+        head_file_parser.parse(head_lines)
+
+        if len(head_file_parser.classes) > 0:
+            # get first class
+            class_info = head_file_parser.classes[0]
+            class_name = class_info.name
+            class_end_line = class_info.end_line
+            print("get class %s from %d to %d" % (class_info.name, class_info.start_line, class_info.end_line))
+        else:
             print("no class find ")
-            return
-        class_name = self.get_class_name(head_lines[class_define_line])
-        print("get class %s from %d to %d" % (class_name, class_define_line, class_end_line))
-        if not class_name:
-            print("can't get class name ")
             return
 
         self.native_class.class_name = class_name
@@ -285,9 +287,12 @@ class CppFileInject(CppFile):
         source_lines = fp.readlines()
         fp.close()
 
-        impl_end_line = self.get_source_last_impl_position(class_name, source_lines)
+        source_file_parser = CppSourceFileParser(macros)
+        source_file_parser.parse(source_lines)
 
-        if impl_end_line == -1:
+        source_insert_line = self.get_source_insert_position(class_info, source_file_parser.namespaces)
+
+        if source_insert_line == -1:
             # no in source,add implement in head
             for method in self.native_class.methods:
                 method.head_tpl_file = os.path.join(self.tpl_folder_path, "function_with_impl.h")
@@ -304,8 +309,8 @@ class CppFileInject(CppFile):
         fp.close()
 
         # insert source
-        if impl_end_line > -1:
-            source_lines.insert(impl_end_line, source_str)
+        if source_insert_line > -1:
+            source_lines.insert(source_insert_line, source_str)
             fp = open(self.source_file_path, "w+")
             fp.writelines(source_lines)
             fp.close()

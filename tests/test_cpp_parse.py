@@ -9,7 +9,7 @@ from cpp_file_parser import *
 #     print("class:%s,namespace:%s,start:%d,end:%d"%(class_info.name,class_info.namespace,class_info.start_line,class_info.end_line))
 
 
-fp = open("../data/temp/cpp/CCMeshCommand.cpp")
+fp = open("../data/temp/cpp/ccGLStateCache.cpp")
 lines = fp.readlines()
 parser = CppSourceFileParser({"NS_CC_BEGIN": "namespace cocos2d {", "NS_CC_END": "}"})
 parser.parse(lines)
