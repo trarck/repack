@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
 import random
-import re
 
 from pbxproj import XcodeProject
 from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
+from cpp_file_parser import *
 import utils
 
 cpp_types = ["int", "long long", "float", "double", "std::string"]
@@ -205,8 +205,10 @@ class CppFileInject(CppFile):
         for line in lines:
             line = line.strip()
             if line.startswith("class"):
-                start_line = line_index
-                print("start:%d" % start_line)
+                if line.find(";") == -1:
+                    start_line = line_index
+                    print("start:%d" % start_line)
+
             if line.startswith("};"):
                 end_line = line_index
                 line_count = end_line - start_line
@@ -254,6 +256,11 @@ class CppFileInject(CppFile):
             cs = class_define.split(" ")
             return cs[-1]
         return None
+
+    '''
+    add field and method to class
+    add garbage code to exists function(make sure garbage code not optimize by compiler)
+    '''
 
     def inject_code(self):
         # check class info
@@ -303,7 +310,7 @@ class CppFileInject(CppFile):
             fp.writelines(source_lines)
             fp.close()
 
-    def inject_head(self):
+    def inject_code_just_head(self):
         # check class info
         fp = open(self.head_file_path, "r+")
         head_lines = fp.readlines()
@@ -324,7 +331,7 @@ class CppFileInject(CppFile):
         for method in self.native_class.methods:
             method.head_tpl_file = os.path.join(self.tpl_folder_path, "function_with_impl.h")
 
-        head_str = self.native_class.get_generated_field_method(self)
+        head_str, content_str = self.native_class.get_generated_field_method(self)
 
         # insert header
         head_lines.insert(class_end_line, head_str)
@@ -509,7 +516,8 @@ class CppGarbageCode:
                     "call_others": call_others
                 })
                 cpp_inject.prepare()
-                cpp_inject.inject_code()
+                # cpp_inject.inject_code()
+                cpp_inject.inject_code_just_head()
                 return True
             else:
                 print("===>cpp code inject source file or head file not exists of %s" % file_path_without_ext)

@@ -121,3 +121,11 @@ class AllRule(BaseRule):
             if not rule.test(value):
                 return False
         return True
+
+
+class ContainsRule(BaseRule):
+    def __init__(self, rule):
+        BaseRule.__init__(self, rule)
+
+    def test(self, value):
+        return str(value).find(self.rule) > -1

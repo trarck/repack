@@ -1,23 +1,23 @@
-from pygccxml import utils
-from pygccxml import declarations
-from pygccxml import parser
+from cpp_file_parser import *
 
-# Find the location of the xml generator (castxml or gccxml)
-generator_path, generator_name = utils.find_xml_generator()
+# fp=open("../data/temp/cpp/CCMeshCommand.h")
+# lines=fp.readlines()
+# parser=CppHeadFileParser({"NS_CC_BEGIN":"namespace cocos2d {","NS_CC_END":"}"})
+# parser.parse(lines)
+# print(parser.classes)
+# for class_info in parser.classes:
+#     print("class:%s,namespace:%s,start:%d,end:%d"%(class_info.name,class_info.namespace,class_info.start_line,class_info.end_line))
 
-# Configure the xml generator
-xml_generator_config = parser.xml_generator_configuration_t(
-    xml_generator_path=generator_path,
-    xml_generator=generator_name)
 
-# The c++ file we want to parse
-filename = "../data/temp/a.h"
+fp = open("../data/temp/cpp/CCMeshCommand.cpp")
+lines = fp.readlines()
+parser = CppSourceFileParser({"NS_CC_BEGIN": "namespace cocos2d {", "NS_CC_END": "}"})
+parser.parse(lines)
+print("======namespaces=======")
+for namespace_info in parser.namespaces:
+    print("%s,start:%d,end:%d" % (namespace_info.name, namespace_info.start_line, namespace_info.end_line))
 
-# Parse the c++ file
-decls = parser.parse([filename], xml_generator_config)
-
-# Get access to the global namespace
-global_namespace = declarations.get_global_namespace(decls)
-
-# Get access to the 'ns' namespace
-ns = global_namespace.namespace("ns")
+print("======methods=======")
+for method_info in parser.methods:
+    print("%s::%s,start:%d,end:%d" % (
+    method_info.class_name, method_info.name, method_info.start_line, method_info.end_line))
