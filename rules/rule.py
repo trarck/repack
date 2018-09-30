@@ -103,6 +103,9 @@ class RegexpSearchRule(BaseRule):
 
 class AnyRule(BaseRule):
     def __init__(self, *rules):
+        if len(rules) == 1:
+            if isinstance(rules[0], list):
+                rules = rules[0]
         self.rules = rules
 
     def test(self, value):
@@ -114,6 +117,9 @@ class AnyRule(BaseRule):
 
 class AllRule(BaseRule):
     def __init__(self, *rules):
+        if len(rules) == 1:
+            if isinstance(rules[0], list):
+                rules = rules[0]
         self.rules = rules
 
     def test(self, value):

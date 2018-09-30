@@ -2,6 +2,8 @@ import os
 import shutil
 import re
 import random
+from rules import *
+
 
 def in_rules(rel_path, rules):
     ret = False
@@ -24,10 +26,36 @@ def convert_rules(rules):
     return ret_rules
 
 
+def create_rules(include_rules, exclude_rules):
+    if include_rules and len(include_rules) > 0:
+
+        include_rules = convert_rules(include_rules)
+        rules = []
+        for r in include_rules:
+            rules.append(RegexpMatchRule(r))
+        include_rule = AnyRule(rules)
+
+    if exclude_rules:
+        exclude_rules = convert_rules(exclude_rules)
+        rules = []
+        for r in exclude_rules:
+            rules.append(RegexpMatchRule(r))
+        exclude_rule = NotRule(AnyRule(rules))
+
+    if include_rule and exclude_rule:
+        root_rule = AndRule(include_rule, exclude_rule)
+    elif include_rule:
+        root_rule = include_rule
+    else:
+        root_rule = exclude_rule
+
+    return root_rule
+
+
 def copy_files(src, dst):
     if not os.path.exists(dst):
         os.makedirs(dst)
-    
+
     for item in os.listdir(src):
         path = os.path.join(src, item)
         if os.path.isfile(path):
@@ -104,28 +132,35 @@ def copy_files_with_rules(src_root, src, dst, include=None, exclude=None):
                     shutil.copy(abs_path, dst)
 
 
-
 def generate_key():
     return ''.join(chr(random.randrange(ord('a'), ord('z'))) for _ in range(16))
 
-words="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-words_length=len(words)
-def generate_name(min_length=6,max_length=64):
-    length=random.randint(min_length,max_length)
-    return ''.join( words[random.randint(0,words_length-1)] for _ in range(length))
 
-def generate_name_first_upper(min_length=6,max_length=64):
-    name=generate_name(min_length,max_length)
-    return name[0].upper()+name[1:]
+words = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+words_length = len(words)
+
+
+def generate_name(min_length=6, max_length=64):
+    length = random.randint(min_length, max_length)
+    return ''.join(words[random.randint(0, words_length - 1)] for _ in range(length))
+
+
+def generate_name_first_upper(min_length=6, max_length=64):
+    name = generate_name(min_length, max_length)
+    return name[0].upper() + name[1:]
+
 
 def pad(size):
-    return ''.join( ' ' for _ in range(size))
+    return ''.join(' ' for _ in range(size))
+
 
 def generate_int(max_value=999999):
-    return random.randint(0,max_value)
+    return random.randint(0, max_value)
+
 
 def generate_float(max_value=999999):
-    return random.uniform(0,max_value)
+    return random.uniform(0, max_value)
 
-def generate_string(min_length=6,max_length=64):
-    return generate_name(min_length,max_length)
+
+def generate_string(min_length=6, max_length=64):
+    return generate_name(min_length, max_length)

@@ -1,3 +1,5 @@
+
+/**add by obf tools start*/
 	std::vector<std::string> _obfuscateParentPaths;
 	std::vector<std::string> _obfuscateSubPaths;
 public:
@@ -10,3 +12,4 @@ public:
 	std::string getObfuscatePath(const std::string& filepath,const std::string& searchPath) const;
 	
 protected:
+	/**add by obf tools end*/

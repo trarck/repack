@@ -1,4 +1,5 @@
-	
+
+/**	add by obf tools start */
 
 	if (path.empty()) {
 		//use obfuscate path
@@ -10,4 +11,4 @@
 
 		path = getObfuscatePath(obf_file_path, searchPath);
 	}
-    
+/**	add by obf tools end */

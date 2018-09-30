@@ -6,8 +6,14 @@ from pbxproj import XcodeProject, PBXProvioningTypes
 
 
 class IosProject:
-    def __init__(self, project_root):
-        self.project_root = project_root
+    def __init__(self, project_file_path):
+
+        if project_file_path.find(".xcodeproj") > -1:
+            self.project_file_path = project_file_path
+            self.project_root = os.path.dirname(project_file_path)
+        else:
+            self.project_root = project_file_path
+            self.project_file_path = self._get_xcode_project_file_path(project_file_path)
 
     def _get_xcode_project_file_path(self, project_dir):
         files = os.listdir(project_dir)
@@ -45,23 +51,22 @@ class IosProject:
         return None
 
     def rename_xcode_project(self, project_file_name):
-        xcode_project_file_path = self._get_xcode_project_file_path(self.project_root)
-        if not xcode_project_file_path:
+        if not self.project_file_path:
             raise "Can't find xocde project in " % self.project_root
 
         if project_file_name.find(".xcodeproj") == -1:
             project_file_name += ".xcodeproj"
 
-        if os.path.basename(xcode_project_file_path) == project_file_name:
+        if os.path.basename(self.project_file_path) == project_file_name:
             # the project_file is same as old
-            return xcode_project_file_path
+            return self.project_file_path
 
         # rename project_file to new
         new_project_file_path = os.path.join(self.project_root, project_file_name)
-        print("===>rename project file %s to %s" % (xcode_project_file_path, new_project_file_path))
+        print("===>rename project file %s to %s" % (self.project_file_path, new_project_file_path))
         if os.path.exists(new_project_file_path):
             shutil.rmtree(new_project_file_path)
-        os.rename(xcode_project_file_path, new_project_file_path)
+        os.rename(self.project_file_path, new_project_file_path)
         return new_project_file_path
 
     def rename_target(self, pbx_project, target_name, product_name=None, fore=False):
@@ -127,9 +132,10 @@ class IosProject:
                                          ios_app_target.name)
 
     def set_code_sign(self, code_sign_identity, provisioning_profile, development_team=None,
-                      provisioning_profile_uuid=None,code_sign_entitlements=None):
+                      provisioning_profile_uuid=None, code_sign_entitlements=None):
         print("===> set code sign identity=%s,profile=%s,team=%s,profile_uuid=%s,entitlements=%s" %
-              (code_sign_identity, provisioning_profile, development_team, provisioning_profile_uuid,code_sign_entitlements))
+              (code_sign_identity, provisioning_profile, development_team, provisioning_profile_uuid,
+               code_sign_entitlements))
         xcode_project_file_path = self._get_xcode_project_file_path(self.project_root)
         pbx_proj_file_path = os.path.join(xcode_project_file_path, "project.pbxproj")
         pbx_project = XcodeProject.load(pbx_proj_file_path)
@@ -141,14 +147,14 @@ class IosProject:
             pbx_project.set_flags(u'PROVISIONING_PROFILE_SPECIFIER', provisioning_profile, target_name)
             if development_team:
                 pbx_project.set_flags(u'DEVELOPMENT_TEAM', development_team, target_name)
-            
+
             if provisioning_profile_uuid:
                 pbx_project.set_flags(u'PROVISIONING_PROFILE', provisioning_profile_uuid, target_name)
-            
+
             if code_sign_entitlements:
                 pbx_project.set_flags(u'CODE_SIGN_ENTITLEMENTS', code_sign_entitlements, target_name)
-                
+
             for target in pbx_project.objects.get_targets(target_name):
                 pbx_project.objects[pbx_project.rootObject].set_provisioning_style(PBXProvioningTypes.MANUAL, target)
-            
+
             pbx_project.save()

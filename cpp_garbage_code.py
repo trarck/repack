@@ -192,43 +192,16 @@ class CppFileInject(CppFile):
     def __init__(self, config):
         CppFile.__init__(self, config)
 
-    def get_head_class_define_position(self, lines):
-        start_line = -1
-        end_line = -1
-        line_index = 0
+    def get_insert_class(self, classes):
 
-        find_start = -1
-        find_end = -1
-        current_class_line_count = 0
-
-        # get max class start end
-        for line in lines:
-            line = line.strip()
-            if line.startswith("class"):
-                if line.find(";") == -1:
-                    start_line = line_index
-                    print("start:%d" % start_line)
-
-            if line.startswith("};"):
-                end_line = line_index
-                line_count = end_line - start_line
-                if line_count > current_class_line_count:
-                    current_class_line_count = line_count
-                    find_start = start_line
-                    find_end = end_line
-                    print("end:%d" % end_line)
-            line_index += 1
-
-        return find_start, find_end
-
-    def get_source_first_impl_position(self, class_name, lines):
-        line_index = 0
-        impl = "%s::" % class_name
-        for line in lines:
-            if line.find(impl):
-                return line_index
-            line_index += 1
-        return -1
+        max_size = 0
+        insert_class = None
+        for class_info in classes:
+            current_size = class_info.end_line - class_info.start_line
+            if current_size > max_size:
+                max_size = current_size
+                insert_class = class_info
+        return insert_class
 
     def get_source_insert_position(self, class_info, source_namespaces):
         if len(source_namespaces) > 0:
@@ -237,21 +210,16 @@ class CppFileInject(CppFile):
                     return namespace_info.end_line
         return -1
 
-    def get_class_name(self, line):
-        line = line.strip()
-        if line.startswith("class"):
-            parent_position = line.find(":")
-            if parent_position > 0:
-                class_define = line[5:parent_position].strip()
-            else:
-                b_position = line.find("{")
-                if b_position > 0:
-                    class_define = line[5:b_position].strip()
-                else:
-                    class_define = line[5:].strip()
-            cs = class_define.split(" ")
-            return cs[-1]
-        return None
+    def get_include_position(self, lines):
+
+        head_id_macro = None
+        for i in range(0, len(lines)):
+            line = lines[i].strip()
+            if line.startswith("#ifndef"):
+                head_id_macro = line[len("#ifndef"):].strip()
+            elif line.startswith("#define") and head_id_macro == line[len("#define"):].strip():
+                return i+1
+        return -1
 
     '''
     add field and method to class
@@ -272,7 +240,7 @@ class CppFileInject(CppFile):
 
         if len(head_file_parser.classes) > 0:
             # get first class
-            class_info = head_file_parser.classes[0]
+            class_info = self.get_insert_class(head_file_parser.classes)
             class_name = class_info.name
             class_end_line = class_info.end_line
             print("get class %s from %d to %d" % (class_info.name, class_info.start_line, class_info.end_line))
@@ -293,6 +261,7 @@ class CppFileInject(CppFile):
         source_insert_line = self.get_source_insert_position(class_info, source_file_parser.namespaces)
 
         if source_insert_line == -1:
+            print("can't find namespace for %s,%s" % (class_info.name, class_info.namespace))
             # no in source,add implement in head
             for method in self.native_class.methods:
                 method.head_tpl_file = os.path.join(self.tpl_folder_path, "function_with_impl.h")
@@ -303,6 +272,11 @@ class CppFileInject(CppFile):
         head_lines.insert(class_end_line, head_str)
         # this is before the head declare
         head_lines.insert(class_end_line, "public:\n")
+
+        # insert include <string> to head
+        insert_include_pos = self.get_include_position(head_lines)
+        if insert_include_pos > -1:
+            head_lines.insert(insert_include_pos, "\n#include <string>\n")
 
         fp = open(self.head_file_path, "w+")
         fp.writelines(head_lines)
@@ -321,14 +295,20 @@ class CppFileInject(CppFile):
         head_lines = fp.readlines()
         fp.close()
 
-        class_define_line, class_end_line = self.get_head_class_define_position(head_lines)
-        if class_define_line == -1:
+        macros = None
+        if "macros" in self.config:
+            macros = self.config["macros"]
+        head_file_parser = CppHeadFileParser(macros)
+        head_file_parser.parse(head_lines)
+
+        if len(head_file_parser.classes) > 0:
+            # get first class
+            class_info = self.get_insert_class(head_file_parser.classes)
+            class_name = class_info.name
+            class_end_line = class_info.end_line
+            print("get class %s from %d to %d" % (class_info.name, class_info.start_line, class_info.end_line))
+        else:
             print("no class find ")
-            return
-        class_name = self.get_class_name(head_lines[class_define_line])
-        print("get class %s from %d to %d" % (class_name, class_define_line, class_end_line))
-        if not class_name:
-            print("can't get class name ")
             return
 
         self.native_class.class_name = class_name
@@ -342,6 +322,11 @@ class CppFileInject(CppFile):
         head_lines.insert(class_end_line, head_str)
         # this is before the head declare
         head_lines.insert(class_end_line, "public:\n")
+
+        # insert include <string> to head
+        insert_include_pos = self.get_include_position(head_lines)
+        if insert_include_pos > -1:
+            head_lines.insert(insert_include_pos, "\n#include <string>\n")
 
         fp = open(self.head_file_path, "w+")
         fp.writelines(head_lines)
@@ -376,6 +361,9 @@ class CppGarbageCode:
         return random.randint(min_value, max_value)
 
     def _get_xcode_project_file_path(self, project_dir):
+        if project_dir.find(".xcodeproj") > -1:
+            return project_dir
+
         files = os.listdir(project_dir)
         for filename in files:
             if filename.find(".xcodeproj") > -1:
@@ -518,11 +506,12 @@ class CppGarbageCode:
                     "generate_field": generate_field_count,
                     "generate_method": generate_method_count,
                     "max_parameter": parameter_count,
-                    "call_others": call_others
+                    "call_others": call_others,
+                    "macros": self.inject_config["macros"]
                 })
                 cpp_inject.prepare()
-                # cpp_inject.inject_code()
-                cpp_inject.inject_code_just_head()
+                cpp_inject.inject_code()
+                # cpp_inject.inject_code_just_head()
                 return True
             else:
                 print("===>cpp code inject source file or head file not exists of %s" % file_path_without_ext)
@@ -530,13 +519,14 @@ class CppGarbageCode:
             print("===>cpp code inject skip %s" % file_path)
         return False
 
-    def _inject_dir(self, folder_path, include_rules=None):
+    def _inject_dir(self, folder_path, rule=None):
         for file_name in os.listdir(folder_path):
             file_path = os.path.join(folder_path, file_name)
             if os.path.isdir(file_path):
-                self._inject_dir(file_path, include_rules)
+                self._inject_dir(file_path, rule)
             elif os.path.isfile(file_path):
-                if utils.in_rules(file_path, include_rules):
+                print("#Rule:%s=%s"%(file_path,str(rule.test(file_path))))
+                if not rule or rule.test(file_path):
                     self._inject_file(file_path)
 
     def inject_files(self, files, inject_config):
@@ -544,14 +534,20 @@ class CppGarbageCode:
         if "include" in self.inject_config:
             include_rules = self.inject_config["include"]
         else:
-            include_rules = "*.h"
+            include_rules = ["*.h"]
+
+        exclude_rules = None
+        if "exclude" in self.inject_config:
+            exclude_rules = self.inject_config["exclude"]
+
+        rule = utils.create_rules(include_rules, exclude_rules)
+
         self._inject_checked_files = {}
         self._injected_files = []
 
-        include_rules = utils.convert_rules(include_rules)
         for file_path in files:
             if os.path.isdir(file_path):
-                self._inject_dir(file_path, include_rules)
+                self._inject_dir(file_path, rule)
             elif os.path.isfile(file_path):
                 # config file force inject
                 self._inject_file(file_path, True)

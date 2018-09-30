@@ -77,6 +77,9 @@ class Repack:
         if not self.crypt_info.key:
             self.crypt_info.key = utils.generate_key()
 
+        if "xcode_project_name" not in conf_data:
+            conf_data["xcode_project_name"] = conf_data["target_name"] + ".xcodeproj"
+
         self._merge_environment(conf_data, "PROJECT")
 
     def run(self, config, steps):
@@ -406,17 +409,17 @@ def main():
     fp.close()
 
     # check step config
-    if "steps" in config_data:
+    if args.step_config:
+        scfp = open(args.step_config)
+        step_config = json.load(scfp)
+        scfp.close()
+        if "steps" in step_config:
+            step_config = step_config["steps"]
+
+    elif "steps" in config_data:
         step_config = config_data["steps"]
     else:
-        if args.step_config:
-            scfp = open(args.config_file)
-            step_config = json.load(scfp)
-            scfp.close()
-            if "steps" in step_config:
-                step_config = step_config["steps"]
-        else:
-            raise "no step config"
+        raise "no step config"
 
     if "projects" in config_data:
         for project_config in config_data["projects"]:

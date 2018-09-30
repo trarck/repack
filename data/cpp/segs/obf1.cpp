@@ -1,4 +1,5 @@
 
+/**	add by obf tools start */
 static std::string s_obfuscateKey = "abcd";
 
 void FileUtils::setObfuscateKey(const std::string & key)
@@ -144,3 +145,4 @@ std::string FileUtils::getObfuscatePath(const std::string& filepath,const std::s
 	
 	return getObfuscatePathCheckParent(filepath,searchPath);
 }
+/**	add by obf tools end */

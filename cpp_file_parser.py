@@ -23,7 +23,7 @@ class BracketInfo:
 
 
 class ClassInfo:
-    def __init__(self, class_name, namespace, start_line):
+    def __init__(self, class_name, namespace, start_line, parent_class=None):
         self.name = class_name
         self.namespace = namespace
         self.start_line = start_line
@@ -31,6 +31,7 @@ class ClassInfo:
         # self.fields = []
         # self.methods = []
         self.bracket_start = None
+        self.parent_class = parent_class
 
 
 class MethodInfo:
@@ -96,16 +97,33 @@ class CppFileParser:
             else:
                 return line_index, bracket_pos + 1
 
+    def _check_in_double_str(self, line, pos):
+
+        count = 0
+        for i in range(0, pos):
+            if line[i] == '"':
+                count += 1
+        if count % 2 == 1:
+            return True
+        else:
+            return False
+
     def _parse_comment(self, line, line_index, lines):
         if line.startswith("//"):
             return line_index, None
 
         pos = line.find("//")
         if pos > 0:
-            return line_index, line[:pos]
+            if self._check_in_double_str(line, pos):
+                return line_index, line
+            else:
+                return line_index, line[:pos]
 
         pos = line.find("/*")
         if pos > -1:
+            if self._check_in_double_str(line, pos):
+                return line_index, line
+
             # print("find comment %d" % line_index)
             if pos > 0:
                 new_line = line[:pos]
@@ -113,12 +131,15 @@ class CppFileParser:
                 new_line = None
 
             lines_count = len(lines)
-            while line_index < lines_count:
+            while True:
 
                 pos = line.find("*/")
 
                 # print("%s,%d:%d" % (line, line_index, pos))
                 if pos > -1:
+                    if self._check_in_double_str(line, pos):
+                        return line_index, line
+
                     # print("find comment end %d" % line_index)
                     # print("%d:%d" % (pos + 2, len(line) - 1))
                     if pos + 2 < len(line) - 1:
@@ -128,6 +149,10 @@ class CppFileParser:
                             new_line = line[pos:]
                     break
                 line_index += 1
+                if line_index >= lines_count:
+                    print("out index %d" % line_index)
+                    break
+
                 line = lines[line_index].strip()
 
             return line_index, new_line
@@ -140,20 +165,57 @@ class CppFileParser:
                 line = line.replace(k, v)
         return line
 
+    def _parse_precompile(self, line, line_index, lines):
+
+        if line.startswith("#else"):
+            # o_l = line_index
+            line_index += 1
+            if_wrap_count = 0
+
+            while line_index < len(lines):
+                line = lines[line_index].strip()
+
+                if line.startswith("#endif"):
+                    if if_wrap_count == 0:
+                        return line_index + 1, None
+                    else:
+                        if_wrap_count -= 1
+
+                elif line.startswith("#if"):
+                    if_wrap_count += 1
+
+                line_index += 1
+            # print("in precompile end for %d" % o_l)
+
+        return line_index, line
+
 
 class CppHeadFileParser(CppFileParser):
     def __init__(self, macros=None):
         CppFileParser.__init__(self, macros)
         self.classes = []
+        self.class_stack = []
         self.current_class = None
 
-    def _check_is_class_pre_declare(self, line, line_index, lines, pos):
+    def _check_is_class_define(self, line, line_index, lines, pos):
+
+        # enum class
+        if line.startswith("enum"):
+            return False
+
+        # in template define
+        if line[:pos].find("<") > -1:
+            return False
+
+        # predeclare
         pos = line.find(";", pos)
         if pos > -1:
-            return True
+            return False
+
+        # class define
         pos = line.find("{")
         if pos > -1:
-            return False
+            return True
 
         # check next line
         lines_count = len(lines)
@@ -161,12 +223,13 @@ class CppHeadFileParser(CppFileParser):
         while line_index < lines_count:
             line = lines[line_index].strip()
             if line:
-                if line.startswith(";"):
-                    return True
-                elif line.startswith("{"):
+                if line.find(";", pos) > -1:
                     return False
-                else:
-                    raise "get class error"
+                elif line.find("{", pos) > -1:
+                    return True
+
+            line_index += 1
+
         raise "get class error"
 
     def _parse_class(self, line, line_index, lines, pos=0):
@@ -176,9 +239,9 @@ class CppHeadFileParser(CppFileParser):
 
         class_pos = line.find("class", pos)
         class_pos += len("class")
-        if self._check_is_class_pre_declare(line, line_index, lines, class_pos):
+        if not self._check_is_class_define(line, line_index, lines, class_pos):
             # print("find class pre declare %d" % line_index)
-            return line_index + 1, 0
+            return line_index, 0
 
         # get class name
         class_define = None
@@ -196,16 +259,21 @@ class CppHeadFileParser(CppFileParser):
 
         segs = class_define.split(" ")
         class_name = segs[-1]
+        if class_name == "final":
+            class_name = segs[-2]
         print("find class name:%s" % class_name)
 
+        parent_class = None
         if self.current_class:
             print "===>inner class find .name %s" % class_name
-        else:
-            namespace_name = None
-            if self.current_namespace:
-                namespace_name = self.current_namespace.name
-            self.current_class = ClassInfo(class_name, namespace_name, line_index)
-            self.classes.append(self.current_class)
+            self.class_stack.append(self.current_class)
+            parent_class = self.current_class
+
+        namespace_name = None
+        if self.current_namespace:
+            namespace_name = self.current_namespace.name
+        self.current_class = ClassInfo(class_name, namespace_name, line_index, parent_class)
+        self.classes.append(self.current_class)
 
         if bracket_pos > -1:
             # create class bracket
@@ -227,52 +295,59 @@ class CppHeadFileParser(CppFileParser):
 
     def _parse_bracket(self, line, line_index, lines, pos=0):
 
-        bracket_begin_pos = line.find("{", pos)
-        if bracket_begin_pos > -1:
-            if self.current_namespace and self.current_namespace.bracket_start is None:
-                bracket_info = BracketInfo(line_index, bracket_begin_pos + 1, BracketInfo.Bracket_Namespace)
-                self.current_namespace.bracket_start = bracket_info
-            elif self.current_class and self.current_class.bracket_start is None:
-                bracket_info = BracketInfo(line_index, bracket_begin_pos + 1, BracketInfo.Bracket_Class)
-                self.current_class.bracket_start = bracket_info
-            else:
-                bracket_info = BracketInfo(line_index, bracket_begin_pos + 1, BracketInfo.Bracket_Other)
-
-            self.bracket_stack.append(bracket_info)
-
-            # print("bracket start %d,%d:%d" % (line_index, bracket_begin_pos, bracket_info.bracket_type))
-
-            if bracket_begin_pos == len(line) - 1:
-                return line_index + 1, 0
-            else:
-                return line_index, bracket_begin_pos + 1
-
-        bracket_end_pos = line.find("}", pos)
-        if bracket_end_pos > -1:
-            # print("bracket end %d,%d:%d" % (line_index, bracket_begin_pos, len(self.bracket_stack)))
-
-            bracket_info = self.bracket_stack.pop()
-            if bracket_info.bracket_type == BracketInfo.Bracket_Namespace:
-                if self.current_namespace:
-                    self.current_namespace.end_line = line_index
-                    if len(self.namespace_stack) > 0:
-                        self.current_namespace = self.namespace_stack.pop()
+        line_count = len(line)
+        in_double_str = False
+        in_single_str = False
+        for i in range(pos, line_count):
+            c = line[i]
+            if c == "{":
+                if not in_double_str and not in_double_str:
+                    if self.current_namespace and self.current_namespace.bracket_start is None:
+                        bracket_info = BracketInfo(line_index, i + 1, BracketInfo.Bracket_Namespace)
+                        self.current_namespace.bracket_start = bracket_info
+                    elif self.current_class and self.current_class.bracket_start is None:
+                        bracket_info = BracketInfo(line_index, i + 1, BracketInfo.Bracket_Class)
+                        self.current_class.bracket_start = bracket_info
                     else:
-                        self.current_namespace = None
-                else:
-                    print("===>err! namespace is close before. current line %d" % line_index)
+                        bracket_info = BracketInfo(line_index, i + 1, BracketInfo.Bracket_Other)
 
-            elif bracket_info.bracket_type == BracketInfo.Bracket_Class:
-                if self.current_class:
-                    self.current_class.end_line = line_index
-                    self.current_class = None
-                else:
-                    print("===>err! class is close before. current line %d" % line_index)
+                    self.bracket_stack.append(bracket_info)
 
-            if bracket_end_pos == len(line) - 1:
-                return line_index + 1, 0
-            else:
-                return line_index, bracket_end_pos + 1
+            elif c == "}":
+                if not in_double_str and not in_double_str:
+                    bracket_info = self.bracket_stack.pop()
+                    if bracket_info.bracket_type == BracketInfo.Bracket_Namespace:
+                        if self.current_namespace:
+                            self.current_namespace.end_line = line_index
+                            if len(self.namespace_stack) > 0:
+                                self.current_namespace = self.namespace_stack.pop()
+                            else:
+                                self.current_namespace = None
+                        else:
+                            print("===>err! namespace is close before. current line %d" % line_index)
+
+                    elif bracket_info.bracket_type == BracketInfo.Bracket_Class:
+                        if self.current_class:
+                            self.current_class.end_line = line_index
+                            if len(self.class_stack) > 0:
+                                self.current_class = self.class_stack.pop()
+                            else:
+                                self.current_class = None
+                        else:
+                            print("===>err! class is close before. current line %d" % line_index)
+
+            elif c == '"':
+                if in_double_str:
+                    in_double_str = False
+                else:
+                    # print("In double sting %d" % line_index)
+                    in_double_str = True
+            elif c == "'":
+                if in_single_str:
+                    in_single_str = False
+                else:
+                    # print("In single sting %d" % line_index)
+                    in_single_str = True
 
         return line_index + 1, 0
 
@@ -290,12 +365,15 @@ class CppHeadFileParser(CppFileParser):
 
                 if line:
                     line = self._parse_macro(line)
-                    next_line_index, col = self._parse_namespace(line, line_index, lines, col)
-                    if next_line_index == line_index:
-                        next_line_index, col = self._parse_class(line, line_index, lines, col)
 
+                    next_line_index, line = self._parse_precompile(line, line_index, lines)
+                    if next_line_index == line_index:
+                        next_line_index, col = self._parse_namespace(line, line_index, lines, col)
                         if next_line_index == line_index:
-                            next_line_index, col = self._parse_bracket(line, line_index, lines, col)
+                            next_line_index, col = self._parse_class(line, line_index, lines, col)
+
+                            if next_line_index == line_index:
+                                next_line_index, col = self._parse_bracket(line, line_index, lines, col)
 
                     line_index = next_line_index
                 else:
@@ -320,6 +398,9 @@ class CppSourceFileParser(CppFileParser):
         if pos > -1:
             return False
 
+        if re.match(r'(if|for|while)\s*\(', line):
+            return False
+
         lines_count = len(lines)
         line_index += 1
         while line_index < lines_count:
@@ -339,6 +420,9 @@ class CppSourceFileParser(CppFileParser):
                     if pos > -1:
                         return False
 
+                    if re.match(r'(if|for|while)\s*\(', line):
+                        return False
+
             line_index += 1
 
     def _parse_method(self, line, line_index, lines, pos=0):
@@ -347,15 +431,16 @@ class CppSourceFileParser(CppFileParser):
         if not m:
             return line_index, pos
 
-        class_pos = line.find("class", pos)
-        class_pos += len("class")
-        if not self._check_is_function_define(line, line_index, lines, class_pos):
+        class_name = re.split("\s", m.group(1))[-1]
+        method_name = m.group(2)
+
+        method_pos = line.find(class_name + "::" + method_name, pos)
+        if not self._check_is_function_define(line, line_index, lines, method_pos):
             # print("find function call %d" % line_index)
             return line_index + 1, 0
 
         # get class name
-        class_name = m.group(1)
-        method_name = m.group(2)
+
         # print("find method name:%s::%s" % (class_name, method_name))
 
         if self.current_method:
@@ -364,7 +449,7 @@ class CppSourceFileParser(CppFileParser):
             self.current_method = MethodInfo(method_name, class_name, line_index)
             self.methods.append(self.current_method)
 
-        bracket_pos = line.find("{", class_pos)
+        bracket_pos = line.find("{", method_pos)
         if bracket_pos > -1:
             # create class bracket
             bracket_info = BracketInfo(line_index, bracket_pos + 1, BracketInfo.Bracket_Class)
@@ -385,52 +470,58 @@ class CppSourceFileParser(CppFileParser):
 
     def _parse_bracket(self, line, line_index, lines, pos=0):
 
-        bracket_begin_pos = line.find("{", pos)
-        if bracket_begin_pos > -1:
-            if self.current_namespace and self.current_namespace.bracket_start is None:
-                bracket_info = BracketInfo(line_index, bracket_begin_pos + 1, BracketInfo.Bracket_Namespace)
-                self.current_namespace.bracket_start = bracket_info
-            elif self.current_method and self.current_method.bracket_start is None:
-                bracket_info = BracketInfo(line_index, bracket_begin_pos + 1, BracketInfo.Bracket_Method)
-                self.current_method.bracket_start = bracket_info
-            else:
-                bracket_info = BracketInfo(line_index, bracket_begin_pos + 1, BracketInfo.Bracket_Other)
-
-            self.bracket_stack.append(bracket_info)
-
-            # print("bracket start %d,%d:%d" % (line_index, bracket_begin_pos, bracket_info.bracket_type))
-
-            if bracket_begin_pos == len(line) - 1:
-                return line_index + 1, 0
-            else:
-                return line_index, bracket_begin_pos + 1
-
-        bracket_end_pos = line.find("}", pos)
-        if bracket_end_pos > -1:
-            # print("bracket end %d,%d:%d" % (line_index, bracket_begin_pos, len(self.bracket_stack)))
-
-            bracket_info = self.bracket_stack.pop()
-            if bracket_info.bracket_type == BracketInfo.Bracket_Namespace:
-                if self.current_namespace:
-                    self.current_namespace.end_line = line_index
-                    if len(self.namespace_stack) > 0:
-                        self.current_namespace = self.namespace_stack.pop()
+        line_count = len(line)
+        in_double_str = False
+        in_single_str = False
+        for i in range(pos, line_count):
+            c = line[i]
+            if c == "{":
+                if not in_double_str and not in_single_str:
+                    if self.current_namespace and self.current_namespace.bracket_start is None:
+                        bracket_info = BracketInfo(line_index, i + 1, BracketInfo.Bracket_Namespace)
+                        self.current_namespace.bracket_start = bracket_info
+                    elif self.current_method and self.current_method.bracket_start is None:
+                        bracket_info = BracketInfo(line_index, i + 1, BracketInfo.Bracket_Method)
+                        self.current_method.bracket_start = bracket_info
                     else:
-                        self.current_namespace = None
-                else:
-                    print("===>err! namespace is close before. current line %d" % line_index)
+                        bracket_info = BracketInfo(line_index, i + 1, BracketInfo.Bracket_Other)
 
-            elif bracket_info.bracket_type == BracketInfo.Bracket_Method:
-                if self.current_method:
-                    self.current_method.end_line = line_index
-                    self.current_method = None
-                else:
-                    print("===>err! class is close before. current line %d" % line_index)
+                    self.bracket_stack.append(bracket_info)
 
-            if bracket_end_pos == len(line) - 1:
-                return line_index + 1, 0
-            else:
-                return line_index, bracket_end_pos + 1
+            elif c == "}":
+                if not in_double_str and not in_single_str:
+                    bracket_info = self.bracket_stack.pop()
+                    if bracket_info.bracket_type == BracketInfo.Bracket_Namespace:
+                        if self.current_namespace:
+                            self.current_namespace.end_line = line_index
+                            if len(self.namespace_stack) > 0:
+                                self.current_namespace = self.namespace_stack.pop()
+                            else:
+                                self.current_namespace = None
+                        else:
+                            print("===>err! namespace is close before. current line %d" % line_index)
+
+                    elif bracket_info.bracket_type == BracketInfo.Bracket_Method:
+                        if self.current_method:
+                            self.current_method.end_line = line_index
+                            self.current_method = None
+                        else:
+                            print("===>err! class is close before. current line %d" % line_index)
+
+            elif c == '"':
+                if in_double_str:
+                    in_double_str = False
+                else:
+                    # print("In double sting %d" % line_index)
+                    in_double_str = True
+
+            elif c == "'":
+
+                if in_single_str:
+                    in_single_str = False
+                else:
+                    # print("In single sting %d" % line_index)
+                    in_single_str = True
 
         return line_index + 1, 0
 
@@ -448,12 +539,14 @@ class CppSourceFileParser(CppFileParser):
 
                 if line:
                     line = self._parse_macro(line)
-                    next_line_index, col = self._parse_namespace(line, line_index, lines, col)
+                    next_line_index, line = self._parse_precompile(line, line_index, lines)
                     if next_line_index == line_index:
-                        next_line_index, col = self._parse_method(line, line_index, lines, col)
-
+                        next_line_index, col = self._parse_namespace(line, line_index, lines, col)
                         if next_line_index == line_index:
-                            next_line_index, col = self._parse_bracket(line, line_index, lines, col)
+                            next_line_index, col = self._parse_method(line, line_index, lines, col)
+
+                            if next_line_index == line_index:
+                                next_line_index, col = self._parse_bracket(line, line_index, lines, col)
 
                     line_index = next_line_index
                 else:

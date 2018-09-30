@@ -14,8 +14,8 @@ from cpp_garbage_code import CppFile, CppFileInject, NativeFunction, NativeType,
 # print(call_str)
 
 cf = CppFileInject({
-    "head_file": "../data/temp/cpp/CCRef.h",
-    "source_file": "../data/temp/cpp/CCRef.cpp",
+    "head_file": "../data/temp/cpp/CCActionGrid.h",
+    "source_file": "../data/temp/cpp/CCActionGrid.cpp",
     "tpl_folder": "../data/template/cpp",
     "namespace": "my",
     "generate_field": 2,
