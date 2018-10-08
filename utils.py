@@ -34,6 +34,8 @@ def create_rules(include_rules, exclude_rules):
         for r in include_rules:
             rules.append(RegexpMatchRule(r))
         include_rule = AnyRule(rules)
+    else:
+        include_rule = None
 
     if exclude_rules:
         exclude_rules = convert_rules(exclude_rules)
@@ -41,7 +43,9 @@ def create_rules(include_rules, exclude_rules):
         for r in exclude_rules:
             rules.append(RegexpMatchRule(r))
         exclude_rule = NotRule(AnyRule(rules))
-
+    else:
+        exclude_rule = None
+    
     if include_rule and exclude_rule:
         root_rule = AndRule(include_rule, exclude_rule)
     elif include_rule:

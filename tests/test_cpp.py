@@ -1,4 +1,6 @@
 import re
+import utils
+
 from cpp_garbage_code import CppFile, CppFileInject, NativeFunction, NativeType, CppGarbageCode
 
 # cf=CppFile({
@@ -25,6 +27,11 @@ cf = CppFileInject({
     "macros": {
         "NS_CC_BEGIN": "namespace cocos2d {",
         "NS_CC_END": "}"
+    },
+    "inject_method": {
+        "probability": 100,
+        "class_rule": utils.create_rules(None, ["*DeccelAmplitude"]),
+        "method_rule": utils.create_rules(None, ["update"])
     }
 })
 cf.prepare()

@@ -584,6 +584,5 @@ class CppSourceFileParser(CppFileParser):
                     positions.append(line_index)
             else:
                 line_index += 1
-        print("method:%s" % method_info.name)
-        print(positions)
+
         return positions
