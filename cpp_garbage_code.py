@@ -60,6 +60,15 @@ class CppFile:
             return "\"%s\"" % utils.generate_string()
 
     @staticmethod
+    def get_random_value(type_name):
+        if type_name == "int" or type_name == "long long":
+            return utils.generate_int()
+        elif type_name == "float" or type_name == "double":
+            return utils.generate_float()
+        else:
+            return utils.generate_string()
+
+    @staticmethod
     def generate_field(tpl_folder_path):
         field_name = utils.generate_name()
         field_type = NativeType(CppFile.generate_type())
@@ -218,7 +227,7 @@ class CppFileInject(CppFile):
             if line.startswith("#ifndef"):
                 head_id_macro = line[len("#ifndef"):].strip()
             elif line.startswith("#define") and head_id_macro == line[len("#define"):].strip():
-                return i+1
+                return i + 1
         return -1
 
     '''
@@ -282,12 +291,48 @@ class CppFileInject(CppFile):
         fp.writelines(head_lines)
         fp.close()
 
+        # inject code to method
+        #  check method inject position
+        inserts = {}
+        if "inject_method_min_val" in self.config:
+            min_val = self.config["inject_method_min_val"]
+        else:
+            min_val = 1
+
+        if "inject_method_max_val" in self.config:
+            max_val = self.config["inject_method_max_val"]
+        else:
+            max_val = 5
+
+        for method_info in source_file_parser.methods:
+            enable_positions = source_file_parser.get_method_inject_positions(method_info, source_lines)
+            if enable_positions and len(enable_positions):
+                pos = enable_positions[random.randrange(0, len(enable_positions))]
+
+                vals = []
+                val_count = random.randint(min_val, max_val)
+                for i in range(val_count):
+                    val_type = CppFile.generate_type()
+                    vals.append(CppFile.get_random_value(val_type))
+
+                code_tpl = Template(file=os.path.join(self.tpl_folder_path, "code_print.cpp"),
+                                    searchList=[{"line_index": pos, "vals": vals, "tag": utils.generate_string()}])
+                inserts[pos] = str(code_tpl)
+
         # insert source
         if source_insert_line > -1:
-            source_lines.insert(source_insert_line, source_str)
-            fp = open(self.source_file_path, "w+")
-            fp.writelines(source_lines)
-            fp.close()
+            inserts[pos] = source_str
+
+        insert_positions = inserts.keys()
+        print(inserts)
+        insert_positions.sort(reverse=True)
+        print(insert_positions)
+        for pos in insert_positions:
+            source_lines.insert(pos, inserts[pos])
+
+        fp = open(self.source_file_path, "w+")
+        fp.writelines(source_lines)
+        fp.close()
 
     def inject_code_just_head(self):
         # check class info
@@ -525,7 +570,7 @@ class CppGarbageCode:
             if os.path.isdir(file_path):
                 self._inject_dir(file_path, rule)
             elif os.path.isfile(file_path):
-                print("#Rule:%s=%s"%(file_path,str(rule.test(file_path))))
+                print("#Rule:%s=%s" % (file_path, str(rule.test(file_path))))
                 if not rule or rule.test(file_path):
                     self._inject_file(file_path)
 

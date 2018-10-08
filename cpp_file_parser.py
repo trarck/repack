@@ -189,6 +189,20 @@ class CppFileParser:
 
         return line_index, line
 
+    def _parse_line(self, line_index, lines):
+
+        line = lines[line_index].strip()
+
+        if line:
+            line_index, line = self._parse_comment(line, line_index, lines)
+
+            if line:
+                line = self._parse_macro(line)
+
+                line_index, line = self._parse_precompile(line, line_index, lines)
+
+        return line_index, line
+
 
 class CppHeadFileParser(CppFileParser):
     def __init__(self, macros=None):
@@ -553,3 +567,23 @@ class CppSourceFileParser(CppFileParser):
                     line_index += 1
             else:
                 line_index += 1
+
+    def get_method_inject_positions(self, method_info, lines):
+        positions = []
+        sign = 0
+        for line_index in range(method_info.start_line, method_info.end_line):
+            line_index, line = self._parse_line(line_index, lines)
+            if line:
+                if line.endswith(";"):
+                    sign += 1
+                else:
+                    sign = 0
+
+                if sign >= 2:
+                    sign = 0
+                    positions.append(line_index)
+            else:
+                line_index += 1
+        print("method:%s" % method_info.name)
+        print(positions)
+        return positions
