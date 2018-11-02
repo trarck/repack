@@ -50,19 +50,19 @@ class IosProject:
             return build_configuration.buildSettings.INFOPLIST_FILE
         return None
 
-    def rename_xcode_project(self, project_file_name):
+    def rename_xcode_project(self, new_project_file_name):
         if not self.project_file_path:
             raise "Can't find xocde project in " % self.project_root
 
-        if project_file_name.find(".xcodeproj") == -1:
-            project_file_name += ".xcodeproj"
+        if new_project_file_name.find(".xcodeproj") == -1:
+            new_project_file_name += ".xcodeproj"
 
-        if os.path.basename(self.project_file_path) == project_file_name:
+        if os.path.basename(self.project_file_path) == new_project_file_name:
             # the project_file is same as old
             return self.project_file_path
 
         # rename project_file to new
-        new_project_file_path = os.path.join(self.project_root, project_file_name)
+        new_project_file_path = os.path.join(self.project_root, new_project_file_name)
         print("===>rename project file %s to %s" % (self.project_file_path, new_project_file_path))
         if os.path.exists(new_project_file_path):
             shutil.rmtree(new_project_file_path)
@@ -104,10 +104,10 @@ class IosProject:
             root_obj['CFBundleDisplayName'] = display_name
             plistlib.writePlist(root_obj, os.path.join(self.project_root, info_plist_file_path))
 
-    def rename(self, target_name, package_id, display_name, project_file_name=None, product_name=None):
-        if not project_file_name:
-            project_file_name = target_name
-        xcode_project_file_path = self.rename_xcode_project(project_file_name)
+    def rename(self, target_name, package_id, display_name, new_project_file_name=None, product_name=None):
+        if not new_project_file_name:
+            new_project_file_name = target_name
+        xcode_project_file_path = self.rename_xcode_project(new_project_file_name)
 
         # open pbx project
         pbx_proj_file_path = os.path.join(xcode_project_file_path, "project.pbxproj")
