@@ -1,9 +1,4 @@
-import os
-import shutil
-import random
-import utils
+from pbxproj import XcodeProject, PBXProvioningTypes
 
-print("%s%s%s"%("aaa",intern()))
-
-
-print(utils.generate_name())
+pbx_project = XcodeProject.load("../data/Unity-iPhone.xcodeproj/project.pbxproj")
+pbx_project.save()
