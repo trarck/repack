@@ -57,7 +57,12 @@ from rules import *
 # print(all_rule.test(4))
 # print(all_rule.test(7))
 
-rule=utils.create_rules(["*.h"],["*CCRef.h","*HttpClient.h","*CCUserDefault.h","*/math/*","*/allocator/*"])
-print(rule.test("tt.h"))
-print(rule.test("tt.c"))
-print(rule.test("tt/CCRef.cpp"))
+# rule=utils.create_rules(["*.h"],["*CCRef.h","*HttpClient.h","*CCUserDefault.h","*/math/*","*/allocator/*"])
+# print(rule.test("tt.h"))
+# print(rule.test("tt.c"))
+# print(rule.test("tt/CCRef.cpp"))
+
+line="(void)willRotateToOrientation"
+t=re.search(r'\s*\(.*\)\s*(.*)', line)
+print(t)
+print (t.groups())
