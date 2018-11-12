@@ -45,7 +45,7 @@ def create_rules(include_rules, exclude_rules):
         exclude_rule = NotRule(AnyRule(rules))
     else:
         exclude_rule = None
-    
+
     if include_rule and exclude_rule:
         root_rule = AndRule(include_rule, exclude_rule)
     elif include_rule:
@@ -152,6 +152,11 @@ def generate_name(min_length=6, max_length=64):
 def generate_name_first_upper(min_length=6, max_length=64):
     name = generate_name(min_length, max_length)
     return name[0].upper() + name[1:]
+
+
+def generate_name_first_lower(min_length=6, max_length=64):
+    name = generate_name(min_length, max_length)
+    return name[0].lower() + name[1:]
 
 
 def pad(size):

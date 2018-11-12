@@ -2,7 +2,6 @@
 import os
 import random
 
-from pbxproj import XcodeProject
 from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from objc_file_parser import *
@@ -10,8 +9,28 @@ import utils
 
 objc_types = ["NSInteger", "CGFloat", "NSString*"]
 objc_types_length = len(objc_types)
-objc_method_parameter_prevs=["with","did","open","can"]
-objc_method_parameter_prevs_length=len(objc_method_parameter_prevs)
+objc_method_parameter_prevs = ["with", "did", "open", "can"]
+objc_method_parameter_prevs_length = len(objc_method_parameter_prevs)
+
+name_prev_words = ["All", "One", "Dynamic", "Static"]
+name_prev_words_lenth = len(name_prev_words)
+name_main_words = ["User", "Account", "Update", "Card", "Deck", "Npc", "Unit", "Controller", "Manager", "System",
+                   "Data", "Output", "Input"]
+name_main_words_lenth = len(name_main_words)
+
+field_prev_words = ["input", "output", "blue", "red", "green"]
+field_prev_words_lenth = len(field_prev_words)
+field_main_words = ["Size", "Color", "Range", "Radius", "Scale", "Center", "Width", "Height", "Framebuffer", "Duration",
+                    "Average", "Processing", "Finished", "Block", "Options"]
+field_main_words_lenth = len(field_main_words)
+
+function_prev_words = ["with", "did", "check", "change", "set", "init", "initWith"]
+function_prev_words_lenth = len(function_prev_words)
+function_main_words = ["Size", "Color", "Range", "Radius", "Scale", "Center", "Width", "Height", "Framebuffer",
+                       "Duration",
+                       "Average", "Processing", "Finished", "Block", "Options", "With", "And"]
+function_main_words_lenth = len(function_main_words)
+
 
 class ObjCFile:
     def __init__(self, config):
@@ -45,9 +64,66 @@ class ObjCFile:
         self.head_fp = None
         self.source_fp = None
 
-        self.headers=[]
-        self.h_headers=[]
-        self.m_headers=[]
+        self.headers = []
+        self.h_headers = []
+        self.m_headers = []
+
+    @staticmethod
+    def generate_rule_name(random_prev_length=3, random_end_length=3, max_word=5, prev_probability=10):
+        name = utils.generate_name_first_upper(random_prev_length, random_prev_length)
+        if random.randint(0, 100) < prev_probability:
+            name += name_prev_words[random.randint(0, name_prev_words_lenth - 1)]
+
+        word_count = random.randint(1, max_word)
+        for _ in range(word_count):
+            name += name_main_words[random.randint(0, name_main_words_lenth - 1)]
+
+        name += utils.generate_name_first_upper(random_end_length, random_end_length)
+        return name
+
+    @staticmethod
+    def generate_field_name(random_prev_length=3, random_end_length=3, max_word=5, prev_probability=10,
+                            auto_add_prev_probability=20):
+        name = ""
+        if random.randint(0, 100) < prev_probability:
+            name += field_prev_words[random.randint(0, field_prev_words_lenth - 1)]
+        elif random_prev_length > 0 and random.randint(0, 100) < auto_add_prev_probability:
+            name += utils.generate_name_first_lower(random_prev_length, random_prev_length)
+
+        word_count = random.randint(1, max_word)
+        indexs = range(field_main_words_lenth)
+
+        for i in range(word_count):
+            indx = random.randint(0, field_main_words_lenth - 1 - i)
+            name += field_main_words[indx]
+            indexs[indx] = indexs[-i - i]
+
+        if random_end_length > 0:
+            name += utils.generate_name_first_upper(random_end_length, random_end_length)
+
+        return name[0].lower() + name[1:]
+
+    @staticmethod
+    def generate_function_name(random_prev_length=3, random_end_length=3, max_word=5, prev_probability=10,
+                               auto_add_prev_probability=80):
+        name = ""
+        if random.randint(0, 100) < prev_probability:
+            name += function_prev_words[random.randint(0, function_prev_words_lenth - 1)]
+        elif random_prev_length > 0 and random.randint(0, 100) < auto_add_prev_probability:
+            name += utils.generate_name_first_lower(random_prev_length, random_prev_length)
+
+        word_count = random.randint(1, max_word)
+
+        indexs = range(function_main_words_lenth)
+
+        for i in range(word_count):
+            indx = random.randint(0, function_main_words_lenth - 1 - i)
+            name += function_main_words[indexs[indx]]
+            indexs[indx] = indexs[-1 - i]
+
+        if random_end_length > 0:
+            name += utils.generate_name_first_upper(random_end_length, random_end_length)
+        return name[0].lower() + name[1:]
 
     @staticmethod
     def generate_type():
@@ -55,9 +131,9 @@ class ObjCFile:
 
     @staticmethod
     def generate_value(type_name):
-        if type_name=="NSInteger" or  type_name == "int" or type_name == "long long":
+        if type_name == "NSInteger" or type_name == "int" or type_name == "long long":
             return str(utils.generate_int())
-        elif type_name=="CGFloat" or type_name == "float" or type_name == "double":
+        elif type_name == "CGFloat" or type_name == "float" or type_name == "double":
             return str(utils.generate_float()) + "f"
         else:
             return "@\"%s\"" % utils.generate_string()
@@ -73,7 +149,7 @@ class ObjCFile:
 
     @staticmethod
     def generate_field(tpl_folder_path):
-        field_name = utils.generate_name()
+        field_name = ObjCFile.generate_field_name(2, 3)
         field_type = NativeType(ObjCFile.generate_type())
         head_tpl_file = os.path.join(tpl_folder_path, "field.h")
         source_tpl_file = os.path.join(tpl_folder_path, "field.mm")
@@ -81,13 +157,13 @@ class ObjCFile:
 
     @staticmethod
     def generate_parameter():
-        param_name = utils.generate_name()
+        param_name = ObjCFile.generate_function_name(0, 0)
         param_type = NativeType(ObjCFile.generate_type())
         return NativeParameter(param_name, param_type)
 
     @staticmethod
     def generate_function(tpl_folder_path, max_parameter_count=0):
-        method_name = utils.generate_name()
+        method_name = ObjCFile.generate_function_name(0, 2,3,50)
         parameters = []
         if max_parameter_count > 0:
             parameter_count = random.randint(0, max_parameter_count)
@@ -106,7 +182,7 @@ class ObjCFile:
     def prepare(self):
         # check class name
         if not self.class_name:
-            self.class_name = utils.generate_name(8, 32)
+            self.class_name = ObjCFile.generate_rule_name(3, 2)
             self.class_name = self.class_name[0].upper() + self.class_name[1:]
 
         # gen fields
