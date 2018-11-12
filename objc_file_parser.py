@@ -124,7 +124,7 @@ class ObjCFileParser:
         return line_index, line
 
 
-class OjbCHeadFileParser(ObjCFileParser):
+class ObjCHeadFileParser(ObjCFileParser):
     def __init__(self, macros=None):
         ObjCFileParser.__init__(self, macros)
         self.classes = []
