@@ -95,8 +95,8 @@ class ObjCFile:
 
         for i in range(word_count):
             indx = random.randint(0, field_main_words_lenth - 1 - i)
-            name += field_main_words[indx]
-            indexs[indx] = indexs[-i - i]
+            name += field_main_words[indexs[indx]]
+            indexs[indx] = indexs[-1 - i]
 
         if random_end_length > 0:
             name += utils.generate_name_first_upper(random_end_length, random_end_length)
