@@ -160,6 +160,7 @@ class IosProject:
             pbx_project.save()
 
     def add_file(self, file_path, parent):
-        pbx_project = XcodeProject.load(self.project_file_path)
+        pbx_project = XcodeProject.load(os.path.join(self.project_file_path, "project.pbxproj"))
+        parent = pbx_project.get_groups_by_name(parent)[0]
         pbx_project.add_file(file_path, parent)
         pbx_project.save()
