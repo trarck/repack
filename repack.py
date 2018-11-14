@@ -13,6 +13,7 @@ from project import IosProject
 from source_file import SourceFile
 from file_crypt import FileCrypt
 from cpp_garbage_code import CppGarbageCode
+from resource_garbage import ResourceGarbage
 import utils
 
 reload(sys)
@@ -336,6 +337,14 @@ class Repack:
 
         cpp_code = CppGarbageCode(tpl_folder_path)
         cpp_code.inject_files(checked_files, config)
+
+    def generate_files(self, config):
+        out_folder_path = self.translate_string(config["out_dir"])
+        if not os.path.isabs(out_folder_path):
+            out_folder_path = os.path.join(self.project_root_path, out_folder_path)
+
+        rg = ResourceGarbage(out_folder_path, config)
+        rg.generate_files()
 
 
 def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config):
