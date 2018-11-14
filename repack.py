@@ -224,6 +224,17 @@ class Repack:
         ios_project.set_code_sign(code_sign_identity, provisioning_profile, development_team, provisioning_profile_uuid,
                                   code_sign_entitlements)
 
+    def xcode_add_file(self, config):
+        xcode_project_path = self.translate_string(config["xcode_project_path"])
+        if not os.path.isabs(xcode_project_path):
+            xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
+
+        file_path = self.translate_string(config["file_path"])
+        parent = self.translate_string(config["parent"])
+
+        ios_project = IosProject(xcode_project_path)
+        ios_project.add_file(file_path, parent)
+
     def crypt_files(self, config):
         from_dir = self.translate_string(config["from"])
         if not os.path.isabs(from_dir):

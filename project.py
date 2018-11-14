@@ -158,3 +158,8 @@ class IosProject:
                 pbx_project.objects[pbx_project.rootObject].set_provisioning_style(PBXProvioningTypes.MANUAL, target)
 
             pbx_project.save()
+
+    def add_file(self, file_path, parent):
+        pbx_project = XcodeProject.load(self.project_file_path)
+        pbx_project.add_file(file_path, parent)
+        pbx_project.save()
