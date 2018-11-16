@@ -2,6 +2,7 @@
 import os
 import random
 
+from pbxproj import XcodeProject
 from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from objc_file_parser import *
@@ -586,3 +587,138 @@ class ObjCFileInject(ObjCFile):
             fp = open(self.source_file_path, "w+")
             fp.writelines(source_lines)
             fp.close()
+
+class ObjCGarbageCode:
+    def __init__(self, tpl_folder_path):
+        self.tpl_folder_path = tpl_folder_path.encode("utf-8")
+        self.generate_config = None
+        self.inject_config = None
+        self._inject_checked_files = None
+        self._injected_files = None
+
+    def _parse_range_count(self, name, config, default_min=1):
+        if name in config:
+            return config[name]
+
+        max_key = "max_" + name
+        min_key = "min_" + name
+
+        if max_key in config:
+            max_value = config[max_key]
+
+        if min_key in config:
+            min_value = config[min_key]
+        else:
+            min_value = default_min
+
+        if min_value > max_value:
+            max_value = min_value
+        return random.randint(min_value, max_value)
+
+    def _get_xcode_project_file_path(self, project_dir):
+        if project_dir.find(".xcodeproj") > -1:
+            return project_dir
+
+        files = os.listdir(project_dir)
+        for filename in files:
+            if filename.find(".xcodeproj") > -1:
+                return os.path.join(project_dir, filename)
+        return None
+
+    def generate_cpp_file(self, out_folder_path, xcode_project_path, exec_code_file_path, generate_config):
+        self.generate_config = generate_config
+
+        gen_file_count = self._parse_range_count("generate_file_count", generate_config, 6)
+        generate_field_count = self._parse_range_count("generate_field_count", generate_config)
+        generate_method_count = self._parse_range_count("generate_method_count", generate_config)
+        parameter_count = self._parse_range_count("parameter_count", generate_config)
+
+        if not os.path.exists(out_folder_path):
+            os.makedirs(out_folder_path)
+
+        if "group_name" in self.generate_config:
+            group_name = self.generate_config["group_name"]
+        else:
+            group_name = utils.generate_string(6, 10)
+
+        call_others = True
+        if "call_others" in self.generate_config:
+            call_others = self.generate_config["call_others"]
+
+        generated_files = []
+        generated_head_files = []
+
+        namespace = utils.generate_name(5, 8).lower()
+
+        call_generate_codes = []
+
+        class_index = 1
+        for i in range(gen_file_count):
+            class_name = utils.generate_name_first_upper(8, 16)
+            head_file_name = os.path.join(out_folder_path, class_name + ".h")
+            source_file_name = os.path.join(out_folder_path, class_name + ".mm")
+            generated_files.append(head_file_name)
+            generated_files.append(source_file_name)
+            generated_head_files.append(class_name + ".h")
+
+            generator = ObjCFile({
+                "head_file": head_file_name,
+                "source_file": source_file_name,
+                "tpl_folder": self.tpl_folder_path,
+                "class_name": class_name,
+                "generate_field": generate_field_count,
+                "generate_method": generate_method_count,
+                "max_parameter": parameter_count,
+                "call_others": call_others
+            })
+            generator.prepare()
+            generator.generate_code()
+            call_generate_func = generator.get_class_execute_chain(class_index)
+            call_generate_codes.append(call_generate_func)
+            class_index += 1
+
+        # generate call generated code prevent delete by link optimization
+        exec_once_tpl = Template(file=os.path.join(self.tpl_folder_path, "exec_code_once.mm"),
+                                 searchList=[{"code": "".join(call_generate_codes)}])
+        exec_once = str(exec_once_tpl)
+
+        if "generate_executor" in generate_config and generate_config["generate_executor"]:
+            print("generate a executor")
+        else:
+            print("insert into execute file")
+            include_heads = "\n"
+            for head_file in generated_head_files:
+                include_heads += "#include \"%s\"\n" % head_file
+
+        # create action execute in repack
+        insert_head_action = {
+            "operation": "insert",
+            "file_path": exec_code_file_path,
+            "keys": generate_config["include_insert_keys"],
+            "words": include_heads
+        }
+        insert_code_action = {
+            "operation": "insert",
+            "file_path": exec_code_file_path,
+            "keys": generate_config["code_insert_keys"],
+            "words": exec_once
+        }
+        modify_exec_code_actions = {
+            "name": "modify_files",
+            "files": [insert_head_action, insert_code_action]
+        }
+
+        # add generated files to xcode project
+
+        pbx_proj_file_path = os.path.join(self._get_xcode_project_file_path(xcode_project_path), "project.pbxproj")
+        pbx_project = XcodeProject.load(pbx_proj_file_path)
+        # add out dir to head search path
+        pbx_project.add_header_search_paths(out_folder_path)
+        # add a group
+        group = pbx_project.add_group(group_name)
+        # add files
+        for file_path in generated_files:
+            pbx_project.add_file(file_path, group)
+        pbx_project.save()
+
+        return modify_exec_code_actions

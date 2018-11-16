@@ -1,0 +1,20 @@
+{
+    "project":
+    {
+        "name":"TestGame1",
+        "resource_path":"game1",
+        "project_path":"game1",
+        "need_copy":true,
+        "crypt":{
+            "key":"helloworld",
+            "type":"md5",
+            "with_ext":false
+        },
+        "xcode_project_path":"./",
+        "target_name":"TestGame1",
+        "package_id":"com.uuzu.testgame1",
+        "display_name":"Hello1",
+        "xxtea_key":"newkey",
+        "xxtea_sign":"XXTEAXX"
+    }
+}

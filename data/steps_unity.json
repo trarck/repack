@@ -1,0 +1,101 @@
+{
+    "steps":[
+        {
+            "name":"set xcode project",
+            "actions":[
+                {
+                    "name":"set_xcode_project",
+                    "xcode_project_path":"Unity-iPhone.xcodeproj",
+                    "package_id":"com.test.tt",
+                    "target_name":"test",
+                    "display_name":"test",
+                    "xcode_project_name":"test",
+                    "product_name":"test",
+                    "code_sign_identity":"",
+                    "provisioning_profile":"",
+                    "development_team":"",
+                    "provisioning_profile_uuid":"",
+                    "code_sign_entitlements":""
+                }
+            ]
+        },
+        {
+            "name":"generate c++ class",
+            "actions":[
+                {
+                    "name":"generate_code",
+                    "out_dir":"class/mycpp",
+                    "tpl_dir":"template/cpp",
+                    "xcode_project_path":"Unity-iPhone.xcodeproj",
+                    "max_generate_file_count":40,
+                    "min_generate_file_count":20,
+                    "generate_field_count":4,
+                    "generate_method_count":5,
+                    "parameter_count":3,
+                    "exec_code_file_path":"Classes/UnityAppController.mm",
+                    "include_insert_keys":["#include <sys/sysctl.h>"],
+                    "code_insert_keys":["UnityCleanup();"]
+                }
+            ]
+        },
+        {
+            "name":"inject c++ code",
+            "actions":[
+                {
+                    "name":"inject_code",
+                    "probability":20,
+                    "files":["Classes/Native"],
+                    "tpl_dir":"template/cpp",
+                    "generate_field_count":4,
+                    "generate_method_count":5,
+                    "parameter_count":3
+                }
+            ]
+        },
+        {
+            "name":"generate objc class",
+            "actions":[
+                {
+                    "name":"generate_objc_class",
+                    "out_dir":"class/myobjc",
+                    "tpl_dir":"template/objc",
+                    "xcode_project_path":"Unity-iPhone.xcodeproj",
+                    "max_generate_file_count":40,
+                    "min_generate_file_count":20,
+                    "generate_field_count":4,
+                    "generate_method_count":5,
+                    "parameter_count":3,
+                    "exec_code_file_path":"Classes/UnityAppController.mm",
+                    "include_insert_keys":["#include <sys/sysctl.h>"],
+                    "code_insert_keys":["UnityCleanup();"]
+                }
+            ]
+        },
+        {
+            "name":"build xcode",
+            "actions":[
+                {
+                    "name":"build_xcode_app",
+                    "xcode_project_path":"Unity-iPhone.xcodeproj"
+                    "target":"${PROJECT_TARGET_NAME}",
+                    "configuration":"Release",
+                    "sdk":"iphoneos",
+                    "out_put":"tt.ipa"
+                }
+            ]
+        },
+        {
+            "name":"build xcode",
+            "actions":[
+                {
+                    "name":"build_xcode_archive",
+                    "xcode_project_path":"Unity-iPhone.xcodeproj"
+                    "scheme":"Unity-iPhone",
+                    "configuration":"Release",
+                    "sdk":"iphoneos",
+                    "out_put":"tt.archive"
+                }
+            ]
+        }
+    ]
+}

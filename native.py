@@ -190,6 +190,6 @@ class NativeClass:
         return head_str, source_str
 
     def get_function_call_code(self, method, generator, index=1):
-        call_tpl = Template(file=os.path.join(generator.tpl_folder_path, "call_class_function.cpp"),
+        call_tpl = Template(file=os.path.join(generator.tpl_folder_path, "call_class_function"),
                             searchList=[{"method": method, "index": index}, self])
         return str(call_tpl)

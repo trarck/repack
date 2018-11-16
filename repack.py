@@ -14,6 +14,8 @@ from source_file import SourceFile
 from file_crypt import FileCrypt
 from cpp_garbage_code import CppGarbageCode
 from resource_garbage import ResourceGarbage
+from objc_garbage_code import ObjCGarbageCode
+
 import utils
 
 reload(sys)
@@ -235,6 +237,26 @@ class Repack:
         ios_project = IosProject(xcode_project_path)
         ios_project.add_file(file_path, parent)
 
+    def build_xcode_app(self,config):
+        xcode_project_path = self.translate_string(config["xcode_project_path"])
+        target = self.translate_string(config["target"])
+        configuration = self.translate_string(config["configuration"])
+        sdk = self.translate_string(config["sdk"])
+        out_put = self.translate_string(config["out_put"])
+
+
+        ios_project = IosProject(xcode_project_path)
+        ios_project.build_app(target,configuration,sdk,out_put)
+
+    def build_xcode_archive(self,config):
+        xcode_project_path = self.translate_string(config["xcode_project_path"])
+        scheme = self.translate_string(config["scheme"])
+        configuration = self.translate_string(config["configuration"])
+        out_put = self.translate_string(config["out_put"])
+
+        ios_project = IosProject(xcode_project_path)
+        ios_project.build_archive(scheme,configuration,out_put)
+
     def crypt_files(self, config):
         from_dir = self.translate_string(config["from"])
         if not os.path.isabs(from_dir):
@@ -357,6 +379,27 @@ class Repack:
         rg = ResourceGarbage(out_folder_path, config)
         rg.generate_files()
 
+    def generate_objc_class(self, config):
+        out_folder_path = self.translate_string(config["out_dir"])
+        if not os.path.isabs(out_folder_path):
+            out_folder_path = os.path.join(self.project_root_path, out_folder_path)
+
+        tpl_folder_path = self.translate_string(config["tpl_dir"])
+        if not os.path.isabs(tpl_folder_path):
+            tpl_folder_path = os.path.join(self.global_data_dir, tpl_folder_path)
+        tpl_folder_path = tpl_folder_path.encode("utf-8")
+
+        xcode_project_path = self.translate_string(config["xcode_project_path"])
+        if not os.path.isabs(xcode_project_path):
+            xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
+
+        exec_code_file_path = self.translate_string(config["exec_code_file_path"])
+        if not os.path.isabs(exec_code_file_path):
+            exec_code_file_path = os.path.join(self.project_root_path, exec_code_file_path)
+
+        objc_code = ObjCGarbageCode(tpl_folder_path)
+        action = objc_code.generate_cpp_file(out_folder_path, xcode_project_path, exec_code_file_path, config)
+        self.do_action(action)
 
 def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config):
     if "project_path" in project_config:

@@ -1,6 +1,7 @@
 import os
 import shutil
 import plistlib
+import subprocess
 
 from pbxproj import XcodeProject, PBXProvioningTypes
 
@@ -164,3 +165,32 @@ class IosProject:
         parent = pbx_project.get_groups_by_name(parent)[0]
         pbx_project.add_file(file_path, parent)
         pbx_project.save()
+
+    def build_app(self, target, configuration, sdk, out_put):
+        build_cmd = 'xcodebuild -project %s -target %s -sdk %s -configuration %s' % (
+        self.project_file_path, target, sdk, configuration)
+        process = subprocess.Popen(build_cmd, shell=True)
+        process.wait()
+
+        sign_app = "./build/%s-iphoneos/%s.app" % (configuration, target)
+        sign_cmd = "xcrun -sdk %s -v PackageApplication %s -o %s" % (sdk, sign_app, out_put)
+        process = subprocess.Popen(sign_cmd, shell=True)
+        process.communicate()
+
+    def build_archive(self, scheme, configuration, out_archive, out_app=None):
+        out_dir = os.path.dirname(out_archive)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+
+        print "archiveDir: " + out_archive
+        archive_cmd = 'xcodebuild archive -project %s -scheme %s -configuration %s -archivePath %s' % (
+            self.project_file_path, scheme, configuration, out_archive)
+        process = subprocess.Popen(archive_cmd, shell=True)
+        process.wait()
+
+        if out_app:
+            export_archive_cmd = 'xcodebuild -exportArchive -archivePath %s -exportPath %s -exportFormat IPA' % (
+                out_archive, out_app)
+            process = subprocess.Popen(export_archive_cmd, shell=True)
+
+        process.communicate()
