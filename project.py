@@ -36,9 +36,9 @@ class IosProject:
                     continue
                 for conf_id in configuration_list.buildConfigurations:
                     build_configuration = pbx_project.objects[conf_id]
-                    if build_configuration is None:
+                    if build_configuration is None or build_configuration.buildSettings is None:
                         continue
-                    if build_configuration.buildSettings.SDKROOT == "iphoneos":
+                    if "SDKROOT" in build_configuration.buildSettings and build_configuration.buildSettings.SDKROOT == "iphoneos":
                         return target
         return None
 
@@ -98,8 +98,8 @@ class IosProject:
         # get plist file
         print("===>set plist packgage_id=%s,display_name=%s" % (package_id, display_name))
         info_plist_file_path = self._get_ios_info_plist_file_path(pbx_project)
-        print("===>get info_plist_file_path %s" % os.path.join(self.project_root, info_plist_file_path))
         if info_plist_file_path:
+            print("===>get info_plist_file_path %s" % os.path.join(self.project_root, info_plist_file_path))
             root_obj = plistlib.readPlist(os.path.join(self.project_root, info_plist_file_path))
             root_obj['CFBundleIdentifier'] = package_id
             root_obj['CFBundleDisplayName'] = display_name
