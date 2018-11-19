@@ -32,7 +32,12 @@ class SourceFile:
             next_pos = pos + len(k)
         self.content = self.content[:pos] + words + self.content[pos:]
 
-    def replace(self, froms, tos, words):
+    def replace(self, olds, news):
+        for i in range(len(olds)):
+            print("replace %s to %s"%(olds[i],news[i]))
+            self.content=self.content.replace(olds[i], news[i])
+
+    def search_replace(self, froms, tos, words):
         from_pos = 0
         from path_crypt import PathCrypt
         # print(PathCrypt.byte_to_hex(self.content))
@@ -53,7 +58,7 @@ class SourceFile:
             find_next_pos = to_pos + len(k)
         self.content = self.content[:from_pos] + words + self.content[to_pos:]
 
-    def replace_after(self, froms, tos, words):
+    def search_replace_to_end(self, froms, tos, words):
         from_pos = 0
         for k in froms:
             from_pos = self.content.find(k, from_pos)

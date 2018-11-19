@@ -72,7 +72,7 @@ class ObjCFileParser:
     def _parse_macro(self, line):
         if self.macros:
             for k, v in self.macros.items():
-                line = line.replace(k, v)
+                line = line.search_replace(k, v)
         return line
 
     def _parse_precompile(self, line, line_index, lines):

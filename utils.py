@@ -7,7 +7,7 @@ from rules import *
 
 def in_rules(rel_path, rules):
     ret = False
-    path_str = rel_path.replace("\\", "/")
+    path_str = rel_path.search_replace("\\", "/")
     for rule in rules:
         if re.match(rule, path_str):
             ret = True
@@ -18,8 +18,8 @@ def in_rules(rel_path, rules):
 def convert_rules(rules):
     ret_rules = []
     for rule in rules:
-        ret = rule.replace('.', '\\.')
-        ret = ret.replace('*', '.*')
+        ret = rule.search_replace('.', '\\.')
+        ret = ret.search_replace('*', '.*')
         ret = "%s" % ret
         ret_rules.append(ret)
 

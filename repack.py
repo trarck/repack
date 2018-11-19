@@ -30,7 +30,7 @@ class Repack:
         self.global_data_dir = global_data_dir
         self.name = name
         self.crypt_info = CryptInfo(None, "md5")
-        self.need_copy_project = True
+        self.need_copy_project = False
 
         self._config_data = None
 
@@ -115,7 +115,7 @@ class Repack:
 
         fun(action_data)
 
-    def copy_project(self):
+    def copy_project(self,config=None):
         print("copy project from %s to %s" % (self.matrix_project_root_path, self.project_root_path))
         if os.path.exists(self.matrix_project_root_path):
             if os.path.exists(self.project_root_path):
@@ -172,9 +172,19 @@ class Repack:
                 elif operation == "insert_before":
                     source.insert_before(modify_config["keys"], words)
                 elif operation == "replace":
-                    source.replace(modify_config["froms"], modify_config["tos"], words)
-                elif operation == "replace_after":
-                    source.replace_after(modify_config["froms"], modify_config["tos"], words)
+                    olds = modify_config["olds"]
+                    for i in range(len(olds)):
+                        olds[i] = self.translate_string(olds[i])
+
+                    news=modify_config["news"]
+                    for i in range(len(news)):
+                        news[i]=self.translate_string(news[i])
+
+                    source.replace(olds, news)
+                elif operation == "search_replace":
+                    source.search_replace(modify_config["froms"], modify_config["tos"], words)
+                elif operation == "search_replace_to_end":
+                    source.search_replace_to_end(modify_config["froms"], modify_config["tos"], words)
                 elif operation == "remove":
                     source.remove(modify_config["froms"], modify_config["tos"])
                 source.save()
@@ -232,6 +242,8 @@ class Repack:
             xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
 
         file_path = self.translate_string(config["file_path"])
+
+
         parent = self.translate_string(config["parent"])
 
         ios_project = IosProject(xcode_project_path)
@@ -239,6 +251,9 @@ class Repack:
 
     def build_xcode_app(self,config):
         xcode_project_path = self.translate_string(config["xcode_project_path"])
+        if not os.path.isabs(xcode_project_path):
+            xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
+
         target = self.translate_string(config["target"])
         configuration = self.translate_string(config["configuration"])
         sdk = self.translate_string(config["sdk"])
@@ -250,6 +265,9 @@ class Repack:
 
     def build_xcode_archive(self,config):
         xcode_project_path = self.translate_string(config["xcode_project_path"])
+        if not os.path.isabs(xcode_project_path):
+            xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
+
         scheme = self.translate_string(config["scheme"])
         configuration = self.translate_string(config["configuration"])
         out_put = self.translate_string(config["out_put"])

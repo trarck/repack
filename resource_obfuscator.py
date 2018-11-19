@@ -80,7 +80,7 @@ class ResourceObfuscator:
                 file_ext = fes[1]
 
                 # use unix path
-            plain_path = plain_path.replace("\\", "/")
+            plain_path = plain_path.search_replace("\\", "/")
 
             if self.crypt_info.type == "md5":
                 crypt_path = PathCrypt.md5_path(plain_path, self.crypt_info.key)

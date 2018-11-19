@@ -167,15 +167,29 @@ class IosProject:
         pbx_project.save()
 
     def build_app(self, target, configuration, sdk, out_put):
-        build_cmd = 'xcodebuild -project %s -target %s -sdk %s -configuration %s' % (
-        self.project_file_path, target, sdk, configuration)
-        process = subprocess.Popen(build_cmd, shell=True)
-        process.wait()
+        # build_cmd = 'xcodebuild -project %s -target %s -sdk %s -configuration %s' % (
+        # self.project_file_path, target, sdk, configuration)
+        # print build_cmd
+        # process = subprocess.Popen(build_cmd, shell=True)
+        #
+        # process.wait()
 
-        sign_app = "./build/%s-iphoneos/%s.app" % (configuration, target)
-        sign_cmd = "xcrun -sdk %s -v PackageApplication %s -o %s" % (sdk, sign_app, out_put)
-        process = subprocess.Popen(sign_cmd, shell=True)
+        build_dir=os.path.join(os.path.dirname(self.project_file_path),"./build/%s-iphoneos" % configuration)
+        sign_app = os.path.join(build_dir,"%s.app" % target)
+
+        if os.path.exists(os.path.join(build_dir,"Payload")):
+            shutil.rmtree(os.path.join(build_dir,"Payload"))
+        else:
+            os.makedirs(os.path.join(build_dir,"Payload"))
+
+
+        shutil.copytree(sign_app,os.path.join(build_dir,"Payload","%s.app" % target))
+        zip_cmd = 'zip -r %s %s' % (out_put,os.path.join(build_dir,"Payload"))
+        print zip_cmd
+        process = subprocess.Popen(zip_cmd, shell=True)
+
         process.communicate()
+
 
     def build_archive(self, scheme, configuration, out_archive, out_app=None):
         out_dir = os.path.dirname(out_archive)
