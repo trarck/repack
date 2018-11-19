@@ -25,11 +25,11 @@ field_main_words = ["Size", "Color", "Range", "Radius", "Scale", "Center", "Widt
                     "Average", "Processing", "Finished", "Block", "Options"]
 field_main_words_lenth = len(field_main_words)
 
-function_prev_words = ["with", "did", "check", "change", "set", "init", "initWith"]
+function_prev_words = ["with", "did", "check", "change", "set"]
 function_prev_words_lenth = len(function_prev_words)
 function_main_words = ["Size", "Color", "Range", "Radius", "Scale", "Center", "Width", "Height", "Framebuffer",
                        "Duration",
-                       "Average", "Processing", "Finished", "Block", "Options", "With", "And"]
+                       "Average", "Processing", "Finished", "Block", "Options", "With"]
 function_main_words_lenth = len(function_main_words)
 
 
