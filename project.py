@@ -162,7 +162,12 @@ class IosProject:
 
     def add_file(self, file_path, parent):
         pbx_project = XcodeProject.load(os.path.join(self.project_file_path, "project.pbxproj"))
-        parent = pbx_project.get_groups_by_name(parent)[0]
+
+        if parent is not None:
+            parents = pbx_project.get_groups_by_name(parent)
+            if parents is not None:
+                parent = parents[0]
+
         pbx_project.add_file(file_path, parent)
         pbx_project.save()
 
@@ -174,22 +179,20 @@ class IosProject:
         #
         # process.wait()
 
-        build_dir=os.path.join(os.path.dirname(self.project_file_path),"./build/%s-iphoneos" % configuration)
-        sign_app = os.path.join(build_dir,"%s.app" % target)
+        build_dir = os.path.join(os.path.dirname(self.project_file_path), "./build/%s-iphoneos" % configuration)
+        sign_app = os.path.join(build_dir, "%s.app" % target)
 
-        if os.path.exists(os.path.join(build_dir,"Payload")):
-            shutil.rmtree(os.path.join(build_dir,"Payload"))
+        if os.path.exists(os.path.join(build_dir, "Payload")):
+            shutil.rmtree(os.path.join(build_dir, "Payload"))
         else:
-            os.makedirs(os.path.join(build_dir,"Payload"))
+            os.makedirs(os.path.join(build_dir, "Payload"))
 
-
-        shutil.copytree(sign_app,os.path.join(build_dir,"Payload","%s.app" % target))
-        zip_cmd = 'zip -r %s %s' % (out_put,os.path.join(build_dir,"Payload"))
+        shutil.copytree(sign_app, os.path.join(build_dir, "Payload", "%s.app" % target))
+        zip_cmd = 'zip -r %s %s' % (out_put, os.path.join(build_dir, "Payload"))
         print zip_cmd
         process = subprocess.Popen(zip_cmd, shell=True)
 
         process.communicate()
-
 
     def build_archive(self, scheme, configuration, out_archive, out_app=None):
         out_dir = os.path.dirname(out_archive)

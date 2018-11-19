@@ -1,8 +1,8 @@
 
 ##======call code one time======
-    static bool _execued=false;
-    if(!_execued){
-        _execued=true;
+    static bool ${prefix}_execued=false;
+    if(!${prefix}_execued){
+        ${prefix}_execued=true;
         ${code}
     }
 

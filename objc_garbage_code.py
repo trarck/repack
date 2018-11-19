@@ -679,7 +679,7 @@ class ObjCGarbageCode:
 
         # generate call generated code prevent delete by link optimization
         exec_once_tpl = Template(file=os.path.join(self.tpl_folder_path, "exec_code_once.mm"),
-                                 searchList=[{"code": "".join(call_generate_codes)}])
+                                 searchList=[{"code": "".join(call_generate_codes),"prefix":utils.generate_name()}])
         exec_once = str(exec_once_tpl)
 
         if "generate_executor" in generate_config and generate_config["generate_executor"]:

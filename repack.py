@@ -243,8 +243,9 @@ class Repack:
 
         file_path = self.translate_string(config["file_path"])
 
-
-        parent = self.translate_string(config["parent"])
+        parent=None
+        if "parent" in config:
+            parent = self.translate_string(config["parent"])
 
         ios_project = IosProject(xcode_project_path)
         ios_project.add_file(file_path, parent)

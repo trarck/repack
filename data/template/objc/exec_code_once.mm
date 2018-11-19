@@ -1,8 +1,8 @@
 
 ##======call code one time======
-    static bool objc_execued=false;
-    if(!objc_execued){
-        objc_execued=true;
+    static bool objc_${prefix}_execued=false;
+    if(!objc_${prefix}_execued){
+        objc_${prefix}_execued=true;
         ${code}
     }
 
