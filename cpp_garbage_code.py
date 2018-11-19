@@ -41,7 +41,7 @@ class CppFile:
         self.headers=[]
         self.hpp_headers = []
         self.cpp_headers = []
-        
+
         self.native_class = None
         self.head_fp = None
         self.source_fp = None
