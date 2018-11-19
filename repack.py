@@ -482,7 +482,7 @@ def main():
         args.data_dir = args.resource_dir
     else:
         if not os.path.isabs(args.data_dir):
-            args.data_dir = os.path.join(workpath, args.resource_dir)
+            args.data_dir = os.path.join(workpath, args.data_dir)
 
     # load config info
     fp = open(args.config_file)
