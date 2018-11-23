@@ -5,4 +5,4 @@
 ${headers}
 
 extern void ${auto_all_function} ();
-\#endif // __REPACK_${class_name}_H__
+\#endif // __REPACK_${name}_H__

@@ -1,4 +1,4 @@
-#include "all_${name}.h"
+\#include "${name}.h"
 
 void ${auto_all_function}()
 {
