@@ -634,13 +634,13 @@ class CppGarbageCode:
             "operation": "insert",
             "file_path": exec_code_file_path,
             "keys": generate_config["include_insert_keys"],
-            "words": "#include \"%s.h\"\n" % auto_all_name
+            "words": "\n#include \"%s.h\"\n" % auto_all_name
         }
         insert_code_action = {
             "operation": "insert",
             "file_path": exec_code_file_path,
             "keys": generate_config["code_insert_keys"],
-            "words":"%s();\n"%auto_all_function
+            "words":"\n%s();\n"%auto_all_function
         }
         modify_exec_code_actions = {
             "name": "modify_files",
