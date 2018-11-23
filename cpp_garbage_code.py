@@ -609,18 +609,38 @@ class CppGarbageCode:
             for head_file in generated_head_files:
                 include_heads += "#include \"%s\"\n" % head_file
 
+        auto_all_name=utils.generate_name(20,30)
+        auto_all_function=utils.generate_name(20,30)
+        auto_all_head_file=os.path.join(out_folder_path,auto_all_name+".h")
+        auto_all_source_file=os.path.join(out_folder_path,auto_all_name+".cpp")
+
+        auto_all_head_tpl = Template(file=os.path.join(self.tpl_folder_path, "auto_all.h"),
+                                 searchList=[{"name": auto_all_name, "headers": include_heads,"auto_all_function":auto_all_function}])
+
+        auto_all_source_tpl = Template(file=os.path.join(self.tpl_folder_path, "auto_all.cpp"),
+                                     searchList=[{"name": auto_all_name, "code": exec_once,
+                                                  "auto_all_function": auto_all_function}])
+
+        fp=open(auto_all_head_file,"w+")
+        fp.write(str(auto_all_head_tpl))
+        fp.close()
+
+        fp = open(auto_all_source_file, "w+")
+        fp.write(str(auto_all_source_tpl))
+        fp.close()
+
         # create action execute in repack
         insert_head_action = {
             "operation": "insert",
             "file_path": exec_code_file_path,
             "keys": generate_config["include_insert_keys"],
-            "words": include_heads
+            "words": "#include \"%s.h\"\n" % auto_all_name
         }
         insert_code_action = {
             "operation": "insert",
             "file_path": exec_code_file_path,
             "keys": generate_config["code_insert_keys"],
-            "words": exec_once
+            "words":"%s();\n"%auto_all_function
         }
         modify_exec_code_actions = {
             "name": "modify_files",
