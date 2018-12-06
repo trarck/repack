@@ -145,6 +145,7 @@ class ResourceObfuscator:
             if self.remove_source:
                 shutil.rmtree(bak_path)
         else:
-			if os.path.exists(self.out_folder_path):
-			    shutil.rmtree(self.out_folder_path)
+            if os.path.exists(self.out_folder_path):
+                shutil.rmtree(self.out_folder_path)
             self.parse_dir(self.resource_folder_path, self.out_folder_path, "")
+        

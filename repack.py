@@ -120,7 +120,7 @@ class Repack:
         if os.path.exists(self.matrix_project_root_path):
             if os.path.exists(self.project_root_path):
                 shutil.rmtree(self.project_root_path)
-            shutil.copytree(self.matrix_project_root_path, self.project_root_path)
+            shutil.copytree(self.matrix_project_root_path, self.project_root_path,True)
         else:
             print("copy project error no %s folder " % self.matrix_project_root_path)
 
