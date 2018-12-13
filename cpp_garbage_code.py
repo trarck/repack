@@ -334,9 +334,13 @@ class CppFileInject(CppFile):
         if len(head_file_parser.classes) > 0:
             # get first class
             class_info = self.get_insert_class(head_file_parser.classes)
-            class_name = class_info.name
-            class_end_line = class_info.end_line
-            print("get class %s from %d to %d" % (class_info.name, class_info.start_line, class_info.end_line))
+            if class_info :
+                class_name = class_info.name
+                class_end_line = class_info.end_line
+                print("get class %s from %d to %d" % (class_info.name, class_info.start_line, class_info.end_line))
+            else:
+                print("no class find ")
+                return
         else:
             print("no class find ")
             return
@@ -444,9 +448,13 @@ class CppFileInject(CppFile):
         if len(head_file_parser.classes) > 0:
             # get first class
             class_info = self.get_insert_class(head_file_parser.classes)
-            class_name = class_info.name
-            class_end_line = class_info.end_line
-            print("get class %s from %d to %d" % (class_info.name, class_info.start_line, class_info.end_line))
+            if class_info:
+                class_name = class_info.name
+                class_end_line = class_info.end_line
+                print("get class %s from %d to %d" % (class_info.name, class_info.start_line, class_info.end_line))
+            else:
+                print("no class find ")
+                return
         else:
             print("no class find ")
             return
@@ -751,7 +759,7 @@ class CppGarbageCode:
             if os.path.isdir(file_path):
                 self._inject_dir(file_path, rule)
             elif os.path.isfile(file_path):
-                # print("#Rule:%s=%s" % (file_path, str(rule.test(file_path))))
+                print("#Rule:%s=%s" % (file_path, str(rule.test(file_path))))
                 if not rule or rule.test(file_path):
                     self._inject_file(file_path)
 
@@ -765,7 +773,7 @@ class CppGarbageCode:
         exclude_rules = None
         if "exclude" in self.inject_config:
             exclude_rules = self.inject_config["exclude"]
-
+        
         rule = utils.create_rules(include_rules, exclude_rules)
 
         self._inject_checked_files = {}
