@@ -81,8 +81,8 @@ class FileCrypt:
             if remove_source:
                 shutil.rmtree(bak_path)
         else:
-            if os.path.exists(out_dir):
-                shutil.rmtree(out_dir)
+            if os.path.exists(out_path):
+                shutil.rmtree(out_path)
             self.encrypt_dir(src_path, out_path, include)
             if remove_source:
                 shutil.rmtree(src_path)

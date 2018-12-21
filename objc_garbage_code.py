@@ -693,7 +693,9 @@ class ObjCGarbageCode:
         auto_all_name = utils.generate_name(20, 30)
         auto_all_function = utils.generate_name(20, 30)
         auto_all_head_file = os.path.join(out_folder_path, auto_all_name + ".h")
-        auto_all_source_file = os.path.join(out_folder_path, auto_all_name + ".cpp")
+        auto_all_source_file = os.path.join(out_folder_path, auto_all_name + ".mm")
+        generated_files.append(auto_all_head_file)
+        generated_files.append(auto_all_source_file)
 
         auto_all_head_tpl = Template(file=os.path.join(self.tpl_folder_path, "auto_all.h"),
                                      searchList=[{"name": auto_all_name, "headers": include_heads,

@@ -38,7 +38,7 @@ class CppFile:
 
         self.generated_methods = []
         self.generated_fields = []
-        self.headers=[]
+        self.headers = []
         self.hpp_headers = []
         self.cpp_headers = []
 
@@ -265,12 +265,12 @@ class CppFileInject(CppFile):
         for method_info in source_file_parser.methods:
             # check probability
             need_inject = random.randint(0, 100) <= probability
-            print("pro:%d"%probability)
+            print("pro:%d" % probability)
             if need_inject:
                 # check rule
                 need_inject = (not class_rule or not method_info.class_name or class_rule.test(
                     method_info.class_name)) and (not method_rule or method_rule.test(method_info.name))
-                print("test method:%s,%s" % (method_info.name,method_rule))
+                print("test method:%s,%s" % (method_info.name, method_rule))
                 if need_inject:
 
                     enable_positions = source_file_parser.get_method_inject_positions(method_info, lines)
@@ -598,7 +598,7 @@ class CppGarbageCode:
 
         # generate call generated code prevent delete by link optimization
         exec_once_tpl = Template(file=os.path.join(self.tpl_folder_path, "exec_code_once.cpp"),
-                                 searchList=[{"code": "".join(call_generate_codes),"prefix":utils.generate_name()}])
+                                 searchList=[{"code": "".join(call_generate_codes), "prefix": utils.generate_name()}])
         exec_once = str(exec_once_tpl)
 
         if "generate_executor" in generate_config and generate_config["generate_executor"]:
@@ -609,19 +609,22 @@ class CppGarbageCode:
             for head_file in generated_head_files:
                 include_heads += "#include \"%s\"\n" % head_file
 
-        auto_all_name=utils.generate_name(20,30)
-        auto_all_function=utils.generate_name(20,30)
-        auto_all_head_file=os.path.join(out_folder_path,auto_all_name+".h")
-        auto_all_source_file=os.path.join(out_folder_path,auto_all_name+".cpp")
+        auto_all_name = utils.generate_name(20, 30)
+        auto_all_function = utils.generate_name(20, 30)
+        auto_all_head_file = os.path.join(out_folder_path, auto_all_name + ".h")
+        auto_all_source_file = os.path.join(out_folder_path, auto_all_name + ".cpp")
+        generated_files.append(auto_all_head_file)
+        generated_files.append(auto_all_source_file)
 
         auto_all_head_tpl = Template(file=os.path.join(self.tpl_folder_path, "auto_all.h"),
-                                 searchList=[{"name": auto_all_name, "headers": include_heads,"auto_all_function":auto_all_function}])
-
-        auto_all_source_tpl = Template(file=os.path.join(self.tpl_folder_path, "auto_all.cpp"),
-                                     searchList=[{"name": auto_all_name, "code": exec_once,
+                                     searchList=[{"name": auto_all_name, "headers": include_heads,
                                                   "auto_all_function": auto_all_function}])
 
-        fp=open(auto_all_head_file,"w+")
+        auto_all_source_tpl = Template(file=os.path.join(self.tpl_folder_path, "auto_all.cpp"),
+                                       searchList=[{"name": auto_all_name, "code": exec_once,
+                                                    "auto_all_function": auto_all_function}])
+
+        fp = open(auto_all_head_file, "w+")
         fp.write(str(auto_all_head_tpl))
         fp.close()
 
@@ -640,7 +643,7 @@ class CppGarbageCode:
             "operation": "insert",
             "file_path": exec_code_file_path,
             "keys": generate_config["code_insert_keys"],
-            "words":"\n%s();\n"%auto_all_function
+            "words": "\n%s();\n" % auto_all_function
         }
         modify_exec_code_actions = {
             "name": "modify_files",
@@ -723,7 +726,6 @@ class CppGarbageCode:
                         print(method_rule)
                         inject_method_config["method_rule"] = method_rule
 
-
                 cpp_inject = CppFileInject({
                     "head_file": head_file_path,
                     "source_file": source_file_path,
@@ -733,7 +735,7 @@ class CppGarbageCode:
                     "max_parameter": parameter_count,
                     "call_others": call_others,
                     "macros": self.inject_config["macros"],
-                    "inject_method":inject_method_config
+                    "inject_method": inject_method_config
                 })
                 cpp_inject.prepare()
                 cpp_inject.inject_code()
