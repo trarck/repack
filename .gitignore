@@ -1,7 +1,6 @@
 /data/aaa
 /data/temp
-/*.pyc
+*.pyc
 /test.rb
 /build.sh
 /.idea
-/rules/*.pyc
