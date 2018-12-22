@@ -103,38 +103,58 @@ void complex2()
 }
 
 //#更多的嵌套
-void complex2()
+void complex3()
 {
-    int i=1;
+    int k=1;
     do{
         while(true)
         {
-            while(i==1){ 
-                i=2;
+            while(k==1){ 
+                k=2;
                 while(true)
                 {
-                    while(i==2){
-                        i=3;
+                    while(k==2){
+                        k=3;
                     }
                     
-                    if(i!=3){
+                    if(k!=3){
                         break;
                     }
-                    i=4;
+                    k=4;
                 }
             }
             
-            if(i!=2){
+            if(k!=2){
                 break;
             }
-            i=5;
+            k=5;
         }
         
-    }while(i!=5);
+    }while(k!=5);
+}
+
+//使用float
+void complex4()
+{
+    float i=1;
+    do{
+        while(true)
+        {
+            while(i<2){
+                i=3;
+            }
+            
+            if(i>5){
+                break;
+            }
+            i=6;
+        }
+        
+    }while(i<4);
 }
 
 int main()
 {
-	printf("%d",fun2());
+	printf("%d",complex1());
 	return 0;
 }
