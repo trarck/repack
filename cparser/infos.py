@@ -316,8 +316,8 @@ class FunctionInfo(object):
         if self.root_statement:
             positions = []
             for stmt in self.root_statement.get_children():
-                if stmt.kink != cindex.CursorKind.RETURN_STMT:
-                    positions.append([stmt.extend.end.line, stmt.extend.end.column])
+                if stmt.kind != cindex.CursorKind.RETURN_STMT:
+                    positions.append([stmt.extent.end.line, stmt.extent.end.column])
             return positions
         else:
             return None

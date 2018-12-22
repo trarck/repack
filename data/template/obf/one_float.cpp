@@ -1,16 +1,16 @@
 
-    float i=${num[0]};
+    float ${var_name}=${num[0]};
     do{
         while(true)
         {
-            while(i<${num[1]}){
-                i=${num[2]};
+            while(${var_name}<${num[1]}){
+                ${var_name}=${num[2]};
             }
             
-            if(i>${num[4]}){
+            if(${var_name}>${num[4]}){
                 break;
             }
-            i=${num[5]};
+            ${var_name}=${num[5]};
         }
-    }while(i<${num[3]});
+    }while(${var_name}<${num[3]});
 

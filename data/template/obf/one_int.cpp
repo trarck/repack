@@ -1,15 +1,15 @@
 
-    int i=${num[0]};
+    int ${var_name}=${num[0]};
     do{
         while(true)
         {
-            while(i==${num[0]}){
-                i=${num[1]};
+            while(${var_name}==${num[0]}){
+                ${var_name}=${num[1]};
             }
             
-            if(i!=${num[1]}){
+            if(${var_name}!=${num[1]}){
                 break;
             }
-            i=${num[2]};
+            ${var_name}=${num[2]};
         }
-    }while(i!=${num[2]});
+    }while(${var_name}!=${num[2]});
