@@ -13,8 +13,13 @@ class Parser(object):
         self.clang_args = opts['clang_args']
         self.skip_classes = {}
         self.parsed_classes = {}
-        self.win32_clang_flags = opts['win32_clang_flags']
-        self.methods = []
+
+        if "win32_clang_flags" in opts:
+            self.win32_clang_flags = opts['win32_clang_flags']
+        else:
+            self.win32_clang_flags = None
+
+        self.functions = []
         self.namespaces = []
 
         self.current_namespace = None
@@ -118,12 +123,13 @@ class Parser(object):
                 return
         elif cursor.kind == cindex.CursorKind.FUNCTION_DECL:
             # print("find function")
-            fun = FunctionInfo(cursor)
-            self.methods.append(fun)
+            if len(Parser._get_children_array_from_iter(cursor.get_children())) > 0:
+                fun = FunctionInfo(cursor)
+                self.functions.append(fun)
         elif cursor.kind == cindex.CursorKind.CXX_METHOD:
             # print("find method")
             method = FunctionInfo(cursor)
-            self.methods.append(method)
+            self.functions.append(method)
         elif cursor.kind == cindex.CursorKind.NAMESPACE:
             # print("find namespace")
             self.current_namespace = cursor.spelling
@@ -133,11 +139,11 @@ class Parser(object):
         elif cursor.kind == cindex.CursorKind.CONSTRUCTOR:
             # print("find CONSTRUCTOR")
             method = FunctionInfo(cursor)
-            self.methods.append(method)
+            self.functions.append(method)
         elif cursor.kind == cindex.CursorKind.DESTRUCTOR:
             # print("find DESTRUCTOR")
             method = FunctionInfo(cursor)
-            self.methods.append(method)
+            self.functions.append(method)
         elif cursor.kind == cindex.CursorKind.OBJC_INTERFACE_DECL:
             print("find OBJC_INTERFACE_DECL")
             if not self.parsed_classes.has_key(cursor.displayname):
@@ -156,7 +162,7 @@ class Parser(object):
                 self._traverse(sub_cursor)
         elif cursor.kind == cindex.CursorKind.OBJC_INSTANCE_METHOD_DECL:
             method = FunctionInfo(cursor)
-            self.methods.append(method)
+            self.functions.append(method)
         else:
             print("find %s" % cursor.kind)
 

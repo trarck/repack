@@ -163,11 +163,11 @@ def pad(size):
     return ''.join(' ' for _ in range(size))
 
 
-def generate_int(max_value=999999):
+def generate_int(max_value=2147483640):
     return random.randint(0, max_value)
 
 
-def generate_float(max_value=999999):
+def generate_float(max_value=2147483640):
     return random.uniform(0, max_value)
 
 

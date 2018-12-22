@@ -236,12 +236,21 @@ class FunctionInfo(object):
         self.comment = self.get_comment(cursor.raw_comment)
         self.attributes = FunctionAttributes.Empty
         self.class_name = None
+        self.root_statement = None
+        self.location = cursor.location
 
         self._parse()
 
     def _parse(self):
         # parse the arguments
+        self._parser_arguments()
 
+        self._check_and_set_attributes()
+
+        for node in self.cursor.get_children():
+            self._traverse(node)
+
+    def _parser_arguments(self):
         for arg in self.cursor.get_arguments():
             self.argumentTips.append(arg.spelling)
             nt = TypeInfo.from_type(arg.type)
@@ -252,7 +261,6 @@ class FunctionInfo(object):
 
         found_default_arg = False
         index = -1
-
         for arg_node in self.cursor.get_children():
             if arg_node.kind == cindex.CursorKind.CXX_OVERRIDE_ATTR:
                 self.is_override = True
@@ -264,14 +272,7 @@ class FunctionInfo(object):
 
         self.min_args = index if found_default_arg else len(self.arguments)
 
-        # set access specifier
-        if self.cursor.access_specifier == cindex.AccessSpecifier.PRIVATE:
-            self.set_attribute(FunctionAttributes.Private)
-        elif self.cursor.access_specifier == cindex.AccessSpecifier.PROTECTED:
-            self.set_attribute(FunctionAttributes.Protected)
-        elif self.cursor.access_specifier == cindex.AccessSpecifier.PUBLIC:
-            self.set_attribute(FunctionAttributes.Public)
-
+    def _check_and_set_attributes(self):
         # check is static function
         if self.cursor.is_static_method():
             self.set_attribute(FunctionAttributes.Static)
@@ -289,9 +290,18 @@ class FunctionInfo(object):
                 or self.cursor.semantic_parent.kind == cindex.CursorKind.OBJC_CATEGORY_DECL:
             self.class_name = utils.get_fullname(self.cursor.semantic_parent)
 
-        # check have implement
-        if self._check_have_implement():
+        # set access specifier
+        if self.cursor.access_specifier == cindex.AccessSpecifier.PRIVATE:
+            self.set_attribute(FunctionAttributes.Private)
+        elif self.cursor.access_specifier == cindex.AccessSpecifier.PROTECTED:
+            self.set_attribute(FunctionAttributes.Protected)
+        elif self.cursor.access_specifier == cindex.AccessSpecifier.PUBLIC:
+            self.set_attribute(FunctionAttributes.Public)
+
+    def _traverse(self, cursor):
+        if cursor.kind == cindex.CursorKind.COMPOUND_STMT:
             self.set_attribute(FunctionAttributes.Implement)
+            self.root_statement = cursor
 
     def _check_have_implement(self):
         have_implement = False
@@ -301,6 +311,16 @@ class FunctionInfo(object):
                 have_implement = True
                 break
         return have_implement
+
+    def get_top_statement_end_positions(self):
+        if self.root_statement:
+            positions = []
+            for stmt in self.root_statement.get_children():
+                if stmt.kink != cindex.CursorKind.RETURN_STMT:
+                    positions.append([stmt.extend.end.line, stmt.extend.end.column])
+            return positions
+        else:
+            return None
 
     def get_comment(self, comment):
         replace_str = comment
@@ -410,6 +430,7 @@ class ClassInfo(object):
 
         self.full_class_name = utils.get_fullname(cursor)
         self.namespace_name = utils.get_namespace_name(cursor)
+        self.location = cursor.location
 
         self._parse()
 
