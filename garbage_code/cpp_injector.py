@@ -1,6 +1,6 @@
 import os
 import random
-import re
+import warnings
 
 from pbxproj import XcodeProject
 from Cheetah.Template import Template
@@ -22,6 +22,7 @@ class CppFunctionInjector:
         self.ruler = ruler
 
     def inject(self, file_path, opts=None):
+        print("inject:%s" % file_path)
         # parse options
         if opts is None:
             opts = {}
@@ -53,7 +54,7 @@ class CppFunctionInjector:
                     impl_funcs.append(func)
 
         # get from class define
-        for cls in parser.parsed_classes:
+        for _, cls in parser.parsed_classes.items():
             for func in cls.methods:
                 if self.ruler:
                     class_name = func.class_name if function.class_name else "*"
@@ -81,14 +82,14 @@ class CppFunctionInjector:
 
     def _inject_function(self, function_info, lines):
         if function_info.root_statement:
-            inject_positions = function_info.get_top_statement_end_positions()
+            inject_positions = function_info.get_top_statement_start_positions()
             if inject_positions:
                 inject_pos_index = random.randrange(0, len(inject_positions))
                 inject_pos = inject_positions[inject_pos_index]
                 inject_code = self._gen_inject_code()
                 line_index = inject_pos[0] - 1
                 line = lines[line_index]
-                lines[line_index] = line[:inject_pos[1]] + inject_code + line[inject_pos[1]:]
+                lines[line_index] = line[:inject_pos[1] - 1] + inject_code + line[inject_pos[1] - 1:]
 
     def _gen_inject_code(self):
         p = random.randrange(0, 10)
@@ -195,8 +196,10 @@ class CppInjector:
                 "clang_args": self.clang_args,
                 "tpl_folder": self.tpl_folder_path
             })
-
-            func_injector.inject(file_path)
+            try:
+                func_injector.inject(file_path)
+            except Exception, e:
+                warnings.warn(e.message)
         else:
             print("===>code inject skip %s" % file_path)
         return False
@@ -207,7 +210,7 @@ class CppInjector:
             if os.path.isdir(file_path):
                 self._inject_dir(file_path)
             elif os.path.isfile(file_path):
-                # print("#Rule:%s=%s" % (file_path, str(rule.test(file_path))))
+                print("#Rule:%s=%s" % (file_path, str(self.file_rule.test(file_path))))
                 # dir file check is match file rule
                 if not self.file_rule or self.file_rule.test(file_path):
                     self._inject_file(file_path)
@@ -223,5 +226,5 @@ class CppInjector:
                 self._inject_file(file_path, True)
 
         print("inject %d files" % len(self._injected_files.keys()))
-        for injected_file,_ in self._injected_files.items:
-            print("==> inject %s" % injected_file)
+        for key, val in self._injected_files.items():
+            print("==> inject %s" % key)

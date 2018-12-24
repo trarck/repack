@@ -62,7 +62,7 @@ class Parser(object):
 
         if source_file:
             source_file = source_file.replace("\\", "/")
-            print("%s=%s" % (source_file, parsing_file))
+            # print("%s=%s" % (source_file, parsing_file))
             return source_file == parsing_file
         else:
             return True
@@ -163,6 +163,8 @@ class Parser(object):
         elif cursor.kind == cindex.CursorKind.OBJC_INSTANCE_METHOD_DECL:
             method = FunctionInfo(cursor)
             self.functions.append(method)
+        elif cursor.kind == cindex.CursorKind.UNEXPOSED_DECL:
+            print("find UNEXPOSED_DECL")
         else:
             print("find %s" % cursor.kind)
 

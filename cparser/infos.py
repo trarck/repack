@@ -312,8 +312,26 @@ class FunctionInfo(object):
                 break
         return have_implement
 
+    def get_top_statement_start_positions(self):
+        if self.root_statement:
+            # check is macro created
+            if self.cursor.location.line == self.root_statement.location.line \
+                    and self.cursor.location.column == self.root_statement.location.column:
+                return None
+            positions = []
+            for stmt in self.root_statement.get_children():
+                if stmt.kind != cindex.CursorKind.NULL_STMT:
+                    positions.append([stmt.location.line, stmt.location.column])
+            return positions
+        else:
+            return None
+
     def get_top_statement_end_positions(self):
         if self.root_statement:
+            # check is macro created
+            if self.cursor.location.line == self.root_statement.location.line \
+                    and self.cursor.location.column == self.root_statement.location.column:
+                return None
             positions = []
             for stmt in self.root_statement.get_children():
                 if stmt.kind != cindex.CursorKind.RETURN_STMT:
