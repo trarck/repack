@@ -1,15 +1,17 @@
 import os
 import random
+import re
 
 from pbxproj import XcodeProject
 from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from cparser.parser import Parser
+from rules import *
 import utils
 
 
 class CppFunctionInjector:
-    def __init__(self, options):
+    def __init__(self, options, ruler=None):
         self.options = options
         if "clang_args" in options:
             self.clang_args = options["clang_args"]
@@ -17,6 +19,7 @@ class CppFunctionInjector:
             self.clang_args = []
 
         self.tpl_folder_path = options["tpl_folder"]
+        self.ruler = ruler
 
     def inject(self, file_path, opts=None):
         # parse options
@@ -42,12 +45,21 @@ class CppFunctionInjector:
         impl_funcs = []
         for func in functions:
             if func.is_implement:
-                impl_funcs.append(func)
+                if self.ruler:
+                    class_name = func.class_name if function.class_name else "*"
+                    if self.ruler.should_skip(class_name, func.name):
+                        impl_funcs.append(func)
+                else:
+                    impl_funcs.append(func)
 
         # get from class define
         for cls in parser.parsed_classes:
             for func in cls.methods:
-                if func.is_implement:
+                if self.ruler:
+                    class_name = func.class_name if function.class_name else "*"
+                    if self.ruler.should_skip(class_name, func.name):
+                        impl_funcs.append(func)
+                else:
                     impl_funcs.append(func)
 
         fp = open(file_path, "r+")
@@ -87,7 +99,7 @@ class CppFunctionInjector:
                 num.append(utils.generate_int())
 
             code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_int.cpp"),
-                                searchList=[{"num": num,"var_name":utils.generate_name()}])
+                                searchList=[{"num": num, "var_name": utils.generate_name()}])
             return str(code_tpl)
         else:
             num = []
@@ -96,7 +108,7 @@ class CppFunctionInjector:
 
             num.sort()
             code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_float.cpp"),
-                                searchList=[{"num": num,"var_name":utils.generate_name()}])
+                                searchList=[{"num": num, "var_name": utils.generate_name()}])
             return str(code_tpl)
 
 
@@ -106,10 +118,13 @@ class CppClassInjector:
 
 
 class CppInjector:
-    def __init__(self,options):
-        self.options=options
+    def __init__(self, options):
+        self.options = options
         self._injected_files = None
-        self._injected_files = None
+        self.tpl_folder_path = options["tpl_folder"]
+        self.skips = {}
+        self.clang_args = options["clang_args"] if "clang_args" in options else []
+        self._init_rule()
 
     def _init_rule(self):
 
@@ -125,17 +140,44 @@ class CppInjector:
 
         self.file_rule = utils.create_rules(include_rules, exclude_rules)
 
-        # init function rule
-        if "include" in self.options:
-            include_rules = self.options["include"]
+        # init skip rule
+        if 'skips' in self.options:
+            if isinstance(self.options['skip'], str):
+                list_of_skips = re.split(",\n?", self.options['skips'])
+                for skip in list_of_skips:
+                    class_name, methods = skip.split("@")
+                    self.skips[class_name] = []
+                    match = re.match("\[([^]]+)\]", methods)
+                    if match:
+                        self.skips[class_name] = match.group(1).split(" ")
+                    else:
+                        raise Exception("invalid list of skip methods")
+            else:
+                self.skips = self.options['skip']
+
+    def should_skip(self, class_name, method_name, verbose=False):
+        if class_name == "*" and "*" in self.skips:
+            for func in self.skips["*"]:
+                if re.match(func, method_name):
+                    return True
         else:
-            include_rules = ["*.cpp"]
-
-        exclude_rules = None
-        if "exclude" in self.options:
-            exclude_rules = self.options["exclude"]
-
-        self.file_rule = utils.create_rules(include_rules, exclude_rules)
+            for key in self.skips.iterkeys():
+                if key == "*" or re.match("^" + key + "$", class_name):
+                    if verbose:
+                        print "%s in skips" % (class_name)
+                    if len(self.skips[key]) == 1 and self.skips[key][0] == "*":
+                        if verbose:
+                            print "%s will be skipped completely" % (class_name)
+                        return True
+                    if method_name != None:
+                        for func in self.skips[key]:
+                            if re.match(func, method_name):
+                                if verbose:
+                                    print "%s will skip method %s" % (class_name, method_name)
+                                return True
+        if verbose:
+            print "%s will be accepted (%s, %s)" % (class_name, key, self.skips[key])
+        return False
 
     def _inject_file(self, file_path, force=False):
         if file_path in self._injected_files:
@@ -150,8 +192,8 @@ class CppInjector:
 
         if need_inject:
             func_injector = CppFunctionInjector({
-                "clang_args": [],
-                "tpl_folder": "../data/template/obf"
+                "clang_args": self.clang_args,
+                "tpl_folder": self.tpl_folder_path
             })
 
             func_injector.inject(file_path)
@@ -171,9 +213,7 @@ class CppInjector:
                     self._inject_file(file_path)
 
     def inject_files(self, files):
-
         self._injected_files = {}
-        self._injected_files = []
 
         for file_path in files:
             if os.path.isdir(file_path):
@@ -182,6 +222,6 @@ class CppInjector:
                 # config file force inject
                 self._inject_file(file_path, True)
 
-        print("inject %d files" % len(self._injected_files))
-        for injected_file in self._injected_files:
+        print("inject %d files" % len(self._injected_files.keys()))
+        for injected_file,_ in self._injected_files.items:
             print("==> inject %s" % injected_file)

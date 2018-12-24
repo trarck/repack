@@ -223,8 +223,8 @@ class FunctionAttributes(object):
 class FunctionInfo(object):
     def __init__(self, cursor):
         self.cursor = cursor
-        self.func_name = cursor.spelling
-        self.signature_name = self.func_name
+        self.name = cursor.spelling
+        self.signature_name = self.name
         self.arguments = []
         self.argumentTips = []
         self.implementations = []
@@ -413,9 +413,9 @@ class ClassInfo(object):
     def __init__(self, cursor):
         # the cursor to the implementation
         self.cursor = cursor
-        self.class_name = cursor.displayname
-        self.is_ref_class = self.class_name == "Ref"
-        self.full_class_name = self.class_name
+        self.name = cursor.displayname
+        self.is_ref_class = self.name == "Ref"
+        self.full_name = self.name
         self.parents = []
         self.fields = []
         self.public_fields = []
@@ -428,7 +428,7 @@ class ClassInfo(object):
         self.has_constructor = False
         self.namespace_name = ""
 
-        self.full_class_name = utils.get_fullname(cursor)
+        self.full_name = utils.get_fullname(cursor)
         self.namespace_name = utils.get_namespace_name(cursor)
         self.location = cursor.location
 
@@ -436,7 +436,7 @@ class ClassInfo(object):
 
     @property
     def underlined_class_name(self):
-        return self.full_class_name.replace("::", "_")
+        return self.full_name.replace("::", "_")
 
     def _parse(self):
         """
@@ -456,7 +456,7 @@ class ClassInfo(object):
             if name == 'constructor':
                 should_skip = True
             else:
-                if self.generator.should_skip(self.class_name, name):
+                if self.generator.should_skip(self.name, name):
                     should_skip = True
             if not should_skip:
                 ret.append({"name": name, "impl": impl})
@@ -468,7 +468,7 @@ class ClassInfo(object):
         """
         ret = []
         for name, impl in self.override_methods.iteritems():
-            should_skip = self.generator.should_skip(self.class_name, name)
+            should_skip = self.generator.should_skip(self.name, name)
             if not should_skip:
                 ret.append({"name": name, "impl": impl})
         return ret
@@ -503,7 +503,7 @@ class ClassInfo(object):
         elif cursor.kind == cindex.CursorKind.CXX_METHOD:  # and cursor.availability != cindex.AvailabilityKind.DEPRECATED:
             # skip if variadic
             m = FunctionInfo(cursor)
-            registration_name = m.func_name  # self.generator.should_rename_function(self.class_name, m.func_name) or m.func_name
+            registration_name = m.name  # self.generator.should_rename_function(self.class_name, m.func_name) or m.func_name
             # bail if the function is not supported (at least one arg not supported)
             if m.not_supported:
                 return None
@@ -511,7 +511,7 @@ class ClassInfo(object):
             self.methods.append(m)
         elif cursor.kind == cindex.CursorKind.CONSTRUCTOR and not self.is_abstract:
             # Skip copy constructor
-            if cursor.displayname == self.class_name + "(const " + self.full_class_name + " &)":
+            if cursor.displayname == self.name + "(const " + self.full_name + " &)":
                 # print "Skip copy constructor: " + cursor.displayname
                 return None
 
