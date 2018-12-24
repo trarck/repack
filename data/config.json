@@ -124,12 +124,21 @@
                 },
                 {
                     "name":"inject_code",
-                    "probability":20,
+                    "probability":70,
                     "files":["frameworks/cocos2d-x/cocos"],
-                    "tpl_dir":"${GLOBAL_DATA_DIR}/template",
-                    "generate_field_count":4,
-                    "generate_method_count":5,
-                    "parameter_count":3
+                    "tpl_dir":"${GLOBAL_DATA_DIR}/template/obf",
+                    "clang_args": [
+                        "-x","c++",
+                        "-ID:/c/cocos2d-x/cocos",
+                        "-ID:/c/cocos2d-x/external",
+                        "-ID:/c/cocos2d-x/extensions",
+                        "-ID:/c/cocos2d-x/external/win32-specific/gles/include/OGLES","-ID:/c/cocos2d-x/external/glfw3/include/win32",
+                        "-ID:/c/cocos2d-x/MyGame/frameworks/cocos2d-x/external/freetype2/include/win10",
+                        "-ID:/c/cocos2d-x/MyGame/frameworks/cocos2d-x/external/freetype2/include/win10/freetype2",
+                        "-ID:/c/cocos2d-x/external/edtaa3func",
+                        "-ID:/c/cocos2d-x/external/tinyxml2",
+                        "-D_WINDOWS","-DWIN32","-D_USRDLL","-D_USEGUIDLL"
+                    ],
                 }
             ]
         }
