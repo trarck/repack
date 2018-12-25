@@ -15,6 +15,7 @@ from file_crypt import FileCrypt
 from cpp_garbage_code import CppGarbageCode
 from resource_garbage import ResourceGarbage
 from objc_garbage_code import ObjCGarbageCode
+from garbage_code.cpp_injector import CppInjector
 
 import utils
 
@@ -115,12 +116,12 @@ class Repack:
 
         fun(action_data)
 
-    def copy_project(self,config=None):
+    def copy_project(self, config=None):
         print("copy project from %s to %s" % (self.matrix_project_root_path, self.project_root_path))
         if os.path.exists(self.matrix_project_root_path):
             if os.path.exists(self.project_root_path):
                 shutil.rmtree(self.project_root_path)
-            shutil.copytree(self.matrix_project_root_path, self.project_root_path,True)
+            shutil.copytree(self.matrix_project_root_path, self.project_root_path, True)
         else:
             print("copy project error no %s folder " % self.matrix_project_root_path)
 
@@ -176,9 +177,9 @@ class Repack:
                     for i in range(len(olds)):
                         olds[i] = self.translate_string(olds[i])
 
-                    news=modify_config["news"]
+                    news = modify_config["news"]
                     for i in range(len(news)):
-                        news[i]=self.translate_string(news[i])
+                        news[i] = self.translate_string(news[i])
 
                     source.replace(olds, news)
                 elif operation == "search_replace":
@@ -243,14 +244,14 @@ class Repack:
 
         file_path = self.translate_string(config["file_path"])
 
-        parent=None
+        parent = None
         if "parent" in config:
             parent = self.translate_string(config["parent"])
 
         ios_project = IosProject(xcode_project_path)
         ios_project.add_file(file_path, parent)
 
-    def build_xcode_app(self,config):
+    def build_xcode_app(self, config):
         xcode_project_path = self.translate_string(config["xcode_project_path"])
         if not os.path.isabs(xcode_project_path):
             xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
@@ -260,11 +261,10 @@ class Repack:
         sdk = self.translate_string(config["sdk"])
         out_put = self.translate_string(config["out_put"])
 
-
         ios_project = IosProject(xcode_project_path)
-        ios_project.build_app(target,configuration,sdk,out_put)
+        ios_project.build_app(target, configuration, sdk, out_put)
 
-    def build_xcode_archive(self,config):
+    def build_xcode_archive(self, config):
         xcode_project_path = self.translate_string(config["xcode_project_path"])
         if not os.path.isabs(xcode_project_path):
             xcode_project_path = os.path.join(self.project_root_path, xcode_project_path)
@@ -274,7 +274,7 @@ class Repack:
         out_put = self.translate_string(config["out_put"])
 
         ios_project = IosProject(xcode_project_path)
-        ios_project.build_archive(scheme,configuration,out_put)
+        ios_project.build_archive(scheme, configuration, out_put)
 
     def crypt_files(self, config):
         from_dir = self.translate_string(config["from"])
@@ -387,8 +387,10 @@ class Repack:
 
         tpl_folder_path = tpl_folder_path.encode("utf-8")
 
-        cpp_code = CppGarbageCode(tpl_folder_path)
-        cpp_code.inject_files(checked_files, config)
+        config["tpl_folder"] = tpl_folder_path
+
+        cpp_injector = CppInjector(config)
+        cpp_injector.inject_files(checked_files)
 
     def generate_files(self, config):
         out_folder_path = self.translate_string(config["out_dir"])
@@ -419,6 +421,7 @@ class Repack:
         objc_code = ObjCGarbageCode(tpl_folder_path)
         action = objc_code.generate_cpp_file(out_folder_path, xcode_project_path, exec_code_file_path, config)
         self.do_action(action)
+
 
 def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config):
     if "project_path" in project_config:

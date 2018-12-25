@@ -7,6 +7,7 @@ from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from cparser.parser import Parser
 from rules import *
+from generater import RandomGenerater
 import utils
 
 
@@ -97,19 +98,19 @@ class CppFunctionInjector:
         if p > 4:
             num = []
             for _ in range(0, 3):
-                num.append(utils.generate_int())
+                num.append(RandomGenerater.generate_int())
 
             code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_int.cpp"),
-                                searchList=[{"num": num, "var_name": utils.generate_name()}])
+                                searchList=[{"num": num, "var_name": RandomGenerater.generate_name()}])
             return str(code_tpl)
         else:
             num = []
             for _ in range(0, 6):
-                num.append(utils.generate_float())
+                num.append(RandomGenerater.generate_float())
 
             num.sort()
             code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_float.cpp"),
-                                searchList=[{"num": num, "var_name": utils.generate_name()}])
+                                searchList=[{"num": num, "var_name": RandomGenerater.generate_name()}])
             return str(code_tpl)
 
 
