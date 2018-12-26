@@ -29,7 +29,8 @@ class DirInfo:
         names = []
         parent = self.parent
         while parent:
-            names.append(parent.name)
+            if parent.name:
+                names.append(parent.name)
             parent = parent.parent
         names.reverse()
         names.append(self.name)
@@ -38,17 +39,31 @@ class DirInfo:
 
 class DirectoryGenerator:
 
-    def __init__(self, max_level, min_dir_count, max_dir_count):
+    def __init__(self, max_level, min_dir_counts, max_dir_counts, ignore_root=False):
         # dir deep
         self.max_level = max_level
-        self.min_dir_count = min_dir_count
-        self.max_dir_count = max_dir_count
+        self.min_dir_counts = min_dir_counts if isinstance(min_dir_counts, list) else [min_dir_counts]
+        self.max_dir_counts = max_dir_counts if isinstance(max_dir_counts, list) else [max_dir_counts]
         self.have_sub_dir_probability = 60
-        self.root_dir = DirInfo(True, RandomGenerater.generate_words(1, 1))
+        self.root_dir = DirInfo(True, "" if ignore_root else RandomGenerater.generate_words(1, 1))
         self.dirs = []
 
+    def _get_level_dir_count(self, level):
+        if level < len(self.min_dir_counts):
+            min_count = self.min_dir_counts[level]
+        else:
+            min_count = self.min_dir_counts[-1]
+
+        if level < len(self.max_dir_counts):
+            max_count = self.max_dir_counts[level]
+        else:
+            max_count = self.max_dir_counts[-1]
+
+        return random.randint(min_count, max_count)
+
     def _generate_children(self, parent_dir):
-        sub_count = random.randint(self.min_dir_count, self.max_dir_count)
+        sub_count = self._get_level_dir_count(parent_dir.level)
+
         for _ in range(sub_count):
             sub_dir = DirInfo(random.randint(0, 100) <= self.have_sub_dir_probability)
             parent_dir.add_child(sub_dir)
@@ -59,12 +74,12 @@ class DirectoryGenerator:
         self.dirs = []
         while len(dir_stack) > 0:
             dir_info = dir_stack.pop()
-            self.dirs.append(dir_info.fullname)
+            if dir_info.fullname:
+                self.dirs.append(dir_info.fullname)
             if dir_info.have_children and dir_info.level < self.max_level:
                 self._generate_children(dir_info)
                 for child in dir_info.children:
-                    if child.have_children:
-                        dir_stack.append(child)
+                    dir_stack.append(child)
 
     def show(self):
         for dir_path in self.dirs:

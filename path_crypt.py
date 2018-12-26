@@ -131,6 +131,12 @@ class PathCrypt:
         file_path = os.path.join(file_path[0], file_path)
         return file_path
 
+    @staticmethod
+    def path_md5(file_path, key='awesomepassword'):
+        file_path = key + "_" + file_path;
+        file_path = PathCrypt.md5(file_path)
+        return file_path
+
     # @staticmethod
     # def xor_encrypt2(data,key):
     # ldata=len(data)
