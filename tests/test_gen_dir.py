@@ -1,6 +1,4 @@
-from resource.directory_generator import DirectoryGenerator
 from resource.resource_mapping import ResourceMapping
-import os
 
 # dg=DirectoryGenerator(3,[10,6],[15,10],True)
 # # dg.generate("../data/temp/gen_dir")

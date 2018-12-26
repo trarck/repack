@@ -1,7 +1,6 @@
-import re
 import utils
 
-from cpp_garbage_code import CppFile, CppFileInject, NativeFunction, NativeType, CppGarbageCode
+from garbage_code.cpp_garbage_code import CppFileInject
 
 # cf=CppFile({
 #     "head_file":"../data/temp/a.h",

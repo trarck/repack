@@ -4,7 +4,7 @@ import shutil
 import json
 import plistlib
 
-from directory_generator import DirectoryGenerator
+from resource.directory_generator import DirectoryGenerator
 from generater import RandomGenerater
 from path_crypt import PathCrypt
 

@@ -6,11 +6,12 @@ import utils
 
 class FileCrypt:
 
-    def __init__(self, key, sign):
+    def __init__(self, key, sign,rule):
         self.key = key
         self.sign = sign
+        self.rule=rule
 
-    def encrypt_dir(self, src_dir, out_dir, include=None):
+    def encrypt_dir(self, src_dir, out_dir):
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
@@ -19,21 +20,21 @@ class FileCrypt:
             out_path = os.path.join(out_dir, filename)
 
             if os.path.isdir(file_path):
-                self.encrypt_dir(file_path, out_path, include)
+                self.encrypt_dir(file_path, out_path)
             elif os.path.isfile(file_path):
-                if utils.in_rules(file_path, include):
+                if not self.rule or self.rule.test(file_path):
                     FileCrypt.encrypt(file_path, out_path, self.key, self.sign)
                 else:
                     shutil.copy(file_path, out_path)
 
-    def decrypt_dir(self, src_dir, out_dir, include=None):
+    def decrypt_dir(self, src_dir, out_dir):
         for filename in os.listdir(src_dir):
             file_path = os.path.join(src_dir, filename)
             out_path = os.path.join(out_dir, filename)
             if os.path.isdir(file_path):
-                self.decrypt_dir(file_path, out_path, include)
+                self.decrypt_dir(file_path, out_path)
             elif os.path.isfile(file_path):
-                if utils.in_rules(file_path, include):
+                if not self.rule or self.rule.test(file_path):
                     FileCrypt.decrypt(file_path, out_path, self.key, self.sign)
                 else:
                     shutil.copy(file_path, out_path)
@@ -71,18 +72,18 @@ class FileCrypt:
             fp.write(decrypt_bytes)
             fp.close()
 
-    def start_encrypt(self, src_path, out_path, include=None, remove_source=True):
+    def start_encrypt(self, src_path, out_path, remove_source=True):
         if src_path == out_path:
             bak_path = src_path + "_bak"
             if os.path.exists(bak_path):
                 shutil.rmtree(bak_path)
             os.rename(src_path, bak_path)
-            self.encrypt_dir(bak_path, out_path, include)
+            self.encrypt_dir(bak_path, out_path)
             if remove_source:
                 shutil.rmtree(bak_path)
         else:
             if os.path.exists(out_path):
                 shutil.rmtree(out_path)
-            self.encrypt_dir(src_path, out_path, include)
+            self.encrypt_dir(src_path, out_path)
             if remove_source:
                 shutil.rmtree(src_path)

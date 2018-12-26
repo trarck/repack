@@ -1,7 +1,4 @@
-import re
-import utils
-
-from objc_garbage_code import ObjCFile
+from garbage_code.objc_garbage_code import ObjCFile
 
 of=ObjCFile({
     "head_file":"../data/temp/a.h",

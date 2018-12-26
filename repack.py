@@ -12,9 +12,9 @@ from resource.resource_obfuscator import ResourceObfuscator, CryptInfo
 from project import IosProject
 from source_file import SourceFile
 from file_crypt import FileCrypt
-from cpp_garbage_code import CppGarbageCode
+from garbage_code.cpp_garbage_code import CppGarbageCode
 from resource.resource_garbage import ResourceGarbage
-from objc_garbage_code import ObjCGarbageCode
+from garbage_code.objc_garbage_code import ObjCGarbageCode
 from garbage_code.cpp_injector import CppInjector
 from resource.resource_mapping import ResourceMapping
 
@@ -129,9 +129,17 @@ class Repack:
     def copy_files(self, config):
         print("===>copy file from %s to %s" % (
             self.translate_string(config["from"]), self.translate_string(config["to"])))
-        config["from"] = self.translate_string(config["from"])
-        config["to"] = self.translate_string(config["to"])
-        utils.copy_files_with_config(config, self.pack_resource_path, self.project_root_path)
+
+        src_dir = self.translate_string(config["from"])
+        dst_dir = self.translate_string(config["to"])
+
+        if not os.path.isabs(src_dir):
+            src_dir = os.path.join(self.pack_resource_path, src_dir)
+
+        if not os.path.isabs(dst_dir):
+            dst_dir = os.path.join(self.project_root_path, dst_dir)
+
+        utils.copy_files_with_config(config, src_dir, dst_dir)
 
     def delete_files(self, config):
         print("===>delete files ")
@@ -301,14 +309,20 @@ class Repack:
 
         include = None
         if "include" in config:
-            include = utils.convert_rules(config["include"])
+            include = config["include"]
+
+        exclude = None
+        if "exclude" in config:
+            exclude = config["exclude"]
+
+        rule = utils.create_rules(include, exclude)
 
         remove_source = True
         if "remove_source" in config:
             remove_source = config["remove_source"]
 
-        fcrypt = FileCrypt(key, sign)
-        fcrypt.start_encrypt(from_dir, to_dir, include, remove_source)
+        fcrypt = FileCrypt(key, sign, rule)
+        fcrypt.start_encrypt(from_dir, to_dir, remove_source)
 
     def obfuscate_resources(self, config):
         crypt_info = self.crypt_info.copy()

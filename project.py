@@ -4,6 +4,7 @@ import plistlib
 import subprocess
 
 from pbxproj import XcodeProject, PBXProvioningTypes
+from source_file import SourceFile
 
 
 class IosProject:
@@ -105,6 +106,87 @@ class IosProject:
             root_obj['CFBundleDisplayName'] = display_name
             plistlib.writePlist(root_obj, os.path.join(self.project_root, info_plist_file_path))
 
+    def replace_scheme_data(self, scheme_file_path, target_name, xcode_project_name=None, scheme_name=None):
+        source = SourceFile(scheme_file_path)
+        source.open()
+
+        if target_name:
+            source.search_replace(["BuildAction", "BuildableName", '"'], ['"'], target_name + ".app")
+            source.search_replace(["TestAction", "BuildableName", '"'], ['"'], target_name + ".app")
+            source.search_replace(["LaunchAction", "BuildableName", '"'], ['"'], target_name + ".app")
+            source.search_replace(["ProfileAction", "BuildableName", '"'], ['"'], target_name + ".app")
+
+        if xcode_project_name:
+            source.search_replace(["BuildAction", "ReferencedContainer", '"'], ['"'],
+                                  "container:" + xcode_project_name)
+            source.search_replace(["TestAction", "ReferencedContainer", '"'], ['"'],
+                                  "container:" + xcode_project_name)
+            source.search_replace(["LaunchAction", "ReferencedContainer", '"'], ['"'],
+                                  "container:" + xcode_project_name)
+            source.search_replace(["ProfileAction", "ReferencedContainer", '"'], ['"'],
+                                  "container:" + xcode_project_name)
+
+        if scheme_name:
+            source.search_replace(["BuildAction", "BlueprintName", '"'], ['"'], scheme_name)
+            source.search_replace(["LaunchAction", "BlueprintName", '"'], ['"'], scheme_name)
+            source.search_replace(["TestAction", "BlueprintName", '"'], ['"'], scheme_name)
+            source.search_replace(["ProfileAction", "BlueprintName", '"'], ['"'], scheme_name)
+
+        source.save()
+
+    def rename_target_in_schemes(self, target_name, xcode_project_name):
+        if xcode_project_name.find(".xcodeproj") == -1:
+            xcode_project_name += ".xcodeproj"
+
+        # replace in shared data
+        if os.path.exists(os.path.join(self.project_file_path, "xcshareddata")):
+            xcscheme_dir_path = os.listdir(os.path.join(self.project_file_path, "xcshareddata", "xcschemes"))
+            files = os.listdir(xcscheme_dir_path)
+            for f in files:
+                scheme_file_path = os.path.join(xcscheme_dir_path, f)
+                if f.find(".xcscheme") > -1:
+                    self.replace_scheme_data(scheme_file_path, target_name, xcode_project_name)
+
+        # replace in user data
+        xcuserdata_path = os.path.join(self.project_file_path, "xcuserdata")
+        if os.path.exists(xcuserdata_path):
+            dirs = [xcuserdata_path]
+            while len(files) > 0:
+                folder_path = dirs.pop()
+                files = os.listdir(folder_path)
+                for f in files:
+                    file_path = os.path.join(folder_path, f)
+                    if os.path.isdir(file_path):
+                        dirs.append(file_path)
+                    elif f.find(".xcscheme") > -1:
+                        self.replace_scheme_data(scheme_file_path, target_name, xcode_project_name)
+
+    def rename_shared_scheme(self, new_scheme, old_scheme, target_name, xcode_project_name):
+        if os.path.exists(os.path.join(self.project_file_path, "xcshareddata")):
+
+            if xcode_project_name.find(".xcodeproj") == -1:
+                xcode_project_name += ".xcodeproj"
+
+            if old_scheme:
+                if old_scheme.find(".xcscheme") == -1:
+                    old_scheme += ".xcscheme"
+                scheme_file_path = os.path.join(self.project_file_path, "xcshareddata", "xcschemes", old_scheme)
+            else:
+                # get first scheme file
+                xcscheme_dir_path = os.listdir(os.path.join(self.project_file_path, "xcshareddata", "xcschemes"))
+                files = os.listdir(xcscheme_dir_path)
+                for f in files:
+                    scheme_file_path = os.path.join(xcscheme_dir_path, f)
+                    if f.find(".xcscheme") > -1:
+                        break
+
+            if os.path.exists(scheme_file_path):
+                self.replace_scheme_data(scheme_file_path, target_name, xcode_project_name, new_scheme)
+
+                # rename scheme file name
+                new_scheme_file_path = os.path.join(os.path.dirname(scheme_file_path), new_scheme + ".xcscheme")
+                os.rename(scheme_file_path, new_scheme_file_path)
+
     def rename(self, target_name, package_id, display_name, new_project_file_name=None, product_name=None):
         if not new_project_file_name:
             new_project_file_name = target_name
@@ -122,6 +204,8 @@ class IosProject:
                 if u"PRODUCT_BUNDLE_IDENTIFIER" in configuration.buildSettings:
                     configuration.set_flags(u"PRODUCT_BUNDLE_IDENTIFIER", package_id)
         pbx_project.save()
+
+        self.rename_target_in_schemes()
 
     def set_resource_obfuscate_key(self, crypt_key):
         xcode_project_file_path = self._get_xcode_project_file_path(self.project_root)
@@ -169,6 +253,18 @@ class IosProject:
                 parent = parents[0]
 
         pbx_project.add_file(file_path, parent)
+        pbx_project.save()
+
+    def add_files(self, files, parent):
+        pbx_project = XcodeProject.load(os.path.join(self.project_file_path, "project.pbxproj"))
+
+        if parent is not None:
+            parents = pbx_project.get_groups_by_name(parent)
+            if parents is not None:
+                parent = parents[0]
+
+        for f in files:
+            pbx_project.add_file(f, parent)
         pbx_project.save()
 
     def build_app(self, target, configuration, sdk, out_put):
