@@ -43,6 +43,8 @@ class Repack:
             u"GLOBAL_DATA_DIR": self.global_data_dir
         }
 
+        self.action_classes = {}
+
     def _merge_environment(self, conf_data, parent_key=None):
         for key, value in conf_data.items():
             if parent_key:
@@ -61,7 +63,7 @@ class Repack:
         t = Template(value)
         return t.substitute(self._environment)
 
-    def _parse_config(self, conf_data):
+    def parse_config(self, conf_data):
         self._config_data = conf_data
 
         if "need_copy" in conf_data:
@@ -87,9 +89,19 @@ class Repack:
 
         self._merge_environment(conf_data, "PROJECT")
 
-    def run(self, config, steps):
-        self._parse_config(config)
+    def register_actions(self, action_config_file):
 
+        fp = open(action_config_file)
+        action_data = json.load(fp)
+        fp.close()
+
+        if "actions" in action_data:
+            for action_config in action_data["actions"]:
+                cls = utils.get_class(action_config["class_name"])
+                if cls:
+                    self.action_classes[action_config["name"]] = cls
+
+    def run(self,steps):
         if self.need_copy_project:
             self.copy_project()
 
@@ -110,12 +122,11 @@ class Repack:
 
     def do_action(self, action_data):
         print("===> do action %s" % action_data["name"])
-        try:
-            fun = getattr(self, action_data["name"])
-        except AttributeError:
+        if action_data["name"] in self.action_classes:
+            action = self.action_classes[action_data["name"]](self, action_data)
+            action.run(None)
+        else:
             raise "Can't find action %s" % action_data["name"]
-
-        fun(action_data)
 
     def copy_project(self, config=None):
         print("copy project from %s to %s" % (self.matrix_project_root_path, self.project_root_path))
@@ -527,7 +538,11 @@ def repack_project(src_project, out_dir, resource_dir, data_dir, project_config,
 
     repack = Repack(src_project, project_path, resource_path, data_dir, project_config["name"])
 
-    repack.run(project_config, step_config)
+    # register base actions
+    base_action_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions", "actions.json")
+    repack.parse_config(project_config)
+    repack.register_actions(base_action_config_file)
+    repack.run(step_config)
 
 
 def main():
@@ -553,6 +568,9 @@ def main():
 
     parser.add_argument('--step-config', dest='step_config',
                         help="step config contains actions")
+
+    parser.add_argument('--action-config', dest='action_config',
+                        help="actions config")
 
     args = parser.parse_args()
 
@@ -594,10 +612,10 @@ def main():
     if "projects" in config_data:
         for project_config in config_data["projects"]:
             repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, project_config,
-                           step_config)
+                           step_config, args.action_config)
     elif "project" in config_data:
         repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, config_data["project"],
-                       step_config)
+                       step_config, args.action_config)
 
 
 # -------------- main --------------

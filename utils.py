@@ -1,6 +1,6 @@
 import os
 import shutil
-import re
+import sys
 import random
 from rules import *
 
@@ -130,6 +130,21 @@ def copy_files_with_rules(src_root, src, dst, include=None, exclude=None):
                     shutil.copy(abs_path, dst)
 
 
+def get_class(kls):
+    parts = kls.split('.')
+    module = ".".join(parts[:-1])
+    if len(parts) == 1:
+        m = sys.modules[__name__]
+        m = getattr(m, parts[0])
+    else:
+        m = __import__(module)
+        for comp in parts[1:]:
+            m = getattr(m, comp)
+    return m
+
+def pad(size):
+    return ''.join(' ' for _ in range(size))
+
 def generate_key():
     return ''.join(chr(random.randrange(ord('a'), ord('z'))) for _ in range(16))
 
@@ -153,8 +168,6 @@ def generate_name_first_lower(min_length=6, max_length=64):
     return name[0].lower() + name[1:]
 
 
-def pad(size):
-    return ''.join(' ' for _ in range(size))
 
 
 def generate_int(max_value=2147483640):

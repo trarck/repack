@@ -87,3 +87,14 @@ class ModifyFilesAction(Action):
             elif operation == "remove":
                 source.remove(modify_config["froms"], modify_config["tos"])
             source.save()
+
+
+class CopyProjectAction(Action):
+    def run(self, args):
+        print("copy project from %s to %s" % (self.runner.matrix_project_root_path, self.runner.project_root_path))
+        if os.path.exists(self.runner.matrix_project_root_path):
+            if os.path.exists(self.runner.project_root_path):
+                shutil.rmtree(self.runner.project_root_path)
+            shutil.copytree(self.runner.matrix_project_root_path, self.runner.project_root_path, True)
+        else:
+            print("copy project error no %s folder " % self.runner.matrix_project_root_path)
