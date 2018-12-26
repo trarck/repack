@@ -8,14 +8,15 @@ import json
 from string import Template
 
 from argparse import ArgumentParser
-from resource_obfuscator import ResourceObfuscator, CryptInfo
+from resource.resource_obfuscator import ResourceObfuscator, CryptInfo
 from project import IosProject
 from source_file import SourceFile
 from file_crypt import FileCrypt
 from cpp_garbage_code import CppGarbageCode
-from resource_garbage import ResourceGarbage
+from resource.resource_garbage import ResourceGarbage
 from objc_garbage_code import ObjCGarbageCode
 from garbage_code.cpp_injector import CppInjector
+from resource.resource_mapping import ResourceMapping
 
 import utils
 
@@ -348,6 +349,76 @@ class Repack:
         res_obf = ResourceObfuscator(res_path, out_path, sub_dirs, ignore_dirs, crypt_info, include_rules,
                                      exclude_rules, remove_source)
         res_obf.start()
+
+    def mapping_resources(self, config):
+        crypt_info = self.crypt_info.copy()
+        res_path = self.translate_string(config["res_path"])
+        if not os.path.isabs(res_path):
+            res_path = os.path.join(self.project_root_path, res_path)
+
+        if "out_path" in config:
+            out_path = self.translate_string(config["out_path"])
+            if not os.path.isabs(out_path):
+                out_path = os.path.join(self.project_root_path, out_path)
+        else:
+            out_path = res_path
+
+        mapping_file = None
+        if "mapping_file" in config:
+            mapping_file = self.translate_string(config["mapping_file"])
+            if not os.path.isabs(out_path):
+                out_path = os.path.join(self.project_root_path, out_path)
+
+        remove_source = True
+        if "remove_source" in config:
+            remove_source = config["remove_source"]
+
+        if "with_ext" in config:
+            crypt_info.with_ext = config["with_ext"]
+
+        ignore_root = True
+        if "ignore_root" in config:
+            ignore_root = config["ignore_root"]
+
+        save_json = False
+        if "save_json" in config:
+            save_json = config["save_json"]
+
+        save_plist = False
+        if "save_plist" in config:
+            save_plist = config["save_plist"]
+
+        include_rules = None
+        if "include_rules" in config:
+            include_rules = config["include_rules"]
+
+        exclude_rules = None
+        if "exclude_rules" in config:
+            exclude_rules = config["exclude_rules"]
+
+        rule = utils.create_rules(include_rules, exclude_rules)
+
+        min_level = 2
+        if "min_level" in config:
+            min_level = config["min_level"]
+
+        max_level = 5
+        if "max_level" in config:
+            max_level = config["max_level"]
+
+        level = random.randint(min_level, max_level)
+
+        min_dir_counts = [10, 6]
+        if "min_dir_counts" in config:
+            min_dir_counts = config["min_dir_counts"]
+
+        max_dir_counts = [15, 10]
+        if "max_dir_counts" in config:
+            max_dir_counts = config["max_dir_counts"]
+
+        res_mapping = ResourceMapping(res_path, rule, remove_source, crypt_info.with_ext)
+        res_mapping.mapping(level, min_dir_counts, max_dir_counts, out_path, ignore_root)
+        res_mapping.save_mapping_data(mapping_file, crypt_info.key, save_json, save_plist)
 
     def generate_code(self, config):
         out_folder_path = self.translate_string(config["out_dir"])

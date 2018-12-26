@@ -1,7 +1,4 @@
-import os
-import shutil
-import utils
-from resource_obfuscator import ResourceObfuscator,CryptInfo
+from resource.resource_obfuscator import ResourceObfuscator,CryptInfo
 
 res_path ="data/temp/res"
 out_path ="data/temp/res"

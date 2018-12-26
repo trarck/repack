@@ -10,18 +10,20 @@ from path_crypt import PathCrypt
 
 
 class ResourceMapping:
-    def __init__(self, src_res_path, keep_ext=True):
+    def __init__(self, src_res_path, rule, remove_source, keep_ext=True):
         self.src_res_path = src_res_path
+        self.rule = rule
+        self.remove_source = remove_source
         self.keep_ext = keep_ext
         self.out_res_path = None
         self.map = None
 
-    def mapping(self, max_level, min_dir_count, max_dir_count, out_res_path, ignore_root=False):
+    def mapping(self, max_level, min_dir_counts, max_dir_counts, out_res_path, ignore_root=False):
         # generate mapping dir
         self.map = {}
         self.out_res_path = out_res_path
 
-        dir_gen = DirectoryGenerator(max_level, min_dir_count, max_dir_count, ignore_root)
+        dir_gen = DirectoryGenerator(max_level, min_dir_counts, max_dir_counts, ignore_root)
         dirs = dir_gen.generate(self.out_res_path)
 
         self.parse_dir(self.src_res_path, dirs)
