@@ -1,9 +1,12 @@
 import os
 import random
+import json
+import plistlib
 from action import Action
 import utils
 from resource.resource_obfuscator import ResourceObfuscator
 from resource.resource_mapping import ResourceMapping
+from resource.directory_generator import DirectoryGenerator
 
 
 class ObfuscateResourcesAction(Action):
@@ -119,6 +122,37 @@ class MappingResourcesAction(Action):
         if "max_dir_counts" in config:
             max_dir_counts = config["max_dir_counts"]
 
-        res_mapping = ResourceMapping(res_path, rule, remove_source, crypt_info.with_ext)
-        res_mapping.mapping(level, min_dir_counts, max_dir_counts, out_path, ignore_root)
+        dir_gen = DirectoryGenerator(level, min_dir_counts, max_dir_counts, ignore_root)
+        dirs = dir_gen.generate(out_path)
+
+        res_mapping = ResourceMapping(out_path, dirs, rule, remove_source, crypt_info.with_ext)
+        res_mapping.mapping(res_path, ignore_root)
         res_mapping.save_mapping_data(mapping_file, crypt_info.key, save_json, save_plist)
+
+
+class MergeMappingFileAction(Action):
+    def run(self, args):
+        config = self.config
+
+        if config["format_type"] == "json":
+            data = {}
+            for mapping_file in config["files"]:
+                file_path = self.translate_string(mapping_file)
+                fp = open(file_path)
+                sub_data = json.load(fp)
+                fp.close()
+                data.update(sub_data)
+
+            out_file = self.translate_string(config["out_path"])
+            fp = open(out_file, "w")
+            json.dump(data, fp)
+            fp.close()
+        elif config["format_type"] == "plist":
+            data = {}
+            for mapping_file in config["files"]:
+                file_path = self.translate_string(mapping_file)
+                sub_data = plistlib.readPlist(file_path)
+                data.update(sub_data)
+
+            out_file = self.translate_string(config["out_path"])
+            plistlib.writePlist(data, out_file)

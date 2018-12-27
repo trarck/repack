@@ -142,8 +142,16 @@ def get_class(kls):
             m = getattr(m, comp)
     return m
 
+
 def pad(size):
     return ''.join(' ' for _ in range(size))
+
+
+def merge_dict(a, b):
+    c = a.copy()
+    c.update(b)
+    return c
+
 
 def generate_key():
     return ''.join(chr(random.randrange(ord('a'), ord('z'))) for _ in range(16))
@@ -166,8 +174,6 @@ def generate_name_first_upper(min_length=6, max_length=64):
 def generate_name_first_lower(min_length=6, max_length=64):
     name = generate_name(min_length, max_length)
     return name[0].lower() + name[1:]
-
-
 
 
 def generate_int(max_value=2147483640):
