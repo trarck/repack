@@ -123,7 +123,7 @@ class CppInjector:
     def __init__(self, options):
         self.options = options
         self._injected_files = None
-        self.tpl_folder_path = options["tpl_folder"]
+        self.tpl_folder_path = options["tpl_dir"]
         self.skips = {}
         self.clang_args = options["clang_args"] if "clang_args" in options else []
         self._init_rule()

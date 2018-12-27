@@ -25,7 +25,7 @@ cpp_injector=CppInjector({
     # "exclude": [
     #     "*CCAction*", "*CCAnim*", "*CCComp*", "*CCDraw*"
     # ],
-    "tpl_folder":"../data/template/obf"
+    "tpl_dir":"../data/template/obf"
 
 })
 

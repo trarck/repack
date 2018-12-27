@@ -77,7 +77,7 @@ class InjectCppCodeAction(Action):
 
         tpl_folder_path = tpl_folder_path.encode("utf-8")
 
-        config["tpl_folder"] = tpl_folder_path
+        config["tpl_dir"] = tpl_folder_path
 
         cpp_injector = CppInjector(config)
         cpp_injector.inject_files(checked_files)
