@@ -43,7 +43,7 @@
         },
         {
             "name":"xcode_build_archive",
-            "class_name":"actions.xcode_actions.XCodeBuildArchive",
+            "class_name":"actions.xcode_actions.XCodeBuildArchiveAction",
             "parameters":[]
         },
         {
@@ -59,6 +59,11 @@
         {
             "name":"mapping_resources",
             "class_name":"actions.obfuscate_actions.MappingResourcesAction",
+            "parameters":[]
+        },
+        {
+            "name":"merge_mapping_file",
+            "class_name":"actions.obfuscate_actions.MergeMappingFileAction",
             "parameters":[]
         },
         {

@@ -11,24 +11,24 @@ class CryptFilesAction(Action):
 
         from_dir = self.translate_string(config["from"])
         if not os.path.isabs(from_dir):
-            from_dir = os.path.join(self.project_root_path, from_dir)
+            from_dir = os.path.join(self.runner.project_root_path, from_dir)
 
         if "to" in config:
             to_dir = self.translate_string(config["to"])
             if not os.path.isabs(to_dir):
-                to_dir = os.path.join(self.project_root_path, to_dir)
+                to_dir = os.path.join(self.runner.project_root_path, to_dir)
         else:
             to_dir = from_dir
 
         if "key" in config:
             key = self.translate_string(config["key"]).encode("utf8")
         else:
-            key = self._config_data["xxtea_key"]
+            key = None
 
         if "sign" in config:
             sign = self.translate_string(config["sign"]).encode("utf8")
         else:
-            sign = self._config_data["xxtea_sign"]
+            sign = None
 
         include = None
         if "include" in config:

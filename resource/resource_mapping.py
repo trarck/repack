@@ -72,4 +72,5 @@ class ResourceMapping:
 
         if save_plist:
             plist_file_path = out_mapping_file + ".plist"
+            print("save to %s"%plist_file_path)
             plistlib.writePlist(map_data, plist_file_path)

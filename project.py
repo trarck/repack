@@ -205,7 +205,7 @@ class IosProject:
                     configuration.set_flags(u"PRODUCT_BUNDLE_IDENTIFIER", package_id)
         pbx_project.save()
 
-        self.rename_target_in_schemes()
+        self.rename_target_in_schemes(target_name,new_project_file_name)
 
     def set_resource_obfuscate_key(self, crypt_key):
         xcode_project_file_path = self._get_xcode_project_file_path(self.project_root)
