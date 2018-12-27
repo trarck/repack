@@ -519,7 +519,7 @@ class Repack:
         self.do_action(action)
 
 
-def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config):
+def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config,ext_action_file):
     if "project_path" in project_config:
         if os.path.isabs(project_config["project_path"]):
             project_path = project_config["project_path"]
@@ -538,10 +538,17 @@ def repack_project(src_project, out_dir, resource_dir, data_dir, project_config,
 
     repack = Repack(src_project, project_path, resource_path, data_dir, project_config["name"])
 
+
+
+    repack.parse_config(project_config)
+
     # register base actions
     base_action_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions", "actions.json")
-    repack.parse_config(project_config)
     repack.register_actions(base_action_config_file)
+
+    if ext_action_file:
+        repack.register_actions(ext_action_file)
+
     repack.run(step_config)
 
 
