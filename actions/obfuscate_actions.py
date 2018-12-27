@@ -2,6 +2,7 @@ import os
 import random
 import json
 import plistlib
+import shutil
 from action import Action
 import utils
 from resource.resource_obfuscator import ResourceObfuscator
@@ -121,6 +122,9 @@ class MappingResourcesAction(Action):
         max_dir_counts = [15, 10]
         if "max_dir_counts" in config:
             max_dir_counts = config["max_dir_counts"]
+
+        if "clean" in config and config["clean"]:
+            shutil.rmtree(out_path)
 
         dir_gen = DirectoryGenerator(level, min_dir_counts, max_dir_counts, ignore_root)
         dirs = dir_gen.generate(out_path)
