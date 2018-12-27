@@ -71,7 +71,7 @@ def copy_files(src, dst):
             copy_files(path, new_dst)
 
 
-def copy_files_with_config(config, src_root, dst_root):
+def copy_files_with_config(config):
     src_dir = config["from"]
     dst_dir = config["to"]
 

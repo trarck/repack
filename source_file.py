@@ -18,8 +18,10 @@ class SourceFile:
         for k in keys:
             pos = self.content.find(k, pos)
             if pos == -1:
+                print("Can't find insert positions %s:[%s]"%(self.file_path,keys))
                 return False
             pos += len(k)
+        print(self.file_path)
         self.content = self.content[:pos] + words + self.content[pos:]
 
     def insert_before(self, keys, words):

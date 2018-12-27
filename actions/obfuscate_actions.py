@@ -57,7 +57,7 @@ class MappingResourcesAction(Action):
     def run(self, args):
         config = self.config
 
-        crypt_info = self.crypt_info.copy()
+        crypt_info = self.runner.crypt_info.copy()
         res_path = self.translate_string(config["res_path"])
         if not os.path.isabs(res_path):
             res_path = os.path.join(self.runner.project_root_path, res_path)
@@ -72,7 +72,7 @@ class MappingResourcesAction(Action):
         mapping_file = None
         if "mapping_file" in config:
             mapping_file = self.translate_string(config["mapping_file"])
-            if not os.path.isabs(out_path):
+            if not os.path.isabs(mapping_file):
                 out_path = os.path.join(self.runner.project_root_path, out_path)
 
         remove_source = True
@@ -125,8 +125,8 @@ class MappingResourcesAction(Action):
         dir_gen = DirectoryGenerator(level, min_dir_counts, max_dir_counts, ignore_root)
         dirs = dir_gen.generate(out_path)
 
-        res_mapping = ResourceMapping(out_path, dirs, rule, remove_source, crypt_info.with_ext)
-        res_mapping.mapping(res_path, ignore_root)
+        res_mapping = ResourceMapping(out_path, dirs, remove_source, crypt_info.with_ext)
+        res_mapping.mapping(res_path, rule, ignore_root)
         res_mapping.save_mapping_data(mapping_file, crypt_info.key, save_json, save_plist)
 
 
@@ -137,7 +137,8 @@ class MergeMappingFileAction(Action):
         if config["format_type"] == "json":
             data = {}
             for mapping_file in config["files"]:
-                file_path = self.translate_string(mapping_file)
+                file_path = self.get_full_path(mapping_file, self.runner.project_root_path)
+
                 fp = open(file_path)
                 sub_data = json.load(fp)
                 fp.close()
@@ -150,9 +151,10 @@ class MergeMappingFileAction(Action):
         elif config["format_type"] == "plist":
             data = {}
             for mapping_file in config["files"]:
-                file_path = self.translate_string(mapping_file)
+                file_path = self.get_full_path(mapping_file, self.runner.project_root_path)
+
                 sub_data = plistlib.readPlist(file_path)
                 data.update(sub_data)
 
-            out_file = self.translate_string(config["out_path"])
+            out_file = self.get_full_path(config["out_path"], self.runner.project_root_path)
             plistlib.writePlist(data, out_file)
