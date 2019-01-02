@@ -24,7 +24,7 @@ class Action:
         if key not in self.config:
             return None
 
-        return self.get_full_path(self.config[key])
+        return self.get_full_path(self.config[key], root_path)
 
     def run(self, args):
         print("should run in sub class")
