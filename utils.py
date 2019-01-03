@@ -151,38 +151,3 @@ def merge_dict(a, b):
     c = a.copy()
     c.update(b)
     return c
-
-
-def generate_key():
-    return ''.join(chr(random.randrange(ord('a'), ord('z'))) for _ in range(16))
-
-
-words = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-words_length = len(words)
-
-
-def generate_name(min_length=6, max_length=64):
-    length = random.randint(min_length, max_length)
-    return ''.join(words[random.randint(0, words_length - 1)] for _ in range(length))
-
-
-def generate_name_first_upper(min_length=6, max_length=64):
-    name = generate_name(min_length, max_length)
-    return name[0].upper() + name[1:]
-
-
-def generate_name_first_lower(min_length=6, max_length=64):
-    name = generate_name(min_length, max_length)
-    return name[0].lower() + name[1:]
-
-
-def generate_int(max_value=2147483640):
-    return random.randint(0, max_value)
-
-
-def generate_float(max_value=2147483640):
-    return random.uniform(0, max_value)
-
-
-def generate_string(min_length=6, max_length=64):
-    return generate_name(min_length, max_length)

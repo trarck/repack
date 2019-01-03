@@ -17,7 +17,7 @@ from resource.resource_garbage import ResourceGarbage
 from garbage_code.objc_garbage_code import ObjCGarbageCode
 from garbage_code.cpp_injector import CppInjector
 from resource.resource_mapping import ResourceMapping
-
+import generater
 import utils
 
 reload(sys)
@@ -82,7 +82,7 @@ class Repack:
             self.crypt_info.parse_config(conf_data["crypt"])
 
         if not self.crypt_info.key:
-            self.crypt_info.key = utils.generate_key()
+            self.crypt_info.key = generater.RandomGenerater.generate_key()
 
         if "xcode_project_name" not in conf_data:
             conf_data["xcode_project_name"] = conf_data["target_name"] + ".xcodeproj"
@@ -101,7 +101,7 @@ class Repack:
                 if cls:
                     self.action_classes[action_config["name"]] = cls
 
-    def run(self,steps):
+    def run(self, steps):
         if self.need_copy_project:
             self.copy_project()
 
@@ -519,7 +519,7 @@ class Repack:
         self.do_action(action)
 
 
-def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config,ext_action_file):
+def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config, ext_action_file):
     if "project_path" in project_config:
         if os.path.isabs(project_config["project_path"]):
             project_path = project_config["project_path"]
@@ -538,8 +538,6 @@ def repack_project(src_project, out_dir, resource_dir, data_dir, project_config,
 
     repack = Repack(src_project, project_path, resource_path, data_dir, project_config["name"])
 
-
-
     repack.parse_config(project_config)
 
     # register base actions
@@ -550,6 +548,21 @@ def repack_project(src_project, out_dir, resource_dir, data_dir, project_config,
         repack.register_actions(ext_action_file)
 
     repack.run(step_config)
+
+
+def parse_words(args):
+    # load extend words
+    if args.words_file and os.path.exists(args.words_file):
+        generater.WordsManager.load_words(args.words_file)
+
+    if args.class_words_file and os.path.exists(args.class_words_file):
+        generater.WordsManager.load_class_words(args.class_words_file)
+
+    if args.filed_words_file and os.path.exists(args.filed_words_file):
+        generater.WordsManager.load_field_words(args.filed_words_file)
+
+    if args.function_words_file and os.path.exists(args.function_words_file):
+        generater.WordsManager.load_function_words(args.function_words_file)
 
 
 def main():
@@ -578,6 +591,9 @@ def main():
 
     parser.add_argument('--action-config', dest='action_config',
                         help="actions config")
+
+    parser.add_argument('--words-file', dest='words_file',
+                        help="words data file")
 
     args = parser.parse_args()
 
@@ -615,6 +631,11 @@ def main():
         step_config = config_data["steps"]
     else:
         raise "no step config"
+
+    # load base words
+    generater.WordsManager.init_words()
+
+    parse_words(args)
 
     if "projects" in config_data:
         for project_config in config_data["projects"]:

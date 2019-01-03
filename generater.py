@@ -1,49 +1,167 @@
-import os
-import shutil
 import random
+import os
 
 chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 chars_length = len(chars)
 
-words_file_path = os.path.join(os.path.dirname(__file__), "data/words.txt")
-fp = open(words_file_path)
-words = fp.readlines()
-fp.close()
-words_length = len(words)
-for i in range(words_length):
-    words[i] = words[i].strip()
+
+class WordsManager:
+    words = []
+    words_length = 0
+
+    class_words = []
+    class_words_length = 0
+
+    filed_words = []
+    filed_words_length = 0
+
+    function_words = []
+    function_words_length = 0
+
+    @staticmethod
+    def init_words():
+        words_file_path = os.path.join(os.path.dirname(__file__), "data/words.txt")
+        WordsManager.load_words(words_file_path)
+
+        words_file_path = os.path.join(os.path.dirname(__file__), "data/class_words.txt")
+        if os.path.exists(words_file_path):
+            WordsManager.load_class_words(words_file_path)
+
+        words_file_path = os.path.join(os.path.dirname(__file__), "data/field_words.txt")
+        if os.path.exists(words_file_path):
+            WordsManager.load_field_words(words_file_path)
+
+        words_file_path = os.path.join(os.path.dirname(__file__), "data/function_words.txt")
+        if os.path.exists(words_file_path):
+            WordsManager.load_function_words(words_file_path)
+
+    @staticmethod
+    def load_words(words_file_path):
+        if os.path.exists(words_file_path):
+            fp = open(words_file_path)
+            ws = fp.readlines()
+            fp.close()
+            for w in ws:
+                WordsManager.words.append(w.strip())
+                WordsManager.words_length += len(ws)
+
+    @staticmethod
+    def load_class_words(words_file_path):
+        if os.path.exists(words_file_path):
+            fp = open(words_file_path)
+            ws = fp.readlines()
+            fp.close()
+            for w in ws:
+                WordsManager.class_words.append(w.strip())
+                WordsManager.class_words_length += len(ws)
+
+    @staticmethod
+    def load_field_words(words_file_path):
+        if os.path.exists(words_file_path):
+            fp = open(words_file_path)
+            ws = fp.readlines()
+            fp.close()
+            for w in ws:
+                WordsManager.filed_words.append(w.strip())
+                WordsManager.filed_words_length += len(ws)
+
+    @staticmethod
+    def load_function_words(words_file_path):
+        if os.path.exists(words_file_path):
+            fp = open(words_file_path)
+            ws = fp.readlines()
+            fp.close()
+            for w in ws:
+                WordsManager.function_words.append(w.strip())
+                WordsManager.function_words_length += len(ws)
+
+    @staticmethod
+    def clean_all():
+        WordsManager.words = []
+        WordsManager.words_length = 0
+
+        WordsManager.class_words = []
+        WordsManager.class_words_length = 0
+
+        WordsManager.filed_words = []
+        WordsManager.filed_words_length = 0
+
+        WordsManager.function_words = []
+        WordsManager.function_words_length = 0
+
+    @staticmethod
+    def clean_all():
+        WordsManager.words = []
+        WordsManager.words_length = 0
+
+        WordsManager.class_words = []
+        WordsManager.class_words_length = 0
+
+        WordsManager.filed_words = []
+        WordsManager.filed_words_length = 0
+
+        WordsManager.function_words = []
+        WordsManager.function_words_length = 0
+
+    @staticmethod
+    def clean_words():
+        WordsManager.words = []
+        WordsManager.words_length = 0
+
+    @staticmethod
+    def clean_class_words():
+        WordsManager.class_words = []
+        WordsManager.class_words_length = 0
+
+    @staticmethod
+    def clean_filed_words():
+        WordsManager.filed_words = []
+        WordsManager.filed_words_length = 0
+
+    @staticmethod
+    def clean_function_words():
+        WordsManager.function_words = []
+        WordsManager.function_words_length = 0
 
 
 class RandomGenerater:
     @staticmethod
-    def generate_name(min_length=6, max_length=64):
-        length = random.randint(min_length, max_length)
-        return ''.join(chars[random.randint(0, chars_length - 1)] for _ in range(length))
+    def upper_first(s):
+        return s[0].upper() + s[1:]
 
     @staticmethod
-    def generate_name_first_upper(min_length=6, max_length=64):
-        name = RandomGenerater.generate_name(min_length, max_length)
-        return name[0].upper() + name[1:]
+    def lower_first(s):
+        return s[0].lower() + s[1:]
 
     @staticmethod
-    def generate_name_first_lower(min_length=6, max_length=64):
-        name = RandomGenerater.generate_name(min_length, max_length)
-        return name[0].lower() + name[1:]
-
-    @staticmethod
-    def generate_int(max_value=999999):
+    def generate_int(max_value=2147483640):
         return random.randint(0, max_value)
 
     @staticmethod
-    def generate_float(max_value=999999):
+    def generate_float(max_value=2147483640):
         return random.uniform(0, max_value)
 
     @staticmethod
     def generate_string(min_length=6, max_length=64):
-        return RandomGenerater.generate_name(min_length, max_length)
+        length = random.randint(min_length, max_length)
+        return ''.join(chars[random.randint(0, chars_length - 1)] for _ in range(length))
 
     @staticmethod
-    def get_reandom_indexs(size, count,start_index=1):
+    def generate_string_first_upper(min_length=6, max_length=64):
+        name = RandomGenerater.generate_string(min_length, max_length)
+        return name[0].upper() + name[1:]
+
+    @staticmethod
+    def generate_string_first_lower(min_length=6, max_length=64):
+        name = RandomGenerater.generate_string(min_length, max_length)
+        return name[0].lower() + name[1:]
+
+    @staticmethod
+    def generate_key():
+        return ''.join(chr(random.randrange(ord('a'), ord('z'))) for _ in range(16))
+
+    @staticmethod
+    def get_reandom_indexs(size, count, start_index=1):
         indexs = range(size)
         for i in range(count):
             index = random.randint(start_index, size - 1 - i)
@@ -53,7 +171,7 @@ class RandomGenerater:
         return indexs[-count:]
 
     @staticmethod
-    def random_split(arr,split_count):
+    def random_split(arr, split_count):
         indexs = RandomGenerater.get_reandom_indexs(len(arr), split_count)
         last_index = 0
         subs = []
@@ -66,28 +184,28 @@ class RandomGenerater:
         return subs
 
     @staticmethod
-    def generate_words(min_count=2, max_count=5, join_str=None,max_join_count=0):
+    def generate_words(min_count=2, max_count=5, join_str=None, max_join_count=0):
         length = random.randint(min_count, max_count)
         if join_str is None:
-            return ''.join(words[random.randint(0, words_length - 1)] for _ in range(length))
+            return ''.join(WordsManager.words[random.randint(0, WordsManager.words_length - 1)] for _ in range(length))
         else:
             s = []
             for _ in range(length):
-                w = words[random.randint(0, words_length - 1)]
+                w = WordsManager.words[random.randint(0, WordsManager.words_length - 1)]
                 s.append(w[0].upper() + w[1:])
             if max_join_count > 0:
                 join_count = random.randint(1, max_join_count)
                 if join_count < length:
-                    subs=RandomGenerater.random_split(s,join_count)
+                    subs = RandomGenerater.random_split(s, join_count)
                     return join_str.join(subs)
             return join_str.join(s)
 
     @staticmethod
-    def generate_words_first_upper(min_count=2, max_count=5, join_str=None,max_join_count=0):
+    def generate_words_first_upper(min_count=2, max_count=5, join_str=None, max_join_count=0):
         length = random.randint(min_count, max_count)
         s = []
         for _ in range(length):
-            w = words[random.randint(0, words_length - 1)]
+            w = WordsManager.words[random.randint(0, WordsManager.words_length - 1)]
             s.append(w[0].upper() + w[1:])
         if join_str is None:
             return ''.join(s)
@@ -95,7 +213,7 @@ class RandomGenerater:
             if max_join_count > 0:
                 join_count = random.randint(1, max_join_count)
                 if join_count < length:
-                    subs=RandomGenerater.random_split(s,join_count)
+                    subs = RandomGenerater.random_split(s, join_count)
                     return join_str.join(subs)
 
             return join_str.join(s)
@@ -105,7 +223,7 @@ class RandomGenerater:
         length = random.randint(min_count, max_count)
         s = []
         for _ in range(length):
-            w = words[random.randint(0, words_length - 1)]
+            w = WordsManager.words[random.randint(0, WordsManager.words_length - 1)]
             s.append(w[0].lower() + w[1:])
         if join_str is None:
             return ''.join(s)
@@ -113,6 +231,16 @@ class RandomGenerater:
             if max_join_count > 0:
                 join_count = random.randint(1, max_join_count)
                 if join_count < length:
-                    subs=RandomGenerater.random_split(s,join_count)
+                    subs = RandomGenerater.random_split(s, join_count)
                     return join_str.join(subs)
             return join_str.join(s)
+
+    @staticmethod
+    def generate_words_with_random_prev_tail(min_prev_length=2, max_prev_length=3, min_tail_length=2, max_tail_lenth=3,
+                                             min_word_length=3, max_word_length=6):
+        name = RandomGenerater.generate_string(min_prev_length, max_prev_length)
+
+        name += RandomGenerater.generate_words(min_word_length, max_word_length)
+
+        name += RandomGenerater.generate_string(min_tail_length, max_tail_lenth)
+        return name

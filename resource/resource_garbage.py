@@ -21,7 +21,7 @@ class ResourceGarbage:
         if random.randint(1,100)<use_rule_ext_probability:
             return file_exts[random.randint(0,file_exts_length-1)]
         else:
-            return RandomGenerater.generate_name(2,3).lower()
+            return RandomGenerater.generate_string(2,3).lower()
 
     @staticmethod
     def generate_content(size):

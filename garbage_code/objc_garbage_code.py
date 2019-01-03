@@ -7,6 +7,7 @@ from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from objc_file_parser import *
 import utils
+from generater import RandomGenerater
 
 objc_types = ["NSInteger", "CGFloat", "NSString*"]
 objc_types_length = len(objc_types)
@@ -71,7 +72,7 @@ class ObjCFile:
 
     @staticmethod
     def generate_rule_name(random_prev_length=3, random_end_length=3, max_word=5, prev_probability=10):
-        name = utils.generate_name_first_upper(random_prev_length, random_prev_length)
+        name = RandomGenerater.generate_string_first_upper(random_prev_length, random_prev_length)
         if random.randint(0, 100) < prev_probability:
             name += name_prev_words[random.randint(0, name_prev_words_lenth - 1)]
 
@@ -79,7 +80,7 @@ class ObjCFile:
         for _ in range(word_count):
             name += name_main_words[random.randint(0, name_main_words_lenth - 1)]
 
-        name += utils.generate_name_first_upper(random_end_length, random_end_length)
+        name += RandomGenerater.generate_string_first_upper(random_end_length, random_end_length)
         return name
 
     @staticmethod
@@ -89,7 +90,7 @@ class ObjCFile:
         if random.randint(0, 100) < prev_probability:
             name += field_prev_words[random.randint(0, field_prev_words_lenth - 1)]
         elif random_prev_length > 0 and random.randint(0, 100) < auto_add_prev_probability:
-            name += utils.generate_name_first_lower(random_prev_length, random_prev_length)
+            name += RandomGenerater.generate_string_first_lower(random_prev_length, random_prev_length)
 
         word_count = random.randint(1, max_word)
         indexs = range(field_main_words_lenth)
@@ -100,7 +101,7 @@ class ObjCFile:
             indexs[indx] = indexs[-1 - i]
 
         if random_end_length > 0:
-            name += utils.generate_name_first_upper(random_end_length, random_end_length)
+            name += RandomGenerater.generate_string_first_upper(random_end_length, random_end_length)
 
         return name[0].lower() + name[1:]
 
@@ -111,7 +112,7 @@ class ObjCFile:
         if random.randint(0, 100) < prev_probability:
             name += function_prev_words[random.randint(0, function_prev_words_lenth - 1)]
         elif random_prev_length > 0 and random.randint(0, 100) < auto_add_prev_probability:
-            name += utils.generate_name_first_lower(random_prev_length, random_prev_length)
+            name += RandomGenerater.generate_string_first_lower(random_prev_length, random_prev_length)
 
         word_count = random.randint(1, max_word)
 
@@ -123,7 +124,7 @@ class ObjCFile:
             indexs[indx] = indexs[-1 - i]
 
         if random_end_length > 0:
-            name += utils.generate_name_first_upper(random_end_length, random_end_length)
+            name += RandomGenerater.generate_string_first_upper(random_end_length, random_end_length)
         return name[0].lower() + name[1:]
 
     @staticmethod
@@ -133,20 +134,20 @@ class ObjCFile:
     @staticmethod
     def generate_value(type_name):
         if type_name == "NSInteger" or type_name == "int" or type_name == "long long":
-            return str(utils.generate_int())
+            return str(RandomGenerater.generate_int())
         elif type_name == "CGFloat" or type_name == "float" or type_name == "double":
-            return str(utils.generate_float()) + "f"
+            return str(RandomGenerater.generate_float()) + "f"
         else:
-            return "@\"%s\"" % utils.generate_string()
+            return "@\"%s\"" % RandomGenerater.generate_string()
 
     @staticmethod
     def get_random_value(type_name):
         if type_name == "NSInteger" or type_name == "int" or type_name == "long long":
-            return utils.generate_int()
+            return RandomGenerater.generate_int()
         elif type_name == "CGFloat" or type_name == "float" or type_name == "double":
-            return utils.generate_float()
+            return RandomGenerater.generate_float()
         else:
-            return utils.generate_string()
+            return RandomGenerater.generate_string()
 
     @staticmethod
     def generate_field(tpl_folder_path):
@@ -368,7 +369,7 @@ class ObjCFileInject(ObjCFile):
 
                         code_tpl = Template(file=os.path.join(self.tpl_folder_path, "code_print.mm"),
                                             searchList=[
-                                                {"line_index": pos, "vals": vals, "tag": utils.generate_string()}])
+                                                {"line_index": pos, "vals": vals, "tag": RandomGenerater.generate_string()}])
                         inserts[pos] = str(code_tpl)
 
         return inserts
@@ -588,6 +589,7 @@ class ObjCFileInject(ObjCFile):
             fp.writelines(source_lines)
             fp.close()
 
+
 class ObjCGarbageCode:
     def __init__(self, tpl_folder_path):
         self.tpl_folder_path = tpl_folder_path.encode("utf-8")
@@ -639,7 +641,7 @@ class ObjCGarbageCode:
         if "group_name" in self.generate_config:
             group_name = self.generate_config["group_name"]
         else:
-            group_name = utils.generate_string(6, 10)
+            group_name = RandomGenerater.generate_string(6, 10)
 
         call_others = True
         if "call_others" in self.generate_config:
@@ -648,13 +650,13 @@ class ObjCGarbageCode:
         generated_files = []
         generated_head_files = []
 
-        namespace = utils.generate_name(5, 8).lower()
+        namespace = RandomGenerater.generate_string(5, 8).lower()
 
         call_generate_codes = []
 
         class_index = 1
         for i in range(gen_file_count):
-            class_name = utils.generate_name_first_upper(8, 16)
+            class_name = ObjCFile.generate_rule_name(3, 2)
             head_file_name = os.path.join(out_folder_path, class_name + ".h")
             source_file_name = os.path.join(out_folder_path, class_name + ".mm")
             generated_files.append(head_file_name)
@@ -679,7 +681,8 @@ class ObjCGarbageCode:
 
         # generate call generated code prevent delete by link optimization
         exec_once_tpl = Template(file=os.path.join(self.tpl_folder_path, "exec_code_once.mm"),
-                                 searchList=[{"code": "".join(call_generate_codes),"prefix":utils.generate_name()}])
+                                 searchList=[{"code": "".join(call_generate_codes),
+                                              "prefix": RandomGenerater.generate_string()}])
         exec_once = str(exec_once_tpl)
 
         if "generate_executor" in generate_config and generate_config["generate_executor"]:
@@ -690,8 +693,8 @@ class ObjCGarbageCode:
             for head_file in generated_head_files:
                 include_heads += "#import \"%s\"\n" % head_file
 
-        auto_all_name = utils.generate_name(20, 30)
-        auto_all_function = utils.generate_name(20, 30)
+        auto_all_name = RandomGenerater.generate_string(20, 30)
+        auto_all_function = RandomGenerater.generate_string(20, 30)
         auto_all_head_file = os.path.join(out_folder_path, auto_all_name + ".h")
         auto_all_source_file = os.path.join(out_folder_path, auto_all_name + ".mm")
         generated_files.append(auto_all_head_file)
@@ -724,7 +727,7 @@ class ObjCGarbageCode:
             "operation": "insert",
             "file_path": exec_code_file_path,
             "keys": generate_config["code_insert_keys"],
-            "words": "\n%s();\n"%auto_all_function
+            "words": "\n%s();\n" % auto_all_function
         }
         modify_exec_code_actions = {
             "name": "modify_files",

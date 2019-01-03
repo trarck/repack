@@ -6,6 +6,7 @@ from pbxproj import XcodeProject
 from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from cpp_file_parser import *
+from generater import RandomGenerater
 import utils
 
 cpp_types = ["int", "long long", "float", "double", "std::string"]
@@ -53,24 +54,24 @@ class CppFile:
     @staticmethod
     def generate_value(type_name):
         if type_name == "int" or type_name == "long long":
-            return str(utils.generate_int())
+            return str(RandomGenerater.generate_int())
         elif type_name == "float" or type_name == "double":
-            return str(utils.generate_float()) + "f"
+            return str(RandomGenerater.generate_float()) + "f"
         else:
-            return "\"%s\"" % utils.generate_string()
+            return "\"%s\"" % RandomGenerater.generate_string()
 
     @staticmethod
     def get_random_value(type_name):
         if type_name == "int" or type_name == "long long":
-            return utils.generate_int()
+            return RandomGenerater.generate_int()
         elif type_name == "float" or type_name == "double":
-            return utils.generate_float()
+            return RandomGenerater.generate_float()
         else:
-            return utils.generate_string()
+            return RandomGenerater.generate_string()
 
     @staticmethod
     def generate_field(tpl_folder_path):
-        field_name = utils.generate_name()
+        field_name = RandomGenerater.generate_string()
         field_type = NativeType(CppFile.generate_type())
         head_tpl_file = os.path.join(tpl_folder_path, "field.h")
         source_tpl_file = os.path.join(tpl_folder_path, "field.cpp")
@@ -78,13 +79,13 @@ class CppFile:
 
     @staticmethod
     def generate_parameter():
-        param_name = utils.generate_name()
+        param_name = RandomGenerater.generate_string()
         param_type = NativeType(CppFile.generate_type())
         return NativeParameter(param_name, param_type)
 
     @staticmethod
     def generate_function(tpl_folder_path, max_parameter_count=0):
-        method_name = utils.generate_name()
+        method_name = RandomGenerater.generate_string()
         parameters = []
         if max_parameter_count > 0:
             parameter_count = random.randint(0, max_parameter_count)
@@ -103,7 +104,7 @@ class CppFile:
     def prepare(self):
         # check class name
         if not self.class_name:
-            self.class_name = utils.generate_name(8, 32)
+            self.class_name = RandomGenerater.generate_string(8, 32)
             self.class_name = self.class_name[0].upper() + self.class_name[1:]
 
         # gen fields
@@ -285,7 +286,7 @@ class CppFileInject(CppFile):
 
                         code_tpl = Template(file=os.path.join(self.tpl_folder_path, "code_print.cpp"),
                                             searchList=[
-                                                {"line_index": pos, "vals": vals, "tag": utils.generate_string()}])
+                                                {"line_index": pos, "vals": vals, "tag": RandomGenerater.generate_string()}])
                         inserts[pos] = str(code_tpl)
 
         return inserts
@@ -334,7 +335,7 @@ class CppFileInject(CppFile):
         if len(head_file_parser.classes) > 0:
             # get first class
             class_info = self.get_insert_class(head_file_parser.classes)
-            if class_info :
+            if class_info:
                 class_name = class_info.name
                 class_end_line = class_info.end_line
                 print("get class %s from %d to %d" % (class_info.name, class_info.start_line, class_info.end_line))
@@ -565,7 +566,7 @@ class CppGarbageCode:
         if "group_name" in self.generate_config:
             group_name = self.generate_config["group_name"]
         else:
-            group_name = utils.generate_string(6, 10)
+            group_name = RandomGenerater.generate_string(6, 10)
 
         call_others = True
         if "call_others" in self.generate_config:
@@ -574,13 +575,13 @@ class CppGarbageCode:
         generated_files = []
         generated_head_files = []
 
-        namespace = utils.generate_name(5, 8).lower()
+        namespace = RandomGenerater.generate_string(5, 8).lower()
 
         call_generate_codes = []
 
         class_index = 1
         for i in range(gen_file_count):
-            class_name = utils.generate_name_first_upper(8, 16)
+            class_name = RandomGenerater.generate_string_first_upper(8, 16)
             head_file_name = os.path.join(out_folder_path, class_name + ".h")
             source_file_name = os.path.join(out_folder_path, class_name + ".cpp")
             generated_files.append(head_file_name)
@@ -606,7 +607,8 @@ class CppGarbageCode:
 
         # generate call generated code prevent delete by link optimization
         exec_once_tpl = Template(file=os.path.join(self.tpl_folder_path, "exec_code_once.cpp"),
-                                 searchList=[{"code": "".join(call_generate_codes), "prefix": utils.generate_name()}])
+                                 searchList=[{"code": "".join(call_generate_codes),
+                                              "prefix": RandomGenerater.generate_string()}])
         exec_once = str(exec_once_tpl)
 
         if "generate_executor" in generate_config and generate_config["generate_executor"]:
@@ -617,8 +619,8 @@ class CppGarbageCode:
             for head_file in generated_head_files:
                 include_heads += "#include \"%s\"\n" % head_file
 
-        auto_all_name = utils.generate_name(20, 30)
-        auto_all_function = utils.generate_name(20, 30)
+        auto_all_name = RandomGenerater.generate_string(20, 30)
+        auto_all_function = RandomGenerater.generate_string(20, 30)
         auto_all_head_file = os.path.join(out_folder_path, auto_all_name + ".h")
         auto_all_source_file = os.path.join(out_folder_path, auto_all_name + ".cpp")
         generated_files.append(auto_all_head_file)
@@ -775,7 +777,7 @@ class CppGarbageCode:
         exclude_rules = None
         if "exclude" in self.inject_config:
             exclude_rules = self.inject_config["exclude"]
-        
+
         rule = utils.create_rules(include_rules, exclude_rules)
 
         self._inject_checked_files = {}
