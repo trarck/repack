@@ -101,11 +101,33 @@ class Repack:
                 if cls:
                     self.action_classes[action_config["name"]] = cls
 
-    def run(self, steps):
+    def run(self, steps, executes=None, ignores=None):
         if self.need_copy_project:
             self.copy_project()
 
+        if executes or ignores:
+            steps = self.filter_steps(steps, executes, ignores)
+
         self.do_steps(steps)
+
+    def filter_steps(self, steps, executes=None, ignores=None):
+        filtered = []
+        for step_data in steps:
+            if ignores:
+                if step_data["name"] not in ignores:
+                    if executes:
+                        if step_data["name"] in executes:
+                            filtered.append(step_data)
+                    else:
+                        filtered.append(step_data)
+            else:
+                if executes:
+                    if step_data["name"] in executes:
+                        filtered.append(step_data)
+                else:
+                    filtered.append(step_data)
+
+        return filtered
 
     def do_steps(self, steps):
         for step_data in steps:
@@ -127,6 +149,25 @@ class Repack:
             action.run(None)
         else:
             raise "Can't find action %s" % action_data["name"]
+
+    # run as give step name[id] sequence
+    def run2(self, steps, executes=None, ignores=None):
+        if self.need_copy_project:
+            self.copy_project()
+
+        if isinstance(steps, list):
+            step_map = {}
+            for step_data in steps:
+                if ignores is None or step_data["name"] not in ignores:
+                    step_map[step_data["name"]] = step_map
+            steps = step_map
+
+        self._execute(executes, steps)
+
+    def _execute(self, executes, steps):
+        for step_name in executes:
+            if step_name in steps:
+                self.do_step(steps[step_name])
 
     def copy_project(self, config=None):
         print("copy project from %s to %s" % (self.matrix_project_root_path, self.project_root_path))
@@ -519,7 +560,8 @@ class Repack:
         self.do_action(action)
 
 
-def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config, ext_action_file):
+def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config, ext_action_file, actions,
+                   ignore_actions):
     if "project_path" in project_config:
         if os.path.isabs(project_config["project_path"]):
             project_path = project_config["project_path"]
@@ -595,6 +637,12 @@ def main():
     parser.add_argument('--words-file', dest='words_file',
                         help="words data file")
 
+    parser.add_argument('steps', nargs='*',
+                        help="steps to run")
+
+    parser.add_argument('-i', '--ignore-steps', dest='ignore_steps',
+                        help="actions not run")
+
     args = parser.parse_args()
 
     print("=======================================================")
@@ -640,10 +688,10 @@ def main():
     if "projects" in config_data:
         for project_config in config_data["projects"]:
             repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, project_config,
-                           step_config, args.action_config)
+                           step_config, args.action_config, args.actions, args.ignore_actions)
     elif "project" in config_data:
         repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, config_data["project"],
-                       step_config, args.action_config)
+                       step_config, args.action_config, args.actions, args.ignore_actions)
 
 
 # -------------- main --------------
