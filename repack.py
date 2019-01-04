@@ -637,6 +637,15 @@ def main():
     parser.add_argument('--words-file', dest='words_file',
                         help="words data file")
 
+    parser.add_argument('--class-words-file', dest='class_words_file',
+                        help="words data file")
+
+    parser.add_argument('--filed-words-file', dest='filed_words_file',
+                        help="words data file")
+
+    parser.add_argument('--function-words-file', dest='function_words_file',
+                        help="words data file")
+
     parser.add_argument('steps', nargs='*',
                         help="steps to run")
 
