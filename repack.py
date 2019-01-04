@@ -697,10 +697,10 @@ def main():
     if "projects" in config_data:
         for project_config in config_data["projects"]:
             repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, project_config,
-                           step_config, args.action_config, args.actions, args.ignore_actions)
+                           step_config, args.action_config, args.steps, args.ignore_steps)
     elif "project" in config_data:
         repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, config_data["project"],
-                       step_config, args.action_config, args.actions, args.ignore_actions)
+                       step_config, args.action_config, args.steps, args.ignore_steps)
 
 
 # -------------- main --------------
