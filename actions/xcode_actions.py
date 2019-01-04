@@ -27,8 +27,17 @@ class XCodeRenameAction(Action):
         if "product_name" in self.config:
             product_name = self.translate_string(self.config["product_name"])
 
+        new_scheme = None
+        if "new_scheme" in self.config:
+            product_name = self.translate_string(self.config["new_scheme"])
+
+        old_scheme = None
+        if "old_scheme" in self.config:
+            product_name = self.translate_string(self.config["old_scheme"])
+
         ios_project = IosProject(xcode_project_path)
-        ios_project.rename(target_name, package_id, display_name, xcode_project_name, product_name)
+        ios_project.rename(target_name, package_id, display_name, xcode_project_name, product_name, new_scheme,
+                           old_scheme)
 
 
 class XCodeSetCodeSignAction(Action):
