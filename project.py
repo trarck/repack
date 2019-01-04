@@ -69,6 +69,7 @@ class IosProject:
         if os.path.exists(new_project_file_path):
             shutil.rmtree(new_project_file_path)
         shutil.copytree(self.project_file_path, new_project_file_path)
+        self.project_file_path = new_project_file_path
         return new_project_file_path
 
     def rename_target(self, pbx_project, target_name, product_name=None, fore=False):
@@ -107,7 +108,8 @@ class IosProject:
             plistlib.writePlist(root_obj, os.path.join(self.project_root, info_plist_file_path))
 
     def replace_scheme_data(self, scheme_file_path, target_name, xcode_project_name=None, scheme_name=None):
-        print("===>replace scheme to %s" % target_name)
+        print("===>replace scheme data in %s to %s,%s,%s" % (
+        scheme_file_path, target_name, xcode_project_name, scheme_name))
         source = SourceFile(scheme_file_path)
         source.open()
 
@@ -150,9 +152,11 @@ class IosProject:
                 if (old_scheme and f.find(old_scheme) > -1) or f.find(".xcscheme") > -1:
                     scheme_file_path = os.path.join(xcscheme_dir_path, f)
                     self.replace_scheme_data(scheme_file_path, target_name, xcode_project_name,
-                                             os.path.splitext()[0])
+                                             os.path.splitext(new_scheme)[0])
+                    print("===>rename scheme %s to %s" % (
+                        scheme_file_path, os.path.join(xcscheme_dir_path, new_scheme)))
                     os.rename(scheme_file_path, os.path.join(xcscheme_dir_path, new_scheme))
-                    return
+                    break
 
         # replace in user data
         xcuserdata_path = os.path.join(self.project_file_path, "xcuserdata")
@@ -168,7 +172,9 @@ class IosProject:
                         if (old_scheme and f.find(old_scheme) > -1) or f.find(".xcscheme") > -1:
                             scheme_file_path = os.path.join(xcscheme_dir_path, f)
                             self.replace_scheme_data(scheme_file_path, target_name, xcode_project_name,
-                                                     os.path.splitext()[0])
+                                                     os.path.splitext(new_scheme)[0])
+                            print("===>rename scheme %s to %s" % (
+                                scheme_file_path, os.path.join(xcscheme_dir_path, new_scheme)))
                             os.rename(scheme_file_path, os.path.join(xcscheme_dir_path, new_scheme))
                             break
 
@@ -217,7 +223,7 @@ class IosProject:
                     configuration.set_flags(u"PRODUCT_BUNDLE_IDENTIFIER", package_id)
         pbx_project.save()
 
-        self.rename_scheme(new_scheme if new_scheme else target_name, target_name, new_project_file_name,old_scheme)
+        self.rename_scheme(new_scheme if new_scheme else target_name, target_name, new_project_file_name, old_scheme)
 
     def set_resource_obfuscate_key(self, crypt_key):
         xcode_project_file_path = self._get_xcode_project_file_path(self.project_root)
