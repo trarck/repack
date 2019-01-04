@@ -81,8 +81,9 @@ class InjectCppCodeAction(Action):
 
         if "clang_args" in config:
             clang_args = config["clang_args"]
-            for clang_args in files:
-                clang_args = self.translate_string(clang_args)
+            for i in range(len(clang_args)):
+                clang_args[i] = self.translate_string(clang_args[i])
+
 
             config["clang_args"] = clang_args
 

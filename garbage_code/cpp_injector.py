@@ -23,7 +23,7 @@ class CppFunctionInjector:
         self.ruler = ruler
 
     def inject(self, file_path, opts=None):
-        print("inject:%s" % file_path)
+        print("===> function inject:%s" % file_path)
         # parse options
         if opts is None:
             opts = {}
@@ -41,6 +41,7 @@ class CppFunctionInjector:
         parser = Parser(opts)
         parser.parse_file(file_path)
 
+        print("==>have functions %s" % len(parser.functions))
         # get implementation method
         # get from define
         functions = parser.functions
@@ -63,6 +64,8 @@ class CppFunctionInjector:
                         impl_funcs.append(func)
                 else:
                     impl_funcs.append(func)
+
+        print("==>have impl functions %s" % len(impl_funcs))
 
         fp = open(file_path, "r+")
         lines = fp.readlines()
@@ -101,7 +104,7 @@ class CppFunctionInjector:
                 num.append(RandomGenerater.generate_int())
 
             code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_int.cpp"),
-                                searchList=[{"num": num, "var_name": RandomGenerater.generate_name()}])
+                                searchList=[{"num": num, "var_name": RandomGenerater.generate_string()}])
             return str(code_tpl)
         else:
             num = []
@@ -110,7 +113,7 @@ class CppFunctionInjector:
 
             num.sort()
             code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_float.cpp"),
-                                searchList=[{"num": num, "var_name": RandomGenerater.generate_name()}])
+                                searchList=[{"num": num, "var_name": RandomGenerater.generate_string()}])
             return str(code_tpl)
 
 
@@ -184,6 +187,9 @@ class CppInjector:
     def _inject_file(self, file_path, force=False):
         if file_path in self._injected_files:
             return False
+
+        print("===>inject file %s " % (file_path))
+
         self._injected_files[file_path] = True
 
         if not force:
@@ -197,10 +203,13 @@ class CppInjector:
                 "clang_args": self.clang_args,
                 "tpl_folder": self.tpl_folder_path
             })
+
             try:
                 func_injector.inject(file_path)
             except Exception, e:
                 warnings.warn(e.message)
+                #raise e
+
         else:
             print("===>code inject skip %s" % file_path)
         return False

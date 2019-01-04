@@ -82,7 +82,7 @@ class Parser(object):
         print("====\n")
 
     # must read the yaml file first
-    def parse_file(self, file_path):
+    def parse_file(self, file_path,error_stop=False):
         tu = self.index.parse(file_path, self.clang_args)
         if len(tu.diagnostics) > 0:
             self._check_diagnostics(tu.diagnostics)
@@ -91,8 +91,10 @@ class Parser(object):
                 if d.severity >= cindex.Diagnostic.Error:
                     is_fatal = True
             if is_fatal:
-                print("*** Found errors - can not continue")
-                raise Exception("Fatal error in parsing headers")
+                if error_stop:
+                    print("*** Found errors - can not continue")
+                    raise Exception("Fatal error in parsing headers")
+
         self._parsing_file = file_path.replace("\\", "/")
 
         # the root cursor is TRANSLATION_UNIT,visitor children
