@@ -1,23 +1,31 @@
-from cpp_file_parser import *
+from cparser.parser import Parser
+from pprint import pprint
 
-fp=open("../data/temp/cpp/CCActionGrid.h")
-lines=fp.readlines()
-parser=CppHeadFileParser({"NS_CC_BEGIN":"namespace cocos2d {","NS_CC_END":"}"})
-parser.parse(lines)
-print(parser.classes)
-for class_info in parser.classes:
-    print("class:%s,namespace:%s,start:%d,end:%d"%(class_info.name,class_info.namespace,class_info.start_line,class_info.end_line))
+parser = Parser({
+    "clang_args": [
+        "-x", "c++",
+        "-arch armv7", "-std=c++11" ,"-stdlib=libc++",
+        "-I/usr/include",
+        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
+        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/include",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/cocos",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/extensions",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/freetype2/include/ios",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/curl/include/ios",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/webp/include/ios",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/tiff/include/ios",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/jpeg/include/ios",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/png/include/ios",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/websockets/include/ios",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/freetype2/include/ios/freetype2",
+        "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/external/fmod/include",
+        "-DCC_TARGET_OS_IPHONE", "-DCC_ENABLE_CHIPMUNK_INTEGRATION=1", "-DNDEBUG", "-DUSE_FILE32API",
+        "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk"
 
-#
-# fp = open("../data/temp/cpp/CCFileUtils.cpp")
-# lines = fp.readlines()
-# parser = CppSourceFileParser({"NS_CC_BEGIN": "namespace cocos2d {", "NS_CC_END": "}"})
-# parser.parse(lines)
-# print("======namespaces=======")
-# for namespace_info in parser.namespaces:
-#     print("%s,start:%d,end:%d" % (namespace_info.name, namespace_info.start_line, namespace_info.end_line))
-#
-# print("======methods=======")
-# for method_info in parser.methods:
-#     print("%s::%s,start:%d,end:%d" % (
-#     method_info.class_name, method_info.name, method_info.start_line, method_info.end_line))
+    ],
+    "tpl_folder": "../data/template/obf"
+})
+
+ast =parser.get_ast("../data/temp/inject/CCSprite3D.cpp");
+pprint(('nodes',ast))

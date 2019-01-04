@@ -29,7 +29,7 @@ ci = CppFunctionInjector({
     "tpl_folder": "../data/template/obf"
 })
 
-ci.inject("/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/cocos/ui/UIWidget.cpp", {
+ci.inject("../data/temp/inject/CCSprite3D.cpp", {
     'out': "../data/temp/inject/b2.cpp"
 })
 

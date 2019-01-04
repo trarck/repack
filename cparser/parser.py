@@ -82,7 +82,7 @@ class Parser(object):
         print("====\n")
 
     # must read the yaml file first
-    def parse_file(self, file_path,error_stop=False):
+    def parse_file(self, file_path, error_stop=False):
         tu = self.index.parse(file_path, self.clang_args)
         if len(tu.diagnostics) > 0:
             self._check_diagnostics(tu.diagnostics)
@@ -102,6 +102,62 @@ class Parser(object):
             cd = Parser._get_children_array_from_iter(tu.cursor.get_children())
             for cursor in tu.cursor.get_children():
                 self._traverse(cursor)
+
+    def get_ast(self, file_path, error_stop=False, max_depth=10):
+        tu = self.index.parse(file_path, self.clang_args)
+        if len(tu.diagnostics) > 0:
+            self._check_diagnostics(tu.diagnostics)
+            is_fatal = False
+            for d in tu.diagnostics:
+                if d.severity >= cindex.Diagnostic.Error:
+                    is_fatal = True
+            if is_fatal:
+                if error_stop:
+                    print("*** Found errors - can not continue")
+                    raise Exception("Fatal error in parsing headers")
+
+        self._parsing_file = file_path.replace("\\", "/")
+        self.max_depth = max_depth
+
+        return self.get_cursor_info(tu.cursor, 0)
+
+    def get_cursor_id(self, cursor, cursor_list=[]):
+
+        if cursor is None:
+            return None
+
+        # FIXME: This is really slow. It would be nice if the index API exposed
+        # something that let us hash cursors.
+        for i, c in enumerate(cursor_list):
+            if cursor == c:
+                return i
+        cursor_list.append(cursor)
+        return len(cursor_list) - 1
+
+    def get_cursor_info(self, cursor, depth):
+
+        if not Parser.in_parse_file(cursor, self._parsing_file):
+            return None
+
+        if self.max_depth is not None and depth >= self.max_depth:
+            children = None
+        else:
+            children = []
+            for c in cursor.get_children():
+                child=self.get_cursor_info(c, depth + 1)
+                if child:
+                    children.append(child)
+
+        return {'id': self.get_cursor_id(cursor),
+                'kind': cursor.kind,
+                'usr': cursor.get_usr(),
+                'spelling': cursor.spelling,
+                'location': cursor.location,
+                'extent.start': cursor.extent.start,
+                'extent.end': cursor.extent.end,
+                'is_definition': cursor.is_definition(),
+                'definition id': self.get_cursor_id(cursor.get_definition()),
+                'children': children}
 
     @staticmethod
     def _get_children_array_from_iter(cursor_iter):
