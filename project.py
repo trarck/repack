@@ -68,7 +68,7 @@ class IosProject:
         print("===>rename project file %s to %s" % (self.project_file_path, new_project_file_path))
         if os.path.exists(new_project_file_path):
             shutil.rmtree(new_project_file_path)
-        os.rename(self.project_file_path, new_project_file_path)
+        shutil.copytree(self.project_file_path, new_project_file_path)
         return new_project_file_path
 
     def rename_target(self, pbx_project, target_name, product_name=None, fore=False):
