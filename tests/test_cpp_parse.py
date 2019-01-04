@@ -4,10 +4,14 @@ from pprint import pprint
 parser = Parser({
     "clang_args": [
         "-x", "c++",
-        "-arch armv7", "-std=c++11" ,"-stdlib=libc++",
-        "-I/usr/include",
+        "-arch", "arm64", "-std=c++11", "-stdlib=libc++",
         "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
+        "-I/usr/local/include",
         "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/include",
+        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+        "-I/usr/include",
+        "-I/System/Library/Frameworks",
+        "-I/Library/Frameworks",
         "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/cocos",
         "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external",
         "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/extensions",
@@ -27,5 +31,5 @@ parser = Parser({
     "tpl_folder": "../data/template/obf"
 })
 
-ast =parser.get_ast("../data/temp/inject/CCSprite3D.cpp");
-pprint(('nodes',ast))
+ast = parser.get_ast("../data/temp/inject/CCSprite3D.cpp");
+# pprint(('nodes',ast))
