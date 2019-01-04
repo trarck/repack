@@ -79,6 +79,13 @@ class InjectCppCodeAction(Action):
 
         config["tpl_dir"] = tpl_folder_path
 
+        if "clang_args" in config:
+            clang_args = config["clang_args"]
+            for clang_args in files:
+                clang_args = self.translate_string(clang_args)
+
+            config["clang_args"] = clang_args
+
         cpp_injector = CppInjector(config)
         cpp_injector.inject_files(checked_files)
 
