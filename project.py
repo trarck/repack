@@ -109,7 +109,7 @@ class IosProject:
 
     def replace_scheme_data(self, scheme_file_path, target_name, xcode_project_name=None, scheme_name=None):
         print("===>replace scheme data in %s to %s,%s,%s" % (
-        scheme_file_path, target_name, xcode_project_name, scheme_name))
+            scheme_file_path, target_name, xcode_project_name, scheme_name))
         source = SourceFile(scheme_file_path)
         source.open()
 
@@ -323,5 +323,5 @@ class IosProject:
             export_archive_cmd = 'xcodebuild -exportArchive -archivePath %s -exportPath %s -exportFormat IPA' % (
                 out_archive, out_app)
             process = subprocess.Popen(export_archive_cmd, shell=True)
-
-        process.communicate()
+            output, err = process.communicate()
+            print output, err
