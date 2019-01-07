@@ -42,8 +42,10 @@ class WordsManager:
             ws = fp.readlines()
             fp.close()
             for w in ws:
-                WordsManager.words.append(w.strip())
-                WordsManager.words_length += len(ws)
+                word=w.strip()
+                if word:
+                    WordsManager.words.append(word)
+                    WordsManager.words_length += 1
 
     @staticmethod
     def load_class_words(words_file_path):
@@ -52,8 +54,10 @@ class WordsManager:
             ws = fp.readlines()
             fp.close()
             for w in ws:
-                WordsManager.class_words.append(w.strip())
-                WordsManager.class_words_length += len(ws)
+                word = w.strip()
+                if word:
+                    WordsManager.class_words.append(word)
+                    WordsManager.class_words_length += 1
 
     @staticmethod
     def load_field_words(words_file_path):
@@ -62,8 +66,10 @@ class WordsManager:
             ws = fp.readlines()
             fp.close()
             for w in ws:
-                WordsManager.filed_words.append(w.strip())
-                WordsManager.filed_words_length += len(ws)
+                word = w.strip()
+                if word:
+                    WordsManager.filed_words.append(word)
+                    WordsManager.filed_words_length += 1
 
     @staticmethod
     def load_function_words(words_file_path):
@@ -72,8 +78,10 @@ class WordsManager:
             ws = fp.readlines()
             fp.close()
             for w in ws:
-                WordsManager.function_words.append(w.strip())
-                WordsManager.function_words_length += len(ws)
+                word = w.strip()
+                if word:
+                    WordsManager.function_words.append(word)
+                    WordsManager.function_words_length += 1
 
     @staticmethod
     def clean_all():
