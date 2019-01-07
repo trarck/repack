@@ -18,8 +18,8 @@ class CopyFilesAction(Action):
             dst_dir = os.path.join(self.runner.project_root_path, dst_dir)
 
         print("===>copy files from %s to %s" % (src_dir, dst_dir))
-        self.config["from"]=src_dir
-        self.config["to"]=dst_dir
+        self.config["from"] = src_dir
+        self.config["to"] = dst_dir
 
         utils.copy_files_with_config(self.config)
 

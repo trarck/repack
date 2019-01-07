@@ -29,5 +29,5 @@ parser = Parser({
     "tpl_folder": "../data/template/obf"
 })
 
-ast = parser.get_ast("../data/temp/inject/CCSprite3d.cpp");
+ast = parser.get_ast("../data/temp/inject/CCSprite3d.cpp")
 pprint(('nodes',ast))
