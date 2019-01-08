@@ -1,15 +1,20 @@
+# -*- coding: utf-8 -*-
 import os
 import shutil
 import plistlib
 import subprocess
+import random
 
-from pbxproj import XcodeProject, PBXProvioningTypes
+from pbxproj import XcodeProject, PBXProvioningTypes, PBXSourcesBuildPhase
 from source_file import SourceFile
 
 
 class IosProject:
-    def __init__(self, project_file_path):
+    """
+    处理xocde工程类
+    """
 
+    def __init__(self, project_file_path):
         if project_file_path.find(".xcodeproj") > -1:
             self.project_file_path = project_file_path
             self.project_root = os.path.dirname(project_file_path)
@@ -27,7 +32,6 @@ class IosProject:
     def _get_ios_app_target(self, pbx_project):
         targets = pbx_project.objects.get_targets()
 
-        ios_app_target = None
         for target in targets:
             if target.productType == "com.apple.product-type.application":
                 # check build config sdkroot
@@ -53,6 +57,12 @@ class IosProject:
         return None
 
     def rename_xcode_project(self, new_project_file_name):
+        """
+        重命名xcode工程xx.xcodeproj
+        :param new_project_file_name:新的工程名
+        :return:新的工程完整路径
+        """
+
         if not self.project_file_path:
             raise "Can't find xocde project in " % self.project_root
 
@@ -325,3 +335,19 @@ class IosProject:
             process = subprocess.Popen(export_archive_cmd, shell=True)
             output, err = process.communicate()
             print output, err
+
+    def shuffle_compile_source(self, target_name=None):
+        pbx_project = XcodeProject.load(os.path.join(self.project_file_path, "project.pbxproj"))
+
+        if target_name:
+            target = pbx_project.get_target_by_name(target_name)
+        else:
+            target = self._get_ios_app_target(pbx_project)
+
+        if target:
+
+            # get sources build phase
+            sources_build_phase = target.get_or_create_build_phase("PBXSourcesBuildPhase")
+            if sources_build_phase:
+                random.shuffle(sources_build_phase[0].files)
+        pbx_project.save()

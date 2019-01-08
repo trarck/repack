@@ -687,7 +687,7 @@ def main():
     elif "steps" in config_data:
         step_config = config_data["steps"]
     else:
-        raise "no step config"
+        raise Exception("no step config")
 
     # load base words
     generater.WordsManager.init_words()
