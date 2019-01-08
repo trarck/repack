@@ -104,10 +104,14 @@ class XCodeBuildArchiveAction(Action):
 
         scheme = self.translate_string(config["scheme"])
         configuration = self.translate_string(config["configuration"])
-        out_put = self.translate_string(config["out_put"])
+        out_put = self.get_full_path_from_config("out_put", self.runner.project_root_path)
+
+        out_app = None
+        if "out_app" in config:
+            out_app = self.get_full_path_from_config("out_app", self.runner.project_root_path)
 
         ios_project = IosProject(xcode_project_path)
-        ios_project.build_archive(scheme, configuration, out_put)
+        ios_project.build_archive(scheme, configuration, out_put, out_app)
 
 
 class XCodeShuffleCompleSourcesAction(Action):
