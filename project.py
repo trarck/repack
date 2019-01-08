@@ -336,7 +336,7 @@ class IosProject:
             output, err = process.communicate()
             print output, err
 
-    def shuffle_compile_source(self, target_name=None):
+    def shuffle_compile_sources(self, target_name=None):
         pbx_project = XcodeProject.load(os.path.join(self.project_file_path, "project.pbxproj"))
 
         if target_name:

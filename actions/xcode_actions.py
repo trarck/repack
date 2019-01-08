@@ -108,3 +108,16 @@ class XCodeBuildArchiveAction(Action):
 
         ios_project = IosProject(xcode_project_path)
         ios_project.build_archive(scheme, configuration, out_put)
+
+
+class XCodeShuffleCompleSourcesAction(Action):
+    def run(self, args):
+        xcode_project_path = self.get_full_path_from_config("xcode_project_path", self.runner.project_root_path)
+        config = self.config
+
+        target_name = None
+        if "target_name" in config:
+            target_name = self.translate_string(config["target_name"])
+
+        ios_project = IosProject(xcode_project_path)
+        ios_project.shuffle_compile_sources(target_name)
