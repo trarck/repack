@@ -292,7 +292,7 @@ class CppFileInject(CppFile):
         return inserts
 
     def inject_method(self):
-        fp = open(self.source_file_path, "r+")
+        fp = open(self.source_file_path, "rU")
         source_lines = fp.readlines()
         fp.close()
 
@@ -322,7 +322,7 @@ class CppFileInject(CppFile):
 
     def inject_class(self):
         # check class info
-        fp = open(self.head_file_path, "r+")
+        fp = open(self.head_file_path, "rU")
         head_lines = fp.readlines()
         fp.close()
 
@@ -349,7 +349,7 @@ class CppFileInject(CppFile):
         self.native_class.class_name = class_name
 
         # check have source implement
-        fp = open(self.source_file_path, "r+")
+        fp = open(self.source_file_path, "rU")
         source_lines = fp.readlines()
         fp.close()
 
@@ -393,7 +393,7 @@ class CppFileInject(CppFile):
 
     def inject_class_just_head(self):
         # check class info
-        fp = open(self.head_file_path, "r+")
+        fp = open(self.head_file_path, "rU")
         head_lines = fp.readlines()
         fp.close()
 
@@ -436,7 +436,7 @@ class CppFileInject(CppFile):
 
     def inject_code(self):
         # check class info
-        fp = open(self.head_file_path, "r+")
+        fp = open(self.head_file_path, "rU")
         head_lines = fp.readlines()
         fp.close()
 
@@ -463,7 +463,7 @@ class CppFileInject(CppFile):
         self.native_class.class_name = class_name
 
         # check have source implement
-        fp = open(self.source_file_path, "r+")
+        fp = open(self.source_file_path, "rU")
         source_lines = fp.readlines()
         fp.close()
 

@@ -67,7 +67,7 @@ class CppFunctionInjector:
 
         print("==>have impl functions %s" % len(impl_funcs))
 
-        fp = open(file_path, "r+")
+        fp = open(file_path, "rU")
         lines = fp.readlines()
         fp.close()
 
