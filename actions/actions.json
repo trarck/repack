@@ -47,6 +47,11 @@
             "parameters":[]
         },
         {
+            "name":"xcode_shuffle_compile_sources",
+            "class_name":"actions.xcode_actions.XCodeShuffleCompileSourcesAction",
+            "parameters":[]
+        },
+        {
             "name":"crypt_files",
             "class_name":"actions.crypt_actions.CryptFilesAction",
             "parameters":[]
