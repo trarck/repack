@@ -90,10 +90,23 @@ class CppFunctionInjector:
             if inject_positions:
                 inject_pos_index = random.randrange(0, len(inject_positions))
                 inject_pos = inject_positions[inject_pos_index]
-                inject_code = self._gen_inject_code()
+                var_declare, inject_code = self._gen_inject_code()
+
+                # insert var declare to begin
+                begin_line=function_info.root_statement.location.line-1
+                begin_column=function_info.root_statement.location.column
+                line = lines[begin_line]
+                lines[begin_line] = line[:begin_column] + var_declare + line[begin_column:]
+
+                # insert impl code
                 line_index = inject_pos[0] - 1
-                line = lines[line_index]
-                lines[line_index] = line[:inject_pos[1] - 1] + inject_code + line[inject_pos[1] - 1:]
+                if line_index > -1 or line_index < len(lines):
+                    line = lines[line_index]
+                    lines[line_index] = line[:inject_pos[1] - 1] + inject_code + line[inject_pos[1] - 1:]
+                else:
+                    print("Error:outline index:%d,%d" % (line_index, len(lines)))
+
+
 
     def _gen_inject_code(self):
         p = random.randrange(0, 10)
@@ -103,18 +116,26 @@ class CppFunctionInjector:
             for _ in range(0, 3):
                 num.append(RandomGenerater.generate_int())
 
+            tpl_data = {"num": num, "var_name": RandomGenerater.generate_string()}
+            code_tpl_declare = Template(file=os.path.join(self.tpl_folder_path, "one_int_declare.cpp"),
+                                        searchList=[tpl_data])
+
             code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_int.cpp"),
-                                searchList=[{"num": num, "var_name": RandomGenerater.generate_string()}])
-            return str(code_tpl)
+                                searchList=[tpl_data])
+            return str(code_tpl_declare), str(code_tpl)
         else:
             num = []
             for _ in range(0, 6):
                 num.append(RandomGenerater.generate_float())
 
             num.sort()
+            tpl_data = {"num": num, "var_name": RandomGenerater.generate_string()}
+            code_tpl_declare = Template(file=os.path.join(self.tpl_folder_path, "one_float_declare.cpp"),
+                                        searchList=[tpl_data])
+
             code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_float.cpp"),
-                                searchList=[{"num": num, "var_name": RandomGenerater.generate_string()}])
-            return str(code_tpl)
+                                searchList=[tpl_data])
+            return str(code_tpl_declare), str(code_tpl)
 
 
 class CppClassInjector:
@@ -208,7 +229,7 @@ class CppInjector:
                 func_injector.inject(file_path)
             except Exception, e:
                 warnings.warn(e.message)
-                #raise e
+                # raise e
 
         else:
             print("===>code inject skip %s" % file_path)

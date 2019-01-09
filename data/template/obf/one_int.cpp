@@ -1,5 +1,4 @@
 
-    int ${var_name}=${num[0]};
     do{
         while(true)
         {
