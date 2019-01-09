@@ -148,7 +148,7 @@ class Repack:
             action = self.action_classes[action_data["name"]](self, action_data)
             action.run(None)
         else:
-            raise "Can't find action %s" % action_data["name"]
+            raise Exception("Can't find action %s" % action_data["name"])
 
     # run as give step name[id] sequence
     def run2(self, steps, executes=None, ignores=None):
