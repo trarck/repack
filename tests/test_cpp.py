@@ -13,28 +13,28 @@ from garbage_code.cpp_garbage_code import CppFileInject
 #
 # call_str=cf.generate_code()
 # print(call_str)
-
-cf = CppFileInject({
-    "head_file": "../data/temp/cpp/CCActionGrid.h",
-    "source_file": "../data/temp/cpp/CCActionGrid.cpp",
-    "tpl_folder": "../data/template/cpp",
-    "namespace": "my",
-    "generate_field": 2,
-    "generate_method": 3,
-    "max_parameter": 4,
-    "call_others": True,
-    "macros": {
-        "NS_CC_BEGIN": "namespace cocos2d {",
-        "NS_CC_END": "}"
-    },
-    "inject_method": {
-        "probability": 100,
-        "class_rule": utils.create_rules(None, ["*DeccelAmplitude"]),
-        "method_rule": utils.create_rules(None, ["update"])
-    }
-})
-cf.prepare()
-cf.inject_code()
+#
+# cf = CppFileInject({
+#     "head_file": "../data/temp/cpp/CCActionGrid.h",
+#     "source_file": "../data/temp/cpp/CCActionGrid.cpp",
+#     "tpl_folder": "../data/template/cpp",
+#     "namespace": "my",
+#     "generate_field": 2,
+#     "generate_method": 3,
+#     "max_parameter": 4,
+#     "call_others": True,
+#     "macros": {
+#         "NS_CC_BEGIN": "namespace cocos2d {",
+#         "NS_CC_END": "}"
+#     },
+#     "inject_method": {
+#         "probability": 100,
+#         "class_rule": utils.create_rules(None, ["*DeccelAmplitude"]),
+#         "method_rule": utils.create_rules(None, ["update"])
+#     }
+# })
+# cf.prepare()
+# cf.inject_code()
 
 # cf=CppFile({
 #     "head_file":"../data/temp/b.h",

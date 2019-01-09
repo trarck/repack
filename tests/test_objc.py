@@ -1,17 +1,17 @@
 from garbage_code.objc_garbage_code import ObjCFile
 
-of=ObjCFile({
-    "head_file":"../data/temp/a.h",
-    "source_file":"../data/temp/a.mm",
-    "tpl_folder":"../data/template/objc",
-    "generate_field":3,
-    "generate_method":3,
-    "max_parameter":6,
-    "call_others":True
-})
-of.prepare()
-call_str=of.generate_code()
-print(call_str)
+# of=ObjCFile({
+#     "head_file":"../data/temp/a.h",
+#     "source_file":"../data/temp/a.mm",
+#     "tpl_folder":"../data/template/objc",
+#     "generate_field":3,
+#     "generate_method":3,
+#     "max_parameter":6,
+#     "call_others":True
+# })
+# of.prepare()
+# call_str=of.generate_code()
+# print(call_str)
 #
 # cf = CppFileInject({
 #     "head_file": "../data/temp/cpp/CCActionGrid.h",
