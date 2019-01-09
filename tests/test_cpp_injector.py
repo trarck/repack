@@ -24,7 +24,6 @@ ci = CppFunctionInjector({
         "-I/Users/duanhh/workspace/load_pack/tempprojects/test3/frameworks/cocos2d-x/external/external/fmod/include",
         "-DCC_TARGET_OS_IPHONE", "-DCC_ENABLE_CHIPMUNK_INTEGRATION=1", "-DNDEBUG", "-DUSE_FILE32API",
         "-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS12.1.sdk"
-
     ],
     "tpl_folder": "../data/template/obf"
 })

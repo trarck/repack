@@ -104,7 +104,7 @@ class TypeInfo(object):
                 if nt.name == "std::function":
                     nt.is_object = False
                     lambda_display_name = utils.get_fullname(cdecl)
-                    lambda_display_name = lambda_display_name.replace("::__ndk1", "")
+                    lambda_display_name = lambda_display_name.replace("::__ndk1", "").replace("::__1", "")
                     lambda_display_name = utils.normalize_type_str(lambda_display_name)
                     nt.fullname = lambda_display_name
                     r = re.compile('function<([^\s]+).*\((.*)\)>').search(nt.fullname)
