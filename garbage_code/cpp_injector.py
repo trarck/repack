@@ -93,8 +93,8 @@ class CppFunctionInjector:
                 var_declare, inject_code = self._gen_inject_code()
 
                 # insert var declare to begin
-                begin_line=function_info.root_statement.location.line-1
-                begin_column=function_info.root_statement.location.column
+                begin_line = function_info.root_statement.location.line - 1
+                begin_column = function_info.root_statement.location.column
                 line = lines[begin_line]
                 lines[begin_line] = line[:begin_column] + var_declare + line[begin_column:]
 
@@ -105,8 +105,6 @@ class CppFunctionInjector:
                     lines[line_index] = line[:inject_pos[1] - 1] + inject_code + line[inject_pos[1] - 1:]
                 else:
                     print("Error:outline index:%d,%d" % (line_index, len(lines)))
-
-
 
     def _gen_inject_code(self):
         p = random.randrange(0, 10)
@@ -150,6 +148,7 @@ class CppInjector:
         self.tpl_folder_path = options["tpl_dir"]
         self.skips = {}
         self.clang_args = options["clang_args"] if "clang_args" in options else []
+        self._success_injected_files = []
         self._init_rule()
 
     def _init_rule(self):
@@ -227,6 +226,7 @@ class CppInjector:
 
             try:
                 func_injector.inject(file_path)
+                self._success_injected_files.append(file_path)
             except Exception, e:
                 warnings.warn(e.message)
                 # raise e
@@ -256,6 +256,6 @@ class CppInjector:
                 # config file force inject
                 self._inject_file(file_path, True)
 
-        print("inject %d files" % len(self._injected_files.keys()))
-        for key, val in self._injected_files.items():
-            print("==> inject %s" % key)
+        print("inject %d files" % len(self._success_injected_files))
+        for f in self._success_injected_files:
+            print("==> inject %s" % f)
