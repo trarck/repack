@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import random
 import warnings
@@ -12,6 +13,11 @@ import utils
 
 
 class CppFunctionInjector:
+    """
+    向函数内插入代码。包括普通函数和类的方法。
+    代码是可以单独存在不需要依赖外部变量。
+    """
+
     def __init__(self, options, ruler=None):
         self.options = options
         if "clang_args" in options:
@@ -23,6 +29,7 @@ class CppFunctionInjector:
         self.ruler = ruler
 
     def inject(self, file_path, opts=None):
+
         print("===> function inject:%s" % file_path)
         # parse options
         if opts is None:
@@ -92,17 +99,20 @@ class CppFunctionInjector:
                 inject_pos = inject_positions[inject_pos_index]
                 var_declare, inject_code = self._gen_inject_code()
 
-                # insert var declare to begin
-                begin_line = function_info.root_statement.location.line - 1
-                begin_column = function_info.root_statement.location.column
-                line = lines[begin_line]
-                lines[begin_line] = line[:begin_column] + var_declare + line[begin_column:]
-
-                # insert impl code
+                # 先插入实现代码
                 line_index = inject_pos[0] - 1
                 if line_index > -1 or line_index < len(lines):
                     line = lines[line_index]
                     lines[line_index] = line[:inject_pos[1] - 1] + inject_code + line[inject_pos[1] - 1:]
+
+                    # 再插入定义。定义放在最开头。
+                    # 这里要在插入代码之后再插入定义，防止原函数只有一行，插入错误。
+                    # 因为定义要插入到前面，如果先插入定义，原来分析出来的插入代码的位置就是错误的。
+                    # 先插入代码，因为是在后面，所以不影响定义的插入。
+                    begin_line = function_info.root_statement.location.line - 1
+                    begin_column = function_info.root_statement.location.column
+                    line = lines[begin_line]
+                    lines[begin_line] = line[:begin_column] + var_declare + line[begin_column:]
                 else:
                     print("Error:outline index:%d,%d" % (line_index, len(lines)))
 
@@ -137,6 +147,10 @@ class CppFunctionInjector:
 
 
 class CppClassInjector:
+    """
+    向类插入属生和方法。并在原方法中调用新生成的属性和方法。
+    """
+
     def __init__(self):
         print("inject code to cpp class")
 
