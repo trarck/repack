@@ -1,7 +1,7 @@
 import os
 import shutil
 import sys
-import random
+import zipfile
 from rules import *
 
 
@@ -151,3 +151,11 @@ def merge_dict(a, b):
     c = a.copy()
     c.update(b)
     return c
+
+
+def zip_dir(dir_path, zip_file_path):
+    zipf = zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED)
+    for root, dirs, files in os.walk(dir_path):
+        for file in files:
+            zipf.write(os.path.join(root, file))
+    zipf.close()

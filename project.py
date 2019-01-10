@@ -4,6 +4,7 @@ import shutil
 import plistlib
 import subprocess
 import random
+import utils
 
 from pbxproj import XcodeProject, PBXProvioningTypes, PBXSourcesBuildPhase
 from source_file import SourceFile
@@ -326,15 +327,12 @@ class IosProject:
         print "archiveDir: " + out_archive
         archive_cmd = 'xcodebuild archive -project %s -scheme %s -configuration %s -archivePath %s' % (
             self.project_file_path, scheme, configuration, out_archive)
+        print archive_cmd
         process = subprocess.Popen(archive_cmd, shell=True)
         process.wait()
 
         if out_app:
-            export_archive_cmd = 'xcodebuild -exportArchive -archivePath %s -exportPath %s -exportFormat IPA' % (
-                out_archive, out_app)
-            process = subprocess.Popen(export_archive_cmd, shell=True)
-            output, err = process.communicate()
-            print output, err
+            self.generate_ipa_from_app(os.path.join(out_archive, "Products/Applications", scheme + ".app"), out_app)
 
     def shuffle_compile_sources(self, target_name=None):
         pbx_project = XcodeProject.load(os.path.join(self.project_file_path, "project.pbxproj"))
@@ -351,3 +349,50 @@ class IosProject:
             if sources_build_phase:
                 random.shuffle(sources_build_phase[0].files)
         pbx_project.save()
+
+    def export_ipa_from_archive(self, archive_path, out_file_path, method, package_id, provisioning_profile, team_id):
+        # create export options plist
+        provisioning_profiles = {}
+        provisioning_profiles[package_id] = provisioning_profile
+        options_data = {
+            "compileBitcode": False,
+            "destination": "export",
+            "method": method,
+            "provisioningProfiles": provisioning_profiles,
+            "signingCertificate": "iPhone Developer" if method == "development" else "iPhone Distribution",
+            "signingStyle": "manual",
+            "stripSwiftSymbols": True,
+            "teamID": team_id,
+            "uploadSymbols": False
+        }
+
+        options_file_path = os.path.join(os.path.dirname(out_file_path), "ExportOptions_%s.plist" % method)
+        plistlib.writePlist(options_data, options_file_path)
+
+        options_file_path = ""
+        export_archive_cmd = 'xcodebuild -exportArchive -archivePath %s -exportPath %s -exportOptionsPlist %s' % (
+            archive_path, out_file_path, options_file_path)
+        print export_archive_cmd
+        process = subprocess.Popen(export_archive_cmd, shell=True)
+        output, err = process.communicate()
+        print output, err
+
+    def generate_ipa_from_app(self, app_path, out_file_path):
+        out_dir = os.path.dirname(out_file_path)
+        # create Payload dir
+        payload_path = os.path.join(out_dir, "Payload")
+        if os.path.exists(payload_path):
+            shutil.rmtree(payload_path)
+        else:
+            # clean
+            os.makedirs(payload_path)
+
+        # copy app to Payload
+        shutil.copytree(app_path, payload_path)
+        # zip to ipa
+        # utils.zip_dir(payload_path, out_file_path)
+        zip_cmd = "zip -qyr %s %s" % (out_file_path, payload_path)
+        process = subprocess.Popen(zip_cmd, shell=True)
+        process.wait()
+        # remove payload
+        shutil.rmtree(payload_path)
