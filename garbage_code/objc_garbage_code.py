@@ -6,7 +6,7 @@ from pbxproj import XcodeProject
 from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from objc_file_parser import *
-import utils
+import gc_utils
 from generater import RandomGenerater
 
 objc_types = ["NSInteger", "CGFloat", "NSString*"]

@@ -4,6 +4,12 @@ import os
 chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 chars_length = len(chars)
 
+cpp_types = ["int", "long long", "float", "double", "std::string"]
+cpp_types_length = len(cpp_types)
+
+objc_types = ["NSInteger", "CGFloat", "NSString*"]
+objc_types_length = len(objc_types)
+
 
 class WordsManager:
     words = []
@@ -42,7 +48,7 @@ class WordsManager:
             ws = fp.readlines()
             fp.close()
             for w in ws:
-                word=w.strip()
+                word = w.strip()
                 if word:
                     WordsManager.words.append(word)
                     WordsManager.words_length += 1
@@ -252,3 +258,31 @@ class RandomGenerater:
 
         name += RandomGenerater.generate_string(min_tail_length, max_tail_lenth)
         return name
+
+    @staticmethod
+    def generate_cpp_type():
+        return cpp_types[random.randint(0, cpp_types_length - 1)]
+
+    @staticmethod
+    def generate_value(type_name):
+        if type_name == "NSInteger" or type_name == "int" or type_name == "long long":
+            return RandomGenerater.generate_int()
+        elif type_name == "CGFloat" or type_name == "float" or type_name == "double":
+            return RandomGenerater.generate_float()
+        else:
+            return RandomGenerater.generate_string()
+
+    @staticmethod
+    def generate_value_stringify(type_name):
+        if type_name == "NSInteger" or type_name == "int" or type_name == "long long":
+            return str(RandomGenerater.generate_int())
+        elif type_name == "CGFloat" or type_name == "float" or type_name == "double":
+            return str(RandomGenerater.generate_float())
+        elif type_name.startswith("NSString"):
+            return "@\"%s\"" % RandomGenerater.generate_string()
+        else:
+            return "\"%s\"" % RandomGenerater.generate_string()
+
+    @staticmethod
+    def generate_objc_type():
+        return objc_types[random.randint(0, objc_types_length - 1)]

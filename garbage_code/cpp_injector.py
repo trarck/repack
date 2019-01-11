@@ -9,7 +9,7 @@ from native import NativeType, NativeField, NativeParameter, NativeFunction, Nat
 from cparser.parser import Parser
 from rules import *
 from generater import RandomGenerater
-import utils
+import gc_utils
 
 
 class CppFunctionInjector:
@@ -65,12 +65,13 @@ class CppFunctionInjector:
         # get from class define
         for _, cls in parser.parsed_classes.items():
             for func in cls.methods:
-                if self.ruler:
-                    class_name = func.class_name if function.class_name else "*"
-                    if self.ruler.should_skip(class_name, func.name):
+                if func.is_implement:
+                    if self.ruler:
+                        class_name = func.class_name if function.class_name else "*"
+                        if self.ruler.should_skip(class_name, func.name):
+                            impl_funcs.append(func)
+                    else:
                         impl_funcs.append(func)
-                else:
-                    impl_funcs.append(func)
 
         print("==>have impl functions %s" % len(impl_funcs))
 
@@ -148,7 +149,7 @@ class CppFunctionInjector:
 
 class CppClassInjector:
     """
-    向类插入属生和方法。并在原方法中调用新生成的属性和方法。
+    向类插入属性和方法。并在原方法中调用新生成的属性和方法。
     """
 
     def __init__(self):
@@ -177,7 +178,7 @@ class CppInjector:
         if "exclude" in self.options:
             exclude_rules = self.options["exclude"]
 
-        self.file_rule = utils.create_rules(include_rules, exclude_rules)
+        self.file_rule = gc_utils.create_rules(include_rules, exclude_rules)
 
         # init skip rule
         if 'skips' in self.options:

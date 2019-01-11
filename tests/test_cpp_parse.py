@@ -29,4 +29,7 @@ class CppParseTest(unittest.TestCase):
         ast = parser.get_ast("./cpp_files/a.cpp")
         self.assertIsNotNone(ast)
 
-        # pprint(('nodes', ast))
+        pprint(('nodes', ast))
+
+if __name__ == '__main__':
+    unittest.main()

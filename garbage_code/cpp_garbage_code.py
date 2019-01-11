@@ -7,7 +7,7 @@ from Cheetah.Template import Template
 from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from cpp_file_parser import *
 from generater import RandomGenerater
-import utils
+import gc_utils
 
 cpp_types = ["int", "long long", "float", "double", "std::string"]
 cpp_types_length = len(cpp_types)
@@ -718,7 +718,7 @@ class CppGarbageCode:
                         exclude_class_rules = None
 
                     if include_class_rules or exclude_class_rules:
-                        class_rule = utils.create_rules(include_class_rules, exclude_class_rules)
+                        class_rule = gc_utils.create_rules(include_class_rules, exclude_class_rules)
                         inject_method_config["class_rule"] = class_rule
 
                     if "include_method" in inject_method_config:
@@ -732,7 +732,7 @@ class CppGarbageCode:
                         exclude_method_rules = None
 
                     if include_method_rules or exclude_method_rules:
-                        method_rule = utils.create_rules(include_method_rules, exclude_method_rules)
+                        method_rule = gc_utils.create_rules(include_method_rules, exclude_method_rules)
                         print(method_rule)
                         inject_method_config["method_rule"] = method_rule
 
@@ -778,7 +778,7 @@ class CppGarbageCode:
         if "exclude" in self.inject_config:
             exclude_rules = self.inject_config["exclude"]
 
-        rule = utils.create_rules(include_rules, exclude_rules)
+        rule = gc_utils.create_rules(include_rules, exclude_rules)
 
         self._inject_checked_files = {}
         self._injected_files = []

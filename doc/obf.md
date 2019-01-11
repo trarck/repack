@@ -18,4 +18,11 @@
 ## 代码链接的位置
 - ios
   按照Compile Source定义的顺序最后出现在二进制文件的位置。Compile Sourcec对应project.pbxproj里的PBXSourcesBuildPhase。在混淆的时候把这里面的内容做乱序处理。
-     
+
+## 混淆方法
+- 改变编译顺序(xcode中会引想链接到可执行文件的位置)
+- 改变函数顺序
+- 改变函数内容
+  - 调用类的方法和属性
+  - 插入复杂代码段
+  - 调用全局变量
