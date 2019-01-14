@@ -1,3 +1,6 @@
+/*
+* some thing
+*/*
 void funa()
 {
     int i=0;
