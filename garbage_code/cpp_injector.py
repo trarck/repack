@@ -3,12 +3,11 @@ import os
 import random
 import warnings
 
-from pbxproj import XcodeProject
 from Cheetah.Template import Template
-from native import NativeType, NativeField, NativeParameter, NativeFunction, NativeClass
 from cparser.parser import Parser
 from rules import *
 from generater import RandomGenerater
+from cpp_source_injector import CppSourceInjector
 import gc_utils
 
 
@@ -234,6 +233,7 @@ class CppInjector:
             need_inject = True
 
         if need_inject:
+            source_injector=CppSourceInjector()
             func_injector = CppFunctionInjector({
                 "clang_args": self.clang_args,
                 "tpl_folder": self.tpl_folder_path

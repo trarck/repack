@@ -29,15 +29,11 @@ class CppGenerator:
 
         # 30% create return type
         if random.randint(0, 100) <= return_probability:
-            return_type = CType(CppGenerator.generate_type())
+            return_type = CType(RandomGenerater.generate_cpp_type())
         else:
-            return_type = CType(None)
+            return_type = CType("void")
 
-        def_template_file = os.path.join(tpl_folder_path, "function_def.tpl")
-        code_template_file = os.path.join(tpl_folder_path, "function_code.tpl")
-        call_template_file = os.path.join(tpl_folder_path, "function_call.tpl")
-        return CppMethod(method_name, parameters, return_type, def_template_file, code_template_file,
-                         call_template_file)
+        return CppMethod(method_name, parameters, return_type, tpl_folder_path)
 
     @staticmethod
     def generate_class(tpl_folder_path, field_count, method_count, max_parameter, method_return_probability,
@@ -47,16 +43,20 @@ class CppGenerator:
         if field_count > 0:
             fields = []
             for i in range(field_count):
-                fields.append(CppClass.generate_field())
+                fields.append(CppGenerator.generate_field())
 
-        # gen mthods
+        class_name = RandomGenerater.generate_string()
+        cpp_class = CppClass(class_name, fields, None, tpl_folder_path, namespace)
+
+        # gen methods
         methods = None
         if method_count > 0:
             methods = []
 
             for i in range(method_count):
-                methods.append(
-                    CppGenerator.generate_function(tpl_folder_path, max_parameter, method_return_probability))
+                method = CppGenerator.generate_function(tpl_folder_path, max_parameter, method_return_probability)
+                method.cpp_class = cpp_class
+                methods.append(method)
 
-        class_name = RandomGenerater.generate_string()
-        return CppClass(class_name, fields, methods, "class.h", namespace)
+        cpp_class.methods = methods
+        return cpp_class

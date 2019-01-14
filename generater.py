@@ -148,11 +148,11 @@ class RandomGenerater:
         return s[0].lower() + s[1:]
 
     @staticmethod
-    def generate_int(max_value=2147483640):
+    def generate_int(max_value=10000):
         return random.randint(0, max_value)
 
     @staticmethod
-    def generate_float(max_value=2147483640):
+    def generate_float(max_value=10000):
         return random.uniform(0, max_value)
 
     @staticmethod

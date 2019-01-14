@@ -1,8 +1,5 @@
-#if $namespace_begin
-${namespace_begin}
-#end if
 
-${class_name}::${class_name}()
+${name}::${name}()
 ##======field init======
 #set $length = len($fields)
 #if $length > 0
@@ -13,7 +10,7 @@ ${class_name}::${class_name}()
     #else
     ,#slurp
     #end if
-${field.name}(${generator.generate_value(field.native_type.name)})
+${field.name}(${field.ctype.random_value_stringify()})
     #set $index = $index + 1
     #end for
 #end if
@@ -21,8 +18,14 @@ ${field.name}(${generator.generate_value(field.native_type.name)})
 
 }
 
-${class_name}::~${class_name}()
+${name}::~${name}()
 {
 
 }
 
+## ===== methods 
+#if $contain_methods
+    #for $method in $methods
+    ${method.get_code_string()}
+    #end for
+#end if

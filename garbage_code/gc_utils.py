@@ -1,4 +1,25 @@
 # -*- coding: utf-8 -*-
+import random
+
+
+def get_range_count(name, config, default_min=1):
+    if name in config:
+        return config[name]
+
+    max_key = "max_" + name
+    min_key = "min_" + name
+
+    if max_key in config:
+        max_value = config[max_key]
+
+    if min_key in config:
+        min_value = config[min_key]
+    else:
+        min_value = default_min
+
+    if min_value > max_value:
+        max_value = min_value
+    return random.randint(min_value, max_value)
 
 
 def get_implement_functions(parser, ruler):

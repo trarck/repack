@@ -1,26 +1,28 @@
 
 ##===set return value
-#if $return_type.name 
+#if not $return_type.is_void() 
     ${return_type.to_string()} ret = ${return_type.random_value_stringify()};
 #end if
 ##======call field======
-#set $length = len($fields)
-#if $length > 0
-    #for $field in $fields
-    ${field.name}=${field.native_type.random_value_stringify()};
-    #end for
+#if $cpp_class
+    #set $length = len($cpp_class.fields)
+    #if $length > 0
+        #for $field in $cpp_class.fields
+        ${field.name}=${field.ctype.random_value_stringify()};
+        #end for
+    #end if
 #end if
 ##======call ohters======
-#set $length = len($call_others)
+#set $length = len($calls)
 #if $length > 0
-    #for $func in $call_others
+    #for $func in $calls
     ${func.name}(#slurp
         ## ===== parameters values
         #set $param_len = len($func.parameters)
         #if $param_len > 0
             #set $param_index = 0
             #for $param in $func.parameters
-${param.native_type.random_value_stringify()}#slurp
+${param.ctype.random_value_stringify()}#slurp
                 #if $param_index < $param_len - 1 
 ,#slurp
                 #end if
@@ -35,6 +37,6 @@ ${param.native_type.random_value_stringify()}#slurp
     ${base_code}
 #end if
 ##======return======
-#if $return_type.name 
+#if not $return_type.is_void()
     return ret;
 #end if

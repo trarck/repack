@@ -23,32 +23,41 @@ class InsertInfo:
 
 
 class BaseInsertion:
-    def __init__(self):
+    def __init__(self, tpl_folder_path):
+        self.tpl_folder_path = tpl_folder_path
         self.inserts = []
 
     def append_inert_info(self, line, column, code):
         self.inserts.append(InsertInfo(line, column, code))
 
-
-class SegmentCodeInsertion(BaseInsertion):
-
-    def inject(self, functions):
-        for func in functions:
-            self._inject_function(func)
-
-    def _inject_function(self, function_info):
+    def _inject_function(self, function_info, var_declare, inject_code):
+        """
+        向函数中插入代码。
+        把变量的定义放在最开始，防止C函数，变量定义放在中间出错。
+        :param function_info:
+        :param var_declare:
+        :param inject_code:
+        :return:
+        """
         if function_info.root_statement:
             inject_positions = function_info.get_top_statement_start_positions()
             if inject_positions:
                 inject_pos_index = random.randrange(0, len(inject_positions))
                 inject_pos = inject_positions[inject_pos_index]
-                var_declare, inject_code = self._gen_inject_code()
                 # 代码段插入信息
                 self.append_inert_info(inject_pos[0] - 1, inject_pos[1] - 1, inject_code)
                 # 定义变量插入信息
                 begin_line = function_info.root_statement.location.line - 1
                 begin_column = function_info.root_statement.location.column
                 self.append_inert_info(begin_line, begin_column, var_declare)
+
+
+class SegmentCodeInsertion(BaseInsertion):
+
+    def inject(self, functions):
+        for func in functions:
+            var_declare, inject_code = self._gen_inject_code()
+            self._inject_function(func, var_declare, inject_code)
 
     def _gen_inject_code(self):
         p = random.randrange(0, 10)
@@ -59,9 +68,10 @@ class SegmentCodeInsertion(BaseInsertion):
                 num.append(RandomGenerater.generate_int())
 
             tpl_data = {"num": num, "var_name": RandomGenerater.generate_string()}
-            code_declare = TemplateManager.get_obf_data("one_int_declare.cpp", [tpl_data])
+            code_declare = TemplateManager.get_data(os.path.join(self.tpl_folder_path, "one_int_declare.cpp"),
+                                                    [tpl_data])
 
-            code = TemplateManager.get_obf_data("one_int.cpp", [tpl_data])
+            code = TemplateManager.get_data(os.path.join(self.tpl_folder_path, "one_int.cpp"), [tpl_data])
 
             return code_declare, code
         else:
@@ -71,9 +81,10 @@ class SegmentCodeInsertion(BaseInsertion):
 
             num.sort()
             tpl_data = {"num": num, "var_name": RandomGenerater.generate_string()}
-            code_declare = TemplateManager.get_obf_data("one_float_declare.cpp", [tpl_data])
+            code_declare = TemplateManager.get_data(os.path.join(self.tpl_folder_path, "one_float_declare.cpp"),
+                                                    [tpl_data])
 
-            code = TemplateManager.get_obf_data("one_float.cpp", [tpl_data])
+            code = TemplateManager.get_data(os.path.join(self.tpl_folder_path, "one_float.cpp"), [tpl_data])
 
             return code_declare, code
 
@@ -89,8 +100,11 @@ class ClassCallInsertion(BaseInsertion):
         for method in cpp_class.methods:
             function_info = random.choice(functions)
             start = function_info.get_extent_start()
+            print"%d,%d" % (start.line, start.column)
+            self.append_inert_info(start.line - 1, start.column - 1, method.get_code_string())
 
-            self.append_inert_info(start.line, start.column, method.to_code())
+        # 把类的声明插入最上面
+        self.append_inert_info(0, 0, cpp_class.get_def_string())
 
     def inject(self, functions, cpp_class):
         """
@@ -99,31 +113,34 @@ class ClassCallInsertion(BaseInsertion):
         :param cpp_class:
         :return:
         """
+        inst_name=RandomGenerater.generate_string()
+        var_declare = cpp_class.get_stack_instance_def(inst_name)
         for function_info in functions:
             if function_info.root_statement:
-                inject_positions = function_info.get_top_statement_start_positions()
-                if inject_positions:
-                    inject_pos=random.choice(inject_positions)
-                    method = random.choice(cpp_class.methods)
-                    self.append_inert_info(inject_pos[0] - 1, inject_pos[1] - 1, inject_code)
+                method=random.choice(cpp_class.methods)
+                self._inject_function(function_info, var_declare,  method.get_call_string(inst_name))
 
 
 class CppSourceInjector:
-    def __init__(self, cpp_class, source_file, ruler):
-        self.cpp_class = cpp_class
-        self.source_file = source_file
+    def __init__(self, cpp_class_options, ruler, clang_args, cpp_tpl_folder_path, obf_tpl_folder_path):
+        self.cpp_class_options = cpp_class_options
         self.ruler = ruler
+        self.clang_args = clang_args
+        self.cpp_tpl_folder_path = cpp_tpl_folder_path
+        self.obf_tpl_folder_path = obf_tpl_folder_path
 
-    def do_inserts(self, inserts):
+        self.source_file = None
+
+    def _do_inserts(self, source_file, inserts, out_file=None):
         def insert_cmp(a, b):
             if a.line == b.line:
-                return b.colmun - a.colmun
+                return b.column - a.column
             else:
                 return b.line - a.line
 
         inserts.sort(insert_cmp)
 
-        fp = open(self.source_file, "rU")
+        fp = open(source_file, "rU")
         lines = fp.readlines()
         fp.close()
 
@@ -131,22 +148,47 @@ class CppSourceInjector:
             line = lines[insert_info.line]
             lines[insert_info.line] = line[:insert_info.column] + insert_info.code + line[insert_info.column:]
 
-    def inject(self):
-        if not os.path.exists(self.source_file):
-            print("===>inject file not exists[%s]" % self.source_file)
+        if not out_file:
+            out_file = source_file
+
+        fp = open(out_file, "w+")
+        fp.writelines(lines)
+        fp.close()
+
+    def gen_cpp_class(self, method_count=0):
+        if "method_count_use_define" in self.cpp_class_options and self.cpp_class_options["method_count_use_define"]:
+            method_count = gc_utils.get_range_count("method_count", self.cpp_class_options, 5)
+        else:
+            if not method_count:
+                method_count = gc_utils.get_range_count("method_count", self.cpp_class_options, 5)
+
+        field_count = gc_utils.get_range_count("field_count", self.cpp_class_options, 3)
+        parameter_count = gc_utils.get_range_count("parameter_count", self.cpp_class_options, 3)
+        return_probability = gc_utils.get_range_count("return_probability", self.cpp_class_options, 5)
+        return CppGenerator.generate_class(self.cpp_tpl_folder_path, field_count, method_count, parameter_count,
+                                           return_probability)
+
+    def inject(self, source_file, out_file=None):
+        if not os.path.exists(source_file):
+            print("===>inject file not exists[%s]" % source_file)
 
         opts = {
             "clang_args": self.clang_args
         }
-        cpp_parser = Parser(opts)
-        cpp_parser.parse_file(self.source_file)
+        self.source_file = source_file
 
-        sci = SegmentCodeInsertion()
+        cpp_parser = Parser(opts)
+        cpp_parser.parse_file(source_file)
+
+        sci = SegmentCodeInsertion(self.obf_tpl_folder_path)
         sci.inject(gc_utils.get_all_implement_functions(cpp_parser, self.ruler))
 
-        cci = ClassCallInsertion()
-        cci.spread(gc_utils.get_all_implement_functions(cpp_parser, self.ruler), self.cpp_class)
-        cci.inject(gc_utils.get_implement_functions(cpp_parser, self.ruler), self.cpp_class)
+        cpp_class = self.gen_cpp_class(len(cpp_parser.functions))
+
+        cci = ClassCallInsertion(self.cpp_tpl_folder_path)
+        cci.spread(gc_utils.get_all_implement_functions(cpp_parser, self.ruler), cpp_class)
+        cci.inject(gc_utils.get_implement_functions(cpp_parser, self.ruler), cpp_class)
+
         inserts = sci.inserts + cci.inserts
 
-        self.do_inserts(inserts)
+        self._do_inserts(source_file, inserts, out_file)

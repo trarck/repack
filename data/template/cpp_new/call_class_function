@@ -6,7 +6,7 @@
         #if $param_len > 0
             #set $param_index = 0
             #for $param in $method.parameters
-${generator.generate_value(param.native_type.name)}#slurp
+${generator.generate_value(param.ctype.random_value_stringify())}#slurp
                 #if $param_index < $param_len - 1 
 ,#slurp
                 #end if
