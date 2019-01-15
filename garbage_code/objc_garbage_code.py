@@ -63,4 +63,4 @@ class ObjCGarbageCode(CGarbageCode):
 
         generator.prepare()
         generator.generate_code()
-        return generator.get_class_execute_chain()
+        return generator.get_class_execute_chain(class_index)
