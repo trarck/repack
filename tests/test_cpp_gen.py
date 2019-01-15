@@ -1,6 +1,7 @@
 import unittest
 
 from garbage_code.cpp_generator import *
+from garbage_code.cpp_garbage_code import CppFile
 
 class CppGenTest(unittest.TestCase):
     @classmethod
@@ -39,6 +40,26 @@ class CppGenTest(unittest.TestCase):
         cls= CppGenerator.generate_class(self.tpl_folder_path,3,5,3,80)
         self.assertIsNotNone(cls.get_def_string())
         self.assertIsNotNone(cls.get_code_string())
+
+    def test_gen_class_to_file(self):
+        head_file_name = "cpp_files/gen/b/a.h"
+        source_file_name = "cpp_files/gen/c/a.cpp"
+        generator = CppFile({
+            "head_file": head_file_name,
+            "source_file": source_file_name,
+            "tpl_folder": self.tpl_folder_path,
+            "class_name": "A",
+            "namespace": None,
+            "field_count": 3,
+            "method_count": 5,
+            "parameter_count": 3,
+            "return_probability": 80,
+            "call_others": True,
+            "search_path":"cpp_files/gen"
+        })
+
+        generator.prepare()
+        generator.generate_code()
 
 if __name__ == '__main__':
     unittest.main()

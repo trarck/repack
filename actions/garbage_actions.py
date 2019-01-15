@@ -27,6 +27,9 @@ class GenerateCppCodeAction(Action):
         if not os.path.isabs(exec_code_file_path):
             exec_code_file_path = os.path.join(self.runner.project_root_path, exec_code_file_path)
 
+        if "search_path" in config:
+            config["search_path"] = self.get_full_path_from_config("search_path", self.runner.project_root_path)
+
         cpp_code = CppGarbageCode(tpl_folder_path)
         action = cpp_code.generate_cpp_file(out_folder_path, xcode_project_path, exec_code_file_path, config)
         self.runner.do_action(action)
@@ -52,6 +55,9 @@ class GenerateObjcCodeAction(Action):
         exec_code_file_path = self.translate_string(config["exec_code_file_path"])
         if not os.path.isabs(exec_code_file_path):
             exec_code_file_path = os.path.join(self.runner.project_root_path, exec_code_file_path)
+
+        if "search_path" in config:
+            config["search_path"] = self.get_full_path_from_config("search_path", self.runner.project_root_path)
 
         objc_code = ObjCGarbageCode(tpl_folder_path)
         action = objc_code.generate_cpp_file(out_folder_path, xcode_project_path, exec_code_file_path, config)
@@ -83,7 +89,6 @@ class InjectCppCodeAction(Action):
             clang_args = config["clang_args"]
             for i in range(len(clang_args)):
                 clang_args[i] = self.translate_string(clang_args[i])
-
 
             config["clang_args"] = clang_args
 

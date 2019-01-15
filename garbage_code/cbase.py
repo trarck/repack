@@ -67,6 +67,9 @@ class CFunction(object):
         self.code_template_file = os.path.join(self.tpl_folder_path, "function_code.tpl")
         self.call_template_file = os.path.join(self.tpl_folder_path, "function_call.tpl")
 
+    def call(self, other):
+        self.calls.append(other)
+
     def to_string(self):
         return self.name
 
@@ -115,8 +118,8 @@ class CClass(object):
     def get_code_string(self, contain_methods=True):
         return TemplateManager.get_data(self.code_template_file, [self, {"contain_methods": contain_methods}])
 
-    def get_stack_instance_def(self,inst_name):
-        return TemplateManager.get_data(self.stack_instance_def_template_file, [self, {"inst_name":inst_name}])
+    def get_stack_instance_def(self, inst_name):
+        return TemplateManager.get_data(self.stack_instance_def_template_file, [self, {"inst_name": inst_name}])
 
     def get_need_includes(self):
         return TemplateManager.get_data(self.need_includes_template_file, [self])

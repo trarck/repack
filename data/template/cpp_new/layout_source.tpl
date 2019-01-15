@@ -1,4 +1,3 @@
-\#include "${os.path.basename($head_file_path)}"
 #for header in $headers
     #set relative = os.path.relpath(header, $search_path)
     #if not '..' in relative
@@ -12,3 +11,7 @@
 \#include "${header}"
 #end for
 #end if
+
+${class_code}
+
+//end ${class_name}

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import random
 from garbage_code.cbase import *
 
 
