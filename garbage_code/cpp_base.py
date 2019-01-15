@@ -30,5 +30,3 @@ class CppClass(CClass):
             return self.namespace + "::" + self.name
         return self.name
 
-    def to_code(self):
-        return "cpp class"

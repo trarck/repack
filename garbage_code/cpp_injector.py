@@ -1,161 +1,18 @@
 # -*- coding: utf-8 -*-
 import os
 import random
-import warnings
-
-from Cheetah.Template import Template
-from cparser.parser import Parser
 from rules import *
-from generater import RandomGenerater
 from cpp_source_injector import CppSourceInjector
 import utils
 
 
-class CppFunctionInjector:
-    """
-    向函数内插入代码。包括普通函数和类的方法。
-    代码是可以单独存在不需要依赖外部变量。
-    """
-
-    def __init__(self, options, ruler=None):
-        self.options = options
-        if "clang_args" in options:
-            self.clang_args = options["clang_args"]
-        else:
-            self.clang_args = []
-
-        self.tpl_folder_path = options["tpl_folder"]
-        self.ruler = ruler
-
-    def inject(self, file_path, opts=None):
-
-        print("===> function inject:%s" % file_path)
-        # parse options
-        if opts is None:
-            opts = {}
-        else:
-            opts = opts.copy()
-
-        if "clang_args" in opts:
-            clang_args = opts["clang_args"][:]
-            clang_args.extend(self.clang_args)
-            opts["clang_args"] = clang_args
-        else:
-            opts["clang_args"] = self.clang_args
-
-        # parse file
-        parser = Parser(opts)
-        parser.parse_file(file_path)
-
-        print("==>have functions %s" % len(parser.functions))
-        # get implementation method
-        # get from define
-        functions = parser.functions
-        impl_funcs = []
-        for func in functions:
-            if func.is_implement:
-                if self.ruler:
-                    class_name = func.class_name if func.class_name else "*"
-                    if self.ruler.should_skip(class_name, func.name):
-                        impl_funcs.append(func)
-                else:
-                    impl_funcs.append(func)
-
-        # get from class define
-        for _, cls in parser.parsed_classes.items():
-            for func in cls.methods:
-                if func.is_implement:
-                    if self.ruler:
-                        class_name = func.class_name if func.class_name else "*"
-                        if self.ruler.should_skip(class_name, func.name):
-                            impl_funcs.append(func)
-                    else:
-                        impl_funcs.append(func)
-
-        print("==>have impl functions %s" % len(impl_funcs))
-
-        fp = open(file_path, "rU")
-        lines = fp.readlines()
-        fp.close()
-
-        # start inject function.
-        for func in impl_funcs:
-            self._inject_function(func, lines)
-
-        if "out" in opts:
-            out_file_path = opts["out"]
-        else:
-            out_file_path = file_path
-
-        fp = open(out_file_path, "w+")
-        fp.writelines(lines)
-        fp.close()
-
-    def _inject_function(self, function_info, lines):
-        if function_info.root_statement:
-            inject_positions = function_info.get_top_statement_start_positions()
-            if inject_positions:
-                inject_pos_index = random.randrange(0, len(inject_positions))
-                inject_pos = inject_positions[inject_pos_index]
-                var_declare, inject_code = self._gen_inject_code()
-
-                # 先插入实现代码
-                line_index = inject_pos[0] - 1
-                if line_index > -1 or line_index < len(lines):
-                    line = lines[line_index]
-                    lines[line_index] = line[:inject_pos[1] - 1] + inject_code + line[inject_pos[1] - 1:]
-
-                    # 再插入定义。定义放在最开头。
-                    # 这里要在插入代码之后再插入定义，防止原函数只有一行，插入错误。
-                    # 因为定义要插入到前面，如果先插入定义，原来分析出来的插入代码的位置就是错误的。
-                    # 先插入代码，因为是在后面，所以不影响定义的插入。
-                    begin_line = function_info.root_statement.location.line - 1
-                    begin_column = function_info.root_statement.location.column
-                    line = lines[begin_line]
-                    lines[begin_line] = line[:begin_column] + var_declare + line[begin_column:]
-                else:
-                    print("Error:outline index:%d,%d" % (line_index, len(lines)))
-
-    def _gen_inject_code(self):
-        p = random.randrange(0, 10)
-        # now use two code type
-        if p > 4:
-            num = []
-            for _ in range(0, 3):
-                num.append(RandomGenerater.generate_int())
-
-            tpl_data = {"num": num, "var_name": RandomGenerater.generate_string()}
-            code_tpl_declare = Template(file=os.path.join(self.tpl_folder_path, "one_int_declare.cpp"),
-                                        searchList=[tpl_data])
-
-            code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_int.cpp"),
-                                searchList=[tpl_data])
-            return str(code_tpl_declare), str(code_tpl)
-        else:
-            num = []
-            for _ in range(0, 6):
-                num.append(RandomGenerater.generate_float())
-
-            num.sort()
-            tpl_data = {"num": num, "var_name": RandomGenerater.generate_string()}
-            code_tpl_declare = Template(file=os.path.join(self.tpl_folder_path, "one_float_declare.cpp"),
-                                        searchList=[tpl_data])
-
-            code_tpl = Template(file=os.path.join(self.tpl_folder_path, "one_float.cpp"),
-                                searchList=[tpl_data])
-            return str(code_tpl_declare), str(code_tpl)
-
-
-class CppClassInjector:
-    """
-    向类插入属性和方法。并在原方法中调用新生成的属性和方法。
-    """
-
-    def __init__(self):
-        print("inject code to cpp class")
-
-
 class CppInjector:
+    """
+    像c++源文件中插入代码片段。
+    二种插入级别：
+        1.在函数之间插入新的函数或类的方法。
+        2.在函数内部插入代码片段。
+    """
     default_class_options = {
         "min_field_count": 3,
         "max_field_count": 6,
@@ -182,7 +39,6 @@ class CppInjector:
         self._init_rule()
 
     def _init_rule(self):
-
         # init file rule
         if "include" in self.options:
             include_rules = self.options["include"]
@@ -211,6 +67,13 @@ class CppInjector:
                 self.skips = self.options['skip']
 
     def should_skip(self, class_name, method_name, verbose=False):
+        """
+        检查哪些方法不用注入
+        :param class_name:
+        :param method_name:
+        :param verbose:
+        :return:
+        """
         if class_name == "*" and "*" in self.skips:
             for func in self.skips["*"]:
                 if re.match(func, method_name):
@@ -235,6 +98,12 @@ class CppInjector:
         return False
 
     def _inject_file(self, file_path, force=False):
+        """
+        按文件注入
+        :param file_path:
+        :param force:
+        :return:
+        """
         if file_path in self._injected_files:
             return False
 
@@ -257,7 +126,7 @@ class CppInjector:
                 # cpp_source_injector.inject(file_path)
                 self._success_injected_files.append(file_path)
             except Exception, e:
-                #warnings.warn(e.message)
+                # warnings.warn(e.message)
                 raise e
 
         else:

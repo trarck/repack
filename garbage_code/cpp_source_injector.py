@@ -5,7 +5,6 @@ from generater import RandomGenerater
 from cparser.parser import Parser
 from template_manager import TemplateManager
 from cpp_generator import CppGenerator
-
 import gc_utils
 
 
@@ -22,7 +21,6 @@ class InsertInfo:
 
     def __init__(self, line, column, code, priority=0):
         """
-
         :param line: is fixed from zero
         :param column: is fixed from zero
         :param code:
@@ -65,6 +63,9 @@ class BaseInsertion:
 
 
 class SegmentCodeInsertion(BaseInsertion):
+    """
+    向函数插入代码段。
+    """
 
     def inject(self, functions):
         for func in functions:
@@ -72,6 +73,11 @@ class SegmentCodeInsertion(BaseInsertion):
             self._inject_function(func, var_declare, inject_code)
 
     def _gen_inject_code(self):
+        """
+        获取注入代码。
+        目前实现二种代码，后面可以加入多种。
+        :return:
+        """
         p = random.randrange(0, 10)
         # now use two code type
         if p > 4:
@@ -102,6 +108,9 @@ class SegmentCodeInsertion(BaseInsertion):
 
 
 class ClassCallInsertion(BaseInsertion):
+    """
+    在函数之间插入类的方法。并把调用代码插入源函数中。
+    """
 
     def spread(self, functions, cpp_class):
         """
@@ -135,6 +144,14 @@ class ClassCallInsertion(BaseInsertion):
 
 class CppSourceInjector:
     def __init__(self, cpp_class_options, ruler, clang_args, cpp_tpl_folder_path, obf_tpl_folder_path):
+        """
+        对c++源文件进行注入。
+        :param cpp_class_options:生成的c++类的配置
+        :param ruler:哪些函数是否不用注入。
+        :param clang_args:提供给clang的参数
+        :param cpp_tpl_folder_path:生成c++代码用的模板。
+        :param obf_tpl_folder_path:生成混淆代码模板。
+        """
         self.cpp_class_options = cpp_class_options
         self.ruler = ruler
         self.clang_args = clang_args
@@ -144,6 +161,13 @@ class CppSourceInjector:
         self.source_file = None
 
     def _do_inserts(self, source_file, inserts, out_file=None):
+        """
+        把插入信息写到文件里。
+        :param source_file:
+        :param inserts:
+        :param out_file:
+        :return:
+        """
         inserts.sort(InsertInfo.sort_cmp)
 
         fp = open(source_file, "rU")

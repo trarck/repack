@@ -1,8 +1,13 @@
+# -*- coding: utf-8 -*-
 from cpp_base import *
 
 
 class CppGenerator:
     def __init__(self, tpl_folder_path):
+        """
+        c++相关的生成器
+        :param tpl_folder_path:
+        """
         self.tpl_folder_path = tpl_folder_path
 
     @staticmethod

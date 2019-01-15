@@ -3,6 +3,13 @@ import random
 
 
 def get_range_count(name, config, default_min=1):
+    """
+    取得一个范围内的随机值。
+    :param name:
+    :param config:
+    :param default_min:
+    :return:
+    """
     if name in config:
         return config[name]
 
