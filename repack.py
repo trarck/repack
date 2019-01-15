@@ -37,6 +37,11 @@ class Repack:
         self.action_classes = {}
 
     def _merge_environment(self, conf_data, parent_key=None):
+        """
+        把配置文件合并到变量里
+        :param conf_data:
+        :param parent_key:
+        """
         for key, value in conf_data.items():
             if parent_key:
                 new_key = parent_key + '_' + key.upper()
@@ -81,7 +86,11 @@ class Repack:
         self._merge_environment(conf_data, "PROJECT")
 
     def register_actions(self, action_config_file):
-
+        """
+        注册动作。通过配置文件来配置命令名到命令类的映射
+        :param action_config_file:
+        :return:
+        """
         fp = open(action_config_file)
         action_data = json.load(fp)
         fp.close()
@@ -92,16 +101,14 @@ class Repack:
                 if cls:
                     self.action_classes[action_config["name"]] = cls
 
-    def run(self, steps, executes=None, ignores=None):
-        # if self.need_copy_project:
-        #     self.copy_project()
-
-        if executes or ignores:
-            steps = self.filter_steps(steps, executes, ignores)
-
-        self.do_steps(steps)
-
     def filter_steps(self, steps, executes=None, ignores=None):
+        """
+        过虑可执行的步骤。
+        :param steps:
+        :param executes:
+        :param ignores:
+        :return:
+        """
         filtered = []
         for step_data in steps:
             if ignores:
@@ -120,9 +127,48 @@ class Repack:
 
         return filtered
 
-    def do_steps(self, steps):
+    def run(self, steps, executes=None, ignores=None):
+        """
+        执行步骤。按配置的顺序执行。
+        :param steps:具体的配置数据。
+        :param executes:可执行的步骤名
+        :param ignores:不执行的步骤名
+        :return:
+        """
+        if executes or ignores:
+            steps = self.filter_steps(steps, executes, ignores)
+
+        self._do_steps(steps)
+
+    def _do_steps(self, steps):
         for step_data in steps:
             self.do_step(step_data)
+
+    # run as give step name[id] sequence
+    def run2(self, steps, executes=None, ignores=None):
+        """
+        新的执行步骤方法。更加灵活。
+        配置信息不在使用数组，即使使用数组也会转成字典。
+        每个步骤都有一个id，执行的时候不按配置数据执行，按每个步骤的id组成的数组执行。
+        这样执行重复的步骤时不需要配置多份，而仅引用多个id就可以。
+        :param steps:步骤的配置信息。含有主键。
+        :param executes:执行步骤名。
+        :return:
+        """
+        if isinstance(steps, list):
+            step_map = {}
+            for step_data in steps:
+                step_map[step_data["name"]] = step_map
+            steps = step_map
+
+        self._execute(steps, executes, ignores)
+
+    def _execute(self, steps, executes, ignores):
+        for step_id in executes:
+            if ignores and step_id in ignores:
+                continue
+            if step_id in steps:
+                self.do_step(steps[step_id])
 
     def do_step(self, step_data):
         print("===> do step %s" % step_data["name"])
@@ -141,25 +187,6 @@ class Repack:
         else:
             raise Exception("Can't find action %s" % action_data["name"])
 
-    # run as give step name[id] sequence
-    def run2(self, steps, executes=None, ignores=None):
-        # if self.need_copy_project:
-        #     self.copy_project()
-
-        if isinstance(steps, list):
-            step_map = {}
-            for step_data in steps:
-                if ignores is None or step_data["name"] not in ignores:
-                    step_map[step_data["name"]] = step_map
-            steps = step_map
-
-        self._execute(executes, steps)
-
-    def _execute(self, executes, steps):
-        for step_name in executes:
-            if step_name in steps:
-                self.do_step(steps[step_name])
-
     # def copy_project(self, config=None):
     #     print("copy project from %s to %s" % (self.matrix_project_root_path, self.project_root_path))
     #     if os.path.exists(self.matrix_project_root_path):
@@ -170,8 +197,9 @@ class Repack:
     #         print("copy project error no %s folder " % self.matrix_project_root_path)
 
 
-def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config, ext_action_file, actions,
-                   ignore_actions):
+def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config, ext_action_file, steps,
+                   ignore_steps, config_version):
+    # 处理路径
     if "project_path" in project_config:
         if os.path.isabs(project_config["project_path"]):
             project_path = project_config["project_path"]
@@ -189,20 +217,29 @@ def repack_project(src_project, out_dir, resource_dir, data_dir, project_config,
         resource_path = os.path.join(resource_dir, project_config["name"])
 
     repack = Repack(src_project, project_path, resource_path, data_dir, project_config["name"])
-
+    # parse config
     repack.parse_config(project_config)
 
     # register base actions
     base_action_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "actions", "actions.json")
     repack.register_actions(base_action_config_file)
-
+    # register other actions
     if ext_action_file:
         repack.register_actions(ext_action_file)
 
-    repack.run(step_config)
+    # run steps
+    if config_version == 2:
+        repack.run2(step_config, steps, ignore_steps)
+    else:
+        repack.run(step_config, steps, ignore_steps)
 
 
 def parse_words(args):
+    """
+    导入单词。
+    :param args:
+    :return:
+    """
     # load extend words
     if args.words_file and os.path.exists(args.words_file):
         generater.WordsManager.load_words(args.words_file)
@@ -220,7 +257,7 @@ def parse_words(args):
 def main():
     workpath = os.getcwd()  # os.path.dirname(os.path.realpath(__file__))
 
-    print("workpath:%s" % workpath)
+    print("===>workpath:%s" % workpath)
 
     parser = ArgumentParser()
     parser.add_argument('-s', '--src-project', dest='src_project',
@@ -266,6 +303,7 @@ def main():
 
     print("=======================================================")
 
+    # 检查基本路径
     if not os.path.isabs(args.src_project):
         args.src_project = os.path.join(workpath, args.src_project)
 
@@ -286,6 +324,11 @@ def main():
     config_data = json.load(fp)
     fp.close()
 
+    # check config format version
+    config_version = 1
+    if "version" in config_data:
+        config_version = config_data["version"]
+
     # check step config
     if args.step_config:
         scfp = open(args.step_config)
@@ -293,7 +336,9 @@ def main():
         scfp.close()
         if "steps" in step_config:
             step_config = step_config["steps"]
-
+        # check config format version
+        if "version" in config_data:
+            config_version = config_data["version"]
     elif "steps" in config_data:
         step_config = config_data["steps"]
     else:
@@ -301,16 +346,16 @@ def main():
 
     # load base words
     generater.WordsManager.init_words()
-
+    # load ext words
     parse_words(args)
 
     if "projects" in config_data:
         for project_config in config_data["projects"]:
             repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, project_config,
-                           step_config, args.action_config, args.steps, args.ignore_steps)
+                           step_config, args.action_config, args.steps, args.ignore_steps, config_version)
     elif "project" in config_data:
         repack_project(args.src_project, args.out_dir, args.resource_dir, args.data_dir, config_data["project"],
-                       step_config, args.action_config, args.steps, args.ignore_steps)
+                       step_config, args.action_config, args.steps, args.ignore_steps, config_version)
 
 
 # -------------- main --------------
