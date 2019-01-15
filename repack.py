@@ -2,21 +2,11 @@
 import os
 import sys
 import traceback
-import shutil
-import random
 import json
 from string import Template
 
 from argparse import ArgumentParser
-from resource.resource_obfuscator import ResourceObfuscator, CryptInfo
-from project import IosProject
-from source_file import SourceFile
-from file_crypt import FileCrypt
-from garbage_code.cpp_garbage_code import CppGarbageCode
-from resource.resource_garbage import ResourceGarbage
-from garbage_code.objc_garbage_code import ObjCGarbageCode
-from garbage_code.cpp_injector import CppInjector
-from resource.resource_mapping import ResourceMapping
+from resource.resource_obfuscator import CryptInfo
 import generater
 import utils
 
@@ -36,6 +26,7 @@ class Repack:
 
         self._config_data = None
 
+        # 4个基本变量
         self._environment = {
             u"MATRIX_PROJECT_ROOT": self.matrix_project_root_path,
             u"PROJECT_ROOT": self.project_root_path,
