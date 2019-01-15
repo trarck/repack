@@ -1,42 +1,38 @@
-/*
-* some thing
-*/
-void funa()
-{
-    int i=0;
-    int j=2;
-    i+=2;
-    if (i>j){
-        j+=2;
-    }
+#include "b.h"
+#include "a.h"
 
-   
-    do
-    {
-      i+=j;
-      j+=i;
-    }while(i<j);
+B::B()
+{
+    
 }
 
-int funb()
-{
-    int i=0;
-    int j=2;
-    i+=2;
 
-    if (i>j){
-        j+=2;
-    }
-    
-    do
-    {
-      i+=j;
-      j+=i;
-    }while(i<j);
+B::~B()
+{}
+
+void B::ma(){
+
+int i=0;
+A a;
+    i+=3;
+    a.ma();
+}
+
+int B::ia()
+{
+
+int i=0;
+    int j=0;
+    i+=3;
+    j*=4;
     return i;
 }
 
-int main()
-{
-    return 0;
+
+float B::fa(){
+    
+float i=0;
+    i+=3;
+    
+    return i;
 }
