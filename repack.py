@@ -102,8 +102,8 @@ class Repack:
                     self.action_classes[action_config["name"]] = cls
 
     def run(self, steps, executes=None, ignores=None):
-        if self.need_copy_project:
-            self.copy_project()
+        # if self.need_copy_project:
+        #     self.copy_project()
 
         if executes or ignores:
             steps = self.filter_steps(steps, executes, ignores)
@@ -152,8 +152,8 @@ class Repack:
 
     # run as give step name[id] sequence
     def run2(self, steps, executes=None, ignores=None):
-        if self.need_copy_project:
-            self.copy_project()
+        # if self.need_copy_project:
+        #     self.copy_project()
 
         if isinstance(steps, list):
             step_map = {}
@@ -169,14 +169,15 @@ class Repack:
             if step_name in steps:
                 self.do_step(steps[step_name])
 
-    def copy_project(self, config=None):
-        print("copy project from %s to %s" % (self.matrix_project_root_path, self.project_root_path))
-        if os.path.exists(self.matrix_project_root_path):
-            if os.path.exists(self.project_root_path):
-                shutil.rmtree(self.project_root_path)
-            shutil.copytree(self.matrix_project_root_path, self.project_root_path, True)
-        else:
-            print("copy project error no %s folder " % self.matrix_project_root_path)
+    # def copy_project(self, config=None):
+    #     print("copy project from %s to %s" % (self.matrix_project_root_path, self.project_root_path))
+    #     if os.path.exists(self.matrix_project_root_path):
+    #         if os.path.exists(self.project_root_path):
+    #             shutil.rmtree(self.project_root_path)
+    #         shutil.copytree(self.matrix_project_root_path, self.project_root_path, True)
+    #     else:
+    #         print("copy project error no %s folder " % self.matrix_project_root_path)
+
 
 def repack_project(src_project, out_dir, resource_dir, data_dir, project_config, step_config, ext_action_file, actions,
                    ignore_actions):
