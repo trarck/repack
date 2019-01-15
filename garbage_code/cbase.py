@@ -96,6 +96,7 @@ class CClass(object):
         self.def_template_file = os.path.join(self.tpl_folder_path, "class_def.tpl")
         self.code_template_file = os.path.join(self.tpl_folder_path, "class_code.tpl")
         self.stack_instance_def_template_file = os.path.join(self.tpl_folder_path, "class_stack_instance.tpl")
+        self.need_includes_template_file = os.path.join(self.tpl_folder_path, "class_need_includes.tpl")
 
     def add_method(self, method):
         self.methods.append(method)
@@ -116,3 +117,6 @@ class CClass(object):
 
     def get_stack_instance_def(self,inst_name):
         return TemplateManager.get_data(self.stack_instance_def_template_file, [self, {"inst_name":inst_name}])
+
+    def get_need_includes(self):
+        return TemplateManager.get_data(self.need_includes_template_file, [self])

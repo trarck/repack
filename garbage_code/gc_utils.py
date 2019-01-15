@@ -34,8 +34,8 @@ def get_implement_functions(parser, ruler):
     for func in functions:
         if func.is_implement:
             if ruler:
-                class_name = func.class_name if function.class_name else "*"
-                if ruler.should_skip(class_name, func.name):
+                class_name = func.class_name if func.class_name else "*"
+                if not ruler.should_skip(class_name, func.name):
                     impl_funcs.append(func)
             else:
                 impl_funcs.append(func)
@@ -54,8 +54,8 @@ def get_all_implement_functions(parser, ruler):
         for func in cls.methods:
             if func.is_implement:
                 if ruler:
-                    class_name = func.class_name if function.class_name else "*"
-                    if ruler.should_skip(class_name, func.name):
+                    class_name = func.class_name if func.class_name else "*"
+                    if not ruler.should_skip(class_name, func.name):
                         impl_funcs.append(func)
                 else:
                     impl_funcs.append(func)

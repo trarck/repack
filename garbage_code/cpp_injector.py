@@ -8,7 +8,7 @@ from cparser.parser import Parser
 from rules import *
 from generater import RandomGenerater
 from cpp_source_injector import CppSourceInjector
-import gc_utils
+import utils
 
 
 class CppFunctionInjector:
@@ -55,7 +55,7 @@ class CppFunctionInjector:
         for func in functions:
             if func.is_implement:
                 if self.ruler:
-                    class_name = func.class_name if function.class_name else "*"
+                    class_name = func.class_name if func.class_name else "*"
                     if self.ruler.should_skip(class_name, func.name):
                         impl_funcs.append(func)
                 else:
@@ -66,7 +66,7 @@ class CppFunctionInjector:
             for func in cls.methods:
                 if func.is_implement:
                     if self.ruler:
-                        class_name = func.class_name if function.class_name else "*"
+                        class_name = func.class_name if func.class_name else "*"
                         if self.ruler.should_skip(class_name, func.name):
                             impl_funcs.append(func)
                     else:
@@ -156,13 +156,29 @@ class CppClassInjector:
 
 
 class CppInjector:
+    default_class_options = {
+        "min_field_count": 3,
+        "max_field_count": 6,
+        "min_method_count": 30,
+        "max_method_count": 60,
+        "min_parameter_count": 3,
+        "max_parameter_count": 8,
+        "min_return_probability": 60,
+        "max_return_probability": 90
+    }
+
     def __init__(self, options):
         self.options = options
         self._injected_files = None
-        self.tpl_folder_path = options["tpl_dir"]
+        self.obf_tpl_folder_path = options["obf_tpl_dir"]
+        self.cpp_tpl_folder_path = options["cpp_tpl_dir"]
         self.skips = {}
         self.clang_args = options["clang_args"] if "clang_args" in options else []
         self._success_injected_files = []
+        if "class" in self.options:
+            self.class_options = self.options["class"]
+        else:
+            self.class_options = CppInjector.default_class_options
         self._init_rule()
 
     def _init_rule(self):
@@ -177,7 +193,7 @@ class CppInjector:
         if "exclude" in self.options:
             exclude_rules = self.options["exclude"]
 
-        self.file_rule = gc_utils.create_rules(include_rules, exclude_rules)
+        self.file_rule = utils.create_rules(include_rules, exclude_rules)
 
         # init skip rule
         if 'skips' in self.options:
@@ -233,18 +249,16 @@ class CppInjector:
             need_inject = True
 
         if need_inject:
-            source_injector=CppSourceInjector()
-            func_injector = CppFunctionInjector({
-                "clang_args": self.clang_args,
-                "tpl_folder": self.tpl_folder_path
-            })
+            cpp_source_injector = CppSourceInjector(self.class_options, self, self.clang_args, self.cpp_tpl_folder_path,
+                                                    self.obf_tpl_folder_path)
 
+            cpp_source_injector.inject(file_path)
             try:
-                func_injector.inject(file_path)
+                # cpp_source_injector.inject(file_path)
                 self._success_injected_files.append(file_path)
             except Exception, e:
-                warnings.warn(e.message)
-                # raise e
+                #warnings.warn(e.message)
+                raise e
 
         else:
             print("===>code inject skip %s" % file_path)

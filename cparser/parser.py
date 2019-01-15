@@ -106,7 +106,7 @@ class Parser(object):
             for cursor in tu.cursor.get_children():
                 self._traverse(cursor)
 
-    def get_ast(self, file_path, error_stop=False, max_depth=10):
+    def get_ast(self, file_path, error_stop=False, max_depth=10,all=False):
         tu = self.index.parse(file_path, self.clang_args)
         if len(tu.diagnostics) > 0:
             self._check_diagnostics(tu.diagnostics)
@@ -122,7 +122,7 @@ class Parser(object):
         self._parsing_file = file_path.replace("\\", "/")
         self.max_depth = max_depth
 
-        return self.get_cursor_info(tu.cursor, 0)
+        return self.get_cursor_info(tu.cursor, 0,all)
 
     def get_cursor_id(self, cursor, cursor_list=[]):
 
@@ -137,9 +137,9 @@ class Parser(object):
         cursor_list.append(cursor)
         return len(cursor_list) - 1
 
-    def get_cursor_info(self, cursor, depth):
+    def get_cursor_info(self, cursor, depth,all=False):
 
-        if not Parser.in_parse_file(cursor, self._parsing_file):
+        if not all and not Parser.in_parse_file(cursor, self._parsing_file):
             return None
 
         if self.max_depth is not None and depth >= self.max_depth:
@@ -147,7 +147,7 @@ class Parser(object):
         else:
             children = []
             for c in cursor.get_children():
-                child=self.get_cursor_info(c, depth + 1)
+                child=self.get_cursor_info(c, depth + 1,all)
                 if child:
                     children.append(child)
 
@@ -160,6 +160,8 @@ class Parser(object):
                 'extent.end': cursor.extent.end,
                 'is_definition': cursor.is_definition(),
                 'definition id': self.get_cursor_id(cursor.get_definition()),
+                'brief_comment':cursor.brief_comment,
+                'raw_comment':cursor.raw_comment,
                 'children': children}
 
     @staticmethod

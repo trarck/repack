@@ -10,16 +10,28 @@ import gc_utils
 
 
 class InsertInfo:
-    def __init__(self, line, column, code):
+    @staticmethod
+    def sort_cmp(a, b):
+        if a.line == b.line:
+            if b.column == a.column:
+                return b.priority - a.priority
+            else:
+                return b.column - a.column
+        else:
+            return b.line - a.line
+
+    def __init__(self, line, column, code, priority=0):
         """
 
         :param line: is fixed from zero
         :param column: is fixed from zero
         :param code:
+        :param priority:如果line和column都相同，按priority排序。priority越小排在前面。.
         """
         self.line = line
         self.column = column
         self.code = code
+        self.priority = priority
 
 
 class BaseInsertion:
@@ -27,8 +39,8 @@ class BaseInsertion:
         self.tpl_folder_path = tpl_folder_path
         self.inserts = []
 
-    def append_inert_info(self, line, column, code):
-        self.inserts.append(InsertInfo(line, column, code))
+    def append_inert_info(self, line, column, code, priority=0):
+        self.inserts.append(InsertInfo(line, column, code, priority))
 
     def _inject_function(self, function_info, var_declare, inject_code):
         """
@@ -100,11 +112,11 @@ class ClassCallInsertion(BaseInsertion):
         for method in cpp_class.methods:
             function_info = random.choice(functions)
             start = function_info.get_extent_start()
-            print"%d,%d" % (start.line, start.column)
             self.append_inert_info(start.line - 1, start.column - 1, method.get_code_string())
 
         # 把类的声明插入最上面
         self.append_inert_info(0, 0, cpp_class.get_def_string())
+        self.append_inert_info(0, 0, cpp_class.get_need_includes(), -1000)
 
     def inject(self, functions, cpp_class):
         """
@@ -113,12 +125,12 @@ class ClassCallInsertion(BaseInsertion):
         :param cpp_class:
         :return:
         """
-        inst_name=RandomGenerater.generate_string()
+        inst_name = RandomGenerater.generate_string()
         var_declare = cpp_class.get_stack_instance_def(inst_name)
         for function_info in functions:
             if function_info.root_statement:
-                method=random.choice(cpp_class.methods)
-                self._inject_function(function_info, var_declare,  method.get_call_string(inst_name))
+                method = random.choice(cpp_class.methods)
+                self._inject_function(function_info, var_declare, method.get_call_string(inst_name))
 
 
 class CppSourceInjector:
@@ -132,13 +144,7 @@ class CppSourceInjector:
         self.source_file = None
 
     def _do_inserts(self, source_file, inserts, out_file=None):
-        def insert_cmp(a, b):
-            if a.line == b.line:
-                return b.column - a.column
-            else:
-                return b.line - a.line
-
-        inserts.sort(insert_cmp)
+        inserts.sort(InsertInfo.sort_cmp)
 
         fp = open(source_file, "rU")
         lines = fp.readlines()
@@ -180,11 +186,13 @@ class CppSourceInjector:
         cpp_parser = Parser(opts)
         cpp_parser.parse_file(source_file)
 
+        print("===>inject segment code")
         sci = SegmentCodeInsertion(self.obf_tpl_folder_path)
         sci.inject(gc_utils.get_all_implement_functions(cpp_parser, self.ruler))
 
         cpp_class = self.gen_cpp_class(len(cpp_parser.functions))
 
+        print("===>inject class call")
         cci = ClassCallInsertion(self.cpp_tpl_folder_path)
         cci.spread(gc_utils.get_all_implement_functions(cpp_parser, self.ruler), cpp_class)
         cci.inject(gc_utils.get_implement_functions(cpp_parser, self.ruler), cpp_class)

@@ -1,5 +1,4 @@
 
-\#include<string>
 class ${name} {
 ## ===== fields 
 #set $length = len($fields)

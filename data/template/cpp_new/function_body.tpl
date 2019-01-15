@@ -40,3 +40,4 @@ ${param.ctype.random_value_stringify()}#slurp
 #if not $return_type.is_void()
     return ret;
 #end if
+
