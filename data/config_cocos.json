@@ -1,0 +1,579 @@
+{
+    "projects":
+    [
+        {
+            "name":"test",
+            "resource_path":"test",
+            "project_path":"test",
+            "need_copy":false,
+            "crypt":{
+                "key":"ltslm-111222",
+                "type":"md5",
+                "with_ext":false
+            },
+            "xcode_project_path":"frameworks/runtime-src/proj.ios_mac",
+			"origin_xcode_project_name":"ft.xcodeproj",
+            "xcode_project_name":"test.xcodeproj",
+            "target_name":"test",
+            "package_id":"com.cardGame.ltslm",
+            "display_name":"游戏显示名",
+			"code_sign_identity":"iPhone Developer: xxx",
+			"provisioning_profile":"xxx_dev",
+			"development_team":"KJ52G9TVTY",
+			"provisioning_profile_uuid":"7c0494f1-9883-42cb-8117-11400556e4f8",
+			"code_sign_entitlements":"ft-mobile/ft-mobile.entitlements",
+            "xxtea_key":"lts_lm1122",
+            "xxtea_sign":"XXTEA_lts",
+			"gen_cpp_dir":"lts_src",
+			"gen_objc_dir":"lts_oc",
+			"mapping_file":"res/lts_data.plist"
+        }
+    ],
+    
+    "steps":[
+		{
+			"name":"copy_project",
+            "discription":"copy cocos2dx ios project",
+			"actions":[
+		        {
+		            "name":"copy_files",
+		            "from":"${MATRIX_PROJECT_ROOT}/frameworks",
+		            "to":"${PROJECT_ROOT}/frameworks"
+		        },
+		        {
+		            "name":"copy_files",
+		            "from":"res",
+		            "to":"${PROJECT_ROOT}/res_bak"
+		        },
+		        {
+		            "name":"copy_files",
+		            "from":"src",
+		            "to":"${PROJECT_ROOT}/src_bak"
+		        },
+		        {
+		            "name":"copy_files",
+		            "from":"${MATRIX_PROJECT_ROOT}/tools",
+		            "to":"${PROJECT_ROOT}/tools"
+		        },		
+		        {
+		            "name":"copy_files",
+		            "from":"${MATRIX_PROJECT_ROOT}/Default",
+		            "to":"${PROJECT_ROOT}/Default"
+		        },		
+		        {
+		            "name":"copy_files",
+		            "from":"${MATRIX_PROJECT_ROOT}/LuaExtend.lua",
+		            "to":"${PROJECT_ROOT}/LuaExtend.lua"
+		        },
+		        {
+		            "name":"copy_files",
+		            "from":"${MATRIX_PROJECT_ROOT}/version.txt",
+		            "to":"${PROJECT_ROOT}/version.txt"
+		        }
+			]
+		},
+        {
+			"name":"icons_lanch",
+            "discription":"replace icons and lanch",
+			"actions":[
+				{
+		            "name":"delete_files",
+					"discription":"delete old icons",
+		            "files":["frameworks/runtime-src/proj.ios_mac/ft-mobile/Images.xcassets/AppIcon.appiconset"]
+		        },
+				{
+		            "name":"copy_files",
+					"discription":"copy icon",
+		            "from":"AppIcon.appiconset",
+		            "to":"frameworks/runtime-src/proj.ios_mac/ft-mobile/Images.xcassets/AppIcon.appiconset"
+		        },
+				{
+		            "name":"delete_files",
+					"discription":"delete old launch",
+		            "files":["frameworks/runtime-src/proj.ios_mac/ft-mobile/Images.xcassets/LaunchImage.launchimage"]
+		        },
+				{
+		            "name":"copy_files",
+					"discription":"copy launch",
+		            "from":"LaunchImage.launchimage",
+		            "to":"frameworks/runtime-src/proj.ios_mac/ft-mobile/Images.xcassets/LaunchImage.launchimage"
+		        }
+			]
+		},
+		
+        {
+			"name":"add_md5_to_cocos2dx",
+            "discription":"add md5 function to cocos2dx-3.9",
+			"actions":[
+		        {
+		            "name":"modify_files",
+					"discription":"md5加入c++中",
+		            "files":[
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/cocos2d-x/cocos/base/ccUtils.h",
+		                    "keys":["getCascadeBoundingBox(Node *node);"],
+		                    "words":"\nCC_DLL std::string getDataMD5Hash(const Data &data);\n"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/cocos2d-x/cocos/base/ccUtils.h",
+		                    "keys":["#include \"base/ccMacros.h\""],
+		                    "words":"\n#include \"base/CCData.h\"\n"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/cocos2d-x/cocos/base/ccUtils.cpp",
+		                    "keys":["#include \"platform/CCFileUtils.h\""],
+		                    "words":"#include \"md5/md5.h\"\n#include \"md5/md5.c\"\n"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/cocos2d-x/cocos/base/ccUtils.cpp",
+		                    "keys":["return cbb;","}"],
+		                    "words_file":"${GLOBAL_DATA_DIR}/cpp/segs/md5.txt"
+		                }
+		            ]
+		        }
+			]
+		},
+		
+        {
+			"name":"add_cpp_obf",
+            "discription":"把目录混淆加入c++中",
+			"actions":[
+		        {
+		            "name":"modify_files",
+		            "files":[
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.h",
+		                    "keys":["virtual bool isDirectoryExistInternal(const std::string& dirPath) const;"],
+		                    "words_file":"${GLOBAL_DATA_DIR}/cpp/segs/obf_head.h"
+		                },
+		                {
+		                    "operation":"insert_before",
+		                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
+		                    "keys":["std::string FileUtils::getPathForFilename"],
+		                    "words_file":"${GLOBAL_DATA_DIR}/cpp/segs/obf1.cpp"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCFileUtils.cpp",
+		                    "keys":["std::string FileUtils::getPathForFilename","getFullPathForDirectoryAndFilename(path, file);"],
+		                    "words_file":"${GLOBAL_DATA_DIR}/cpp/segs/obf2.cpp"
+		                }                
+		            ]
+		        },
+		        {
+		            "name":"modify_files",
+					"discription":"设置混淆子目录",
+		            "files":[
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+		                    "words":"\nFileUtils::getInstance()->addObfuscateSubPath(\"multiLang/cn\");\n"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+		                    "words":"\nFileUtils::getInstance()->addObfuscateSubPath(\"cocosyz/lpeg\");\n"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+		                    "words":"\nFileUtils::getInstance()->addObfuscateSubPath(\"cocosyz/pbc\");\n"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+		                    "words":"\nFileUtils::getInstance()->addObfuscateSubPath(\"sound_wwise\");\n"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+		                    "words":"\nFileUtils::getInstance()->addObfuscateParentPath(\"res\");\n"
+		                },
+		                {
+		                    "operation":"insert",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+		                    "words":"\nFileUtils::getInstance()->addObfuscateParentPath(\"res/sound_wwise\",true);\n"
+		                },
+						{
+		                    "operation":"insert",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+		                    "words":"\nFileUtils::getInstance()->setObfuscateKey(\"${PROJECT_CRYPT_KEY}\");\n"
+						}						             
+		            ]
+		        }
+			]
+		},
+		
+        {
+			"name":"修改资xxtea加密密钥",
+			"actions":[
+		        {
+		            "name":"modify_files",
+		            "files":[
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCImage.cpp",
+		                    "froms":["#define XXTEA_KEY","\""],
+							"tos":["\""],
+		                    "words":"${PROJECT_XXTEA_KEY}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"frameworks/cocos2d-x/cocos/platform/CCImage.cpp",
+		                    "froms":["#define XXTEA_SIGN","\""],
+							"tos":["\""],
+		                    "words":"${PROJECT_XXTEA_SIGN}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "froms":["stack->setXXTEAKeyAndSign","\""],
+							"tos":["\""],
+		                    "words":"${PROJECT_XXTEA_KEY}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "froms":["stack->setXXTEAKeyAndSign","strlen","\""],
+							"tos":["\""],
+		                    "words":"${PROJECT_XXTEA_KEY}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "froms":["stack->setXXTEAKeyAndSign","strlen",",","\""],
+							"tos":["\""],
+		                    "words":"${PROJECT_XXTEA_SIGN}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+		                    "froms":["stack->setXXTEAKeyAndSign","strlen","strlen","\""],
+							"tos":["\""],
+		                    "words":"${PROJECT_XXTEA_SIGN}"
+		                }           
+						     
+						     
+		            ]
+		        }
+			]
+		},
+		
+        {
+			"name":"set xcode project",
+			"actions":[
+		        {
+		            "name":"xcode_rename",
+					"discription":"设置xcode工程",
+					"xcode_project_path":"${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_ORIGIN_XCODE_PROJECT_NAME}",
+		            "target_name":"${PROJECT_TARGET_NAME}",
+		            "package_id":"${PROJECT_PACKAGE_ID}",
+		            "display_name":"${PROJECT_DISPLAY_NAME}"
+					
+		        },
+		        {
+		            "name":"xcode_set_code_sign",
+					"discription":"设置签名",
+					"xcode_project_path":"${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_ORIGIN_XCODE_PROJECT_NAME}",
+					"code_sign_identity":"${PROJECT_CODE_SIGN_IDENTITY}",
+					"provisioning_profile":"${PROJECT_PROVISIONING_PROFILE}",
+					"development_team":"${PROJECT_DEVELOPMENT_TEAM}",
+					"provisioning_profile_uuid":"${PROJECT_PROVISIONING_PROFILE_UUID}",
+					"code_sign_entitlements":"${PROJECT_CODE_SIGN_ENTITLEMENTS}"
+		        }
+			]
+		},
+		
+        {
+			"name":"修改多语言游戏名",
+			"actions":[
+		        {
+		            "name":"modify_files",
+		            "files":[
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/Base.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/de.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/en.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/pl-PL.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/pl.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/pt-BR.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/pt-PT.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/pt.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/tr.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/zh-Hans.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                },
+		                {
+		                    "operation":"search_replace",
+		                    "file_path":"${PROJECT_XCODE_PROJECT_PATH}/ios/zh-Hant-TW.lproj/InfoPlist.strings",
+		                    "froms":["CFBundleDisplayName","\""],
+		                    "tos":["\""],
+		                    "words":"${PROJECT_DISPLAY_NAME}"
+		                }
+		            ]
+		        }
+			]
+		},
+		
+        
+		
+		{
+			"name":"加密lua",
+			"actions":[
+				{
+					
+					"name":"crypt_files",
+					"discription":"加密lua",
+					"from":"src_bak",
+					"to":"src_xx",
+					"key":"${PROJECT_XXTEA_KEY}",
+					"sign":"${PROJECT_XXTEA_SIGN}",
+					"include":["*.lua"],
+					"remove_source":false
+				}
+			]
+		},
+		
+		{
+			"name":"加密图片资源",
+			"actions":[
+				{
+					
+					"name":"crypt_files",
+					"discription":"加密图片",
+					"from":"res_bak",
+					"to":"res_xx",
+					"key":"${PROJECT_XXTEA_KEY}",
+					"sign":"${PROJECT_XXTEA_SIGN}",
+					"include":["*.png","*.jpg","*.lua"],
+					"remove_source":false
+				}
+			]
+		},
+
+        {
+			"name":"mapping resources",
+			"actions":[
+		        {
+		            "name":"mapping_resources",
+					"discription":"混淆lua目录",
+		            "res_path":"src_xx",
+					"out_path":"src",
+		            "remove_source":false,
+					"mapping_file":"${PROJECT_ROOT}/src",
+					"with_ext":true,
+					"ignore_root":true,
+					"save_plist":true,
+					"min_level":2,
+					"max_level":5,
+					"min_dir_counts":[10,6],
+					"max_dir_counts":[15,10]
+		        }
+			]
+		},
+		
+        {
+			"name":"mapping resources",
+			"actions":[
+		        {
+		            "name":"mapping_resources",
+					"discription":"混淆资源目录",
+		            "res_path":"res_xx",
+					"out_path":"res",
+		            "remove_source":false,
+					"mapping_file":"${PROJECT_ROOT}/res",
+					"with_ext":true,
+					"ignore_root":true,
+					"save_plist":true,
+					"min_level":2,
+					"max_level":5,
+					"min_dir_counts":[10,6],
+					"max_dir_counts":[15,10]					
+		        }
+			]
+		},
+        {
+			"name":"merge mapping file",
+			"actions":[
+		        {
+		            "name":"merge_mapping_file",
+					"discription":"合并映射文件",
+		            "format_type":"plist",
+					"files":["res.plist","src.plist"],
+					"out_path":"${PROJECT_MAPPING_FILE}"					
+		        }
+			]
+		},
+        {
+			"name":"garbage cpp code",
+			"actions":[
+		        {
+		            "name":"generate_cpp_code",
+					"discription":"生成c++垃圾类",
+                    "out_dir":"${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_CPP_DIR}",
+                    "tpl_dir":"${GLOBAL_DATA_DIR}/template/cpp",
+                    "xcode_project_path":"${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_XCODE_PROJECT_NAME}",
+                    "max_generate_file_count":600,
+                    "min_generate_file_count":500,
+                    "generate_field_count":4,
+                    "generate_method_count":5,
+                    "parameter_count":3,
+                    "exec_code_file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+                    "include_insert_keys":["#include \"cocos2d.h\""],
+                    "code_insert_keys":["AppDelegate::~AppDelegate()","{"]
+		        }
+			]
+		},
+        {
+			"name":"garbage objc code",
+			"actions":[
+		        {
+		            "name":"generate_objc_code",
+					"discription":"生成objc垃圾类",
+                    "out_dir":"${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_OBJC_DIR}",
+                    "tpl_dir":"${GLOBAL_DATA_DIR}/template/objc",
+                    "xcode_project_path":"${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_XCODE_PROJECT_NAME}",
+                    "max_generate_file_count":500,
+                    "min_generate_file_count":400,
+                    "generate_field_count":4,
+                    "generate_method_count":5,
+                    "parameter_count":3,
+                    "exec_code_file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+                    "include_insert_keys":["#include \"cocos2d.h\""],
+                    "code_insert_keys":["AppDelegate::~AppDelegate()","{"]
+		        }
+			]
+		},
+        {
+			"name":"inject code",
+			"actions":[
+		        {
+		            "name":"inject_cpp_code",
+					"discription":"插入垃圾代码",
+					"probability":80,
+                    "files":["frameworks/cocos2d-x/cocos"],
+					"exclude":["*CCRef","*HttpClient","*CCUserDefault.h","*/math/*","*/allocator/*"],
+                    "obf_tpl_dir":"${GLOBAL_DATA_DIR}/template/obf",
+                    "cpp_tpl_dir":"${GLOBAL_DATA_DIR}/template/cpp_new",
+                    "class": {
+                        "min_field_count": 3,
+                        "max_field_count": 8,
+                        "min_method_count": 30,
+                        "max_method_count": 60,
+                        "min_parameter_count": 3,
+                        "max_parameter_count": 8,
+                        "min_return_probability": 60,
+                        "max_return_probability": 90
+                    },
+					"clang_args": [
+                        "-x", "c++",
+                        "-arch","arm64",
+                        "-std=c++11", "-stdlib=libc++",
+                        "-isysroot","/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdkiPhoneOS.sdk",
+                        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
+                        "-I/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include",
+                        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/include",
+						"-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/9.1.0/include",
+                        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+                        "-I/usr/include",
+                        "-F/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/cocos",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/cocos/editor-support",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/chipmunk/include",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/extensions",                        
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/external/poly2tri",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/poly2tri/common",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/poly2tri/sweep",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/chipmunk/include",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/chipmunk/include",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/freetype2/include/ios",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/curl/include/ios",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/webp/include/ios",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/tiff/include/ios",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/jpeg/include/ios",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/png/include/ios",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/websockets/include/ios",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/freetype2/include/ios/freetype2",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/fmod/include",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/external/tinyxml2",
+                        "-I${PROJECT_ROOT}/frameworks/runtime-src/Classes/protobuf-lite",
+                        "-I${PROJECT_ROOT}/frameworks/runtime-src/Classes",
+                        "-I${PROJECT_ROOT}/frameworks/cocos2d-x/tools/simulator/libsimulator/lib",
+                        
+                        "-DCC_TARGET_OS_IPHONE", "-DCC_ENABLE_CHIPMUNK_INTEGRATION=1", "-DNDEBUG", "-DUSE_FILE32API"
+                    ]
+		        }
+			]
+		}
+    ]
+}
