@@ -95,5 +95,5 @@ class CFile(object):
     def get_class_execute_chain(self, class_index):
         inst_name = "%s_%d" % (RandomGenerater.generate_string(), class_index)
         inst_declare = self.c_class.get_stack_instance_def(inst_name)
-        call_str = self.c_class.methods[0].method.get_call_string(inst_name)
+        call_str = self.c_class.methods[0].get_call_string(inst_name)
         return inst_declare + call_str
