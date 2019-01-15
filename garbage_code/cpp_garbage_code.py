@@ -52,10 +52,10 @@ class CppGarbageCode(CGarbageCode):
         self.generated_files.append(source_file_name)
         self.generated_head_files.append(class_name + ".h")
 
-        field_count = gc_utils.get_range_count("field_count", self.config, 3)
-        method_count = gc_utils.get_range_count("method_count", self.config, 5)
-        parameter_count = gc_utils.get_range_count("parameter_count", self.config, 3)
-        return_probability = gc_utils.get_range_count("return_probability", self.config, 5)
+        field_count = gc_utils.get_range_count("field_count", self.generate_config, 3)
+        method_count = gc_utils.get_range_count("method_count", self.generate_config, 5)
+        parameter_count = gc_utils.get_range_count("parameter_count", self.generate_config, 3)
+        return_probability = gc_utils.get_range_count("return_probability", self.generate_config, 5)
 
         generator = CppFile({
             "head_file": head_file_name,
