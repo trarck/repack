@@ -250,13 +250,13 @@ class RandomGenerater:
             return join_str.join(s)
 
     @staticmethod
-    def generate_words_with_random_prev_tail(min_prev_length=2, max_prev_length=3, min_tail_length=2, max_tail_lenth=3,
+    def generate_words_with_random_prev_tail(min_prev_length=2, max_prev_length=3, min_tail_length=2, max_tail_length=3,
                                              min_word_length=3, max_word_length=6):
         name = RandomGenerater.generate_string(min_prev_length, max_prev_length)
 
         name += RandomGenerater.generate_words(min_word_length, max_word_length)
 
-        name += RandomGenerater.generate_string(min_tail_length, max_tail_lenth)
+        name += RandomGenerater.generate_string(min_tail_length, max_tail_length)
         return name
 
     @staticmethod

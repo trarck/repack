@@ -525,7 +525,7 @@
                     "files":["frameworks/cocos2d-x/cocos"],
                     "exclude":["*CCRef","*HttpClient","*CCUserDefault.h","*/math/*","*/allocator/*"],
                     "obf_tpl_dir":"${GLOBAL_DATA_DIR}/template/obf",
-                    "cpp_tpl_dir":"${GLOBAL_DATA_DIR}/template/cpp_new",
+                    "cpp_tpl_dir":"${GLOBAL_DATA_DIR}/template/cpp",
                     "class": {
                         "min_field_count": 3,
                         "max_field_count": 8,

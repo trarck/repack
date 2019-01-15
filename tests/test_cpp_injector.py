@@ -9,7 +9,7 @@ class CppInjectTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("in setup class")
-        cls.cpp_tpl_folder_path = os.path.join(os.path.dirname(__file__), "../data/template/cpp_new")
+        cls.cpp_tpl_folder_path = os.path.join(os.path.dirname(__file__), "../data/template/cpp")
         cls.obf_tpl_folder_path = os.path.join(os.path.dirname(__file__), "../data/template/obf")
 
     @classmethod
@@ -43,7 +43,7 @@ class CppInjectTest(unittest.TestCase):
         config = {
             "probability":100,
             "obf_tpl_dir": "../data/template/obf",
-            "cpp_tpl_dir": "../data/template/cpp_new",
+            "cpp_tpl_dir": "../data/template/cpp",
             "class": {
                 "min_field_count": 3,
                 "max_field_count": 6,

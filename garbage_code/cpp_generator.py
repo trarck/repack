@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from cpp_base import *
+import random
 
 
 class CppGenerator:
@@ -11,18 +12,19 @@ class CppGenerator:
         self.tpl_folder_path = tpl_folder_path
 
     @staticmethod
-    def generate_field(field_name=None, field_type=None):
+    def generate_field(tpl_folder_path, field_name=None, field_type=None):
         if not field_name:
             field_name = RandomGenerater.generate_string()
         if not field_type:
             field_type = CType(RandomGenerater.generate_cpp_type())
-        return CField(field_name, field_type)
+        return CField(field_name, field_type, tpl_folder_path)
 
     @staticmethod
-    def generate_parameter(param_name=None):
+    def generate_parameter(param_name=None,param_type=None):
         if not param_name:
             param_name = RandomGenerater.generate_string()
-        param_type = CType(RandomGenerater.generate_cpp_type())
+        if not param_type:
+            param_type = CType(RandomGenerater.generate_cpp_type())
         return CParameter(param_name, param_type)
 
     @staticmethod
@@ -46,14 +48,14 @@ class CppGenerator:
         return CppMethod(method_name, parameters, return_type, tpl_folder_path)
 
     @staticmethod
-    def generate_class(tpl_folder_path, field_count, method_count, max_parameter, method_return_probability,
-                       namespace=None, class_name=None):
+    def generate_class(tpl_folder_path, field_count, method_count, max_parameter, method_return_probability,class_name=None,
+                       namespace=None):
         # gen fields
         fields = None
         if field_count > 0:
             fields = []
             for i in range(field_count):
-                fields.append(CppGenerator.generate_field())
+                fields.append(CppGenerator.generate_field(tpl_folder_path))
 
         if not class_name:
             class_name = RandomGenerater.generate_string()

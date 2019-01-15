@@ -5,3 +5,4 @@
 /build.sh
 /.idea
 /t.py
+/tests/cpp_files/gen

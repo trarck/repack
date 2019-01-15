@@ -33,18 +33,24 @@ class CType(object):
 
 
 class CField(object):
-    def __init__(self, name, ctype):
+    def __init__(self, name, ctype, tpl_folder_path):
         self.name = name
         self.ctype = ctype
+        self.tpl_folder_path = tpl_folder_path
+        self._init_template_files()
+
+    def _init_template_files(self):
+        self.def_template_file = os.path.join(self.tpl_folder_path, "field.tpl")
 
     def to_string(self):
-        return self.ctype.to_string() + " " + self.name
+        return TemplateManager.get_data(self.def_template_file, [self])
 
 
 class CParameter(object):
-    def __init__(self, name, ctype):
+    def __init__(self, name, ctype, prev=None):
         self.name = name
         self.ctype = ctype
+        self.prev = prev if prev else name
 
     def to_string(self):
         return self.ctype.to_string() + " " + self.name
