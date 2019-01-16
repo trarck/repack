@@ -22,7 +22,5 @@ class ObjcClass(CClass):
 
     @property
     def full_name(self):
-        if self.namespace:
-            return self.namespace + "::" + self.name
         return self.name
 

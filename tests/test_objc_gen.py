@@ -44,6 +44,7 @@ class ObjcGenTest(unittest.TestCase):
         cls= ObjcGenerator.generate_class(self.tpl_folder_path,3,5,3,80)
         # print(cls.get_def_string())
         # print(cls.get_code_string())
+        print(cls.get_stack_instance_def("test"))
         self.assertIsNotNone(cls.get_def_string())
         self.assertIsNotNone(cls.get_code_string())
 
