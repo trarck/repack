@@ -100,7 +100,7 @@ class GenerateFilesAction(Action):
 
         out_folder_path = self.translate_string(config["out_dir"])
         if not os.path.isabs(out_folder_path):
-            out_folder_path = os.path.join(self.project_root_path, out_folder_path)
+            out_folder_path = os.path.join(self.runner.project_root_path, out_folder_path)
 
         rg = ResourceGarbage(out_folder_path, config)
         rg.generate_files()

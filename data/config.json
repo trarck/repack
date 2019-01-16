@@ -1,4 +1,4 @@
-{
+﻿{
     "projects":
     [
         {
@@ -174,45 +174,24 @@
                         {
                             "operation":"insert",
                             "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                            "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
-                            "words":"\nFileUtils::getInstance()->addObfuscateSubPath(\"multiLang/cn\");\n"
-                        },
-                        {
-                            "operation":"insert",
-                            "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                            "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
-                            "words":"\nFileUtils::getInstance()->addObfuscateSubPath(\"cocosyz/lpeg\");\n"
-                        },
-                        {
-                            "operation":"insert",
-                            "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                            "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
-                            "words":"\nFileUtils::getInstance()->addObfuscateSubPath(\"cocosyz/pbc\");\n"
-                        },
-                        {
-                            "operation":"insert",
-                            "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                            "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
-                            "words":"\nFileUtils::getInstance()->addObfuscateSubPath(\"sound_wwise\");\n"
-                        },
-                        {
-                            "operation":"insert",
-                            "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                            "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+                            "keys":["register_all_packages();"],
                             "words":"\nFileUtils::getInstance()->addObfuscateParentPath(\"res\");\n"
                         },
                         {
                             "operation":"insert",
                             "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                            "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
-                            "words":"\nFileUtils::getInstance()->addObfuscateParentPath(\"res/sound_wwise\",true);\n"
-                        },
-                        {
-                            "operation":"insert",
-                            "file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
-                            "keys":["FileUtils::getInstance()->addSearchPath(\"res/sound_wwise\",true);"],
+                            "keys":["register_all_packages();"],
                             "words":"\nFileUtils::getInstance()->setObfuscateKey(\"${PROJECT_CRYPT_KEY}\");\n"
-                        }                                    
+
+                        },
+                       {
+                        "operation": "insert",
+                        "file_path": "frameworks/runtime-src/Classes/AppDelegate.cpp",
+                        "keys": [
+                          "register_all_packages();"
+                        ],
+                        "words": "\nFileUtils::getInstance()->loadObfNameDictionaryFromFile(\"${PROJECT_MAPPING_FILE}\");\n"
+                       }
                     ]
                 }
             ]
@@ -418,6 +397,28 @@
                     "sign":"${PROJECT_XXTEA_SIGN}",
                     "include":["*.png","*.jpg","*.lua"],
                     "remove_source":false
+                }
+            ]
+        },
+        {
+            "name":"generate_files",
+            "discription":"加入垃圾文件",
+            "actions":[
+                {
+                    "name":"generate_files",
+                    "discription":"给res目录生成垃圾文件",
+                    "out_dir":"aaaa",
+                    "min_file_count":6,
+                    "max_file_count":8,
+                    "min_file_size":1024,
+                    "max_file_size":1024000
+                },
+               {
+                    "name":"xcode_add_files",
+                    "discription":"把生成的文件添加到xcode工程",
+                    "xcode_project_path":"${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_XCODE_PROJECT_NAME}",
+                    "files":["aaaa"],
+                    "parent":"Resources"
                 }
             ]
         },
