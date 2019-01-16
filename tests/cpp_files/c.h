@@ -1,3 +1,12 @@
+class A{
+public:
+    A();
+    ~A();
+    void ama();
+    int aia();
+    float afa();
+};
+    
 namespace foo{
     class C{
     public:

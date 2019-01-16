@@ -1,5 +1,26 @@
 #include "c.h"
 
+A::A()
+{
+    
+}
+
+A::~A()
+{}
+
+void A::ama(){
+    int i=0;
+    i+=3;
+}
+
+
+
+float A::afa(){
+    float i=0;
+    i+=3;
+    return i;
+}
+
 namespace foo
 {
 C::C()
@@ -62,4 +83,13 @@ float D::fa(){
     return i;
 }
 
+}
+
+int A::aia()
+{
+int i=0;
+int j=0;
+    i+=3;
+j*=4;
+    return i;
 }
