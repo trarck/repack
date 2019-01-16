@@ -15,5 +15,7 @@ typedef struct
             i+=2;
             i*=3;
             
+            tImageSource img;
+            
         }
 }
