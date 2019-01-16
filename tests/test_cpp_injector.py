@@ -34,32 +34,33 @@ class CppInjectTest(unittest.TestCase):
             "max_return_probability": 90
         }
 
-        clang_args = []
+        clang_args = ["-x", "c++",
+                "-I./cpp_files"]
         cpp_injector = CppSourceInjector(cpp_class_options, None, clang_args, self.cpp_tpl_folder_path,
                                          self.obf_tpl_folder_path)
-        cpp_injector.inject("cpp_files/b.cpp")
+        cpp_injector.inject("cpp_files/c.cpp")
 
-    def test_inject_dir(self):
-        config = {
-            "probability":100,
-            "obf_tpl_dir": "../data/template/obf",
-            "cpp_tpl_dir": "../data/template/cpp",
-            "class": {
-                "min_field_count": 3,
-                "max_field_count": 6,
-                "min_method_count": 3,
-                "max_method_count": 6,
-                "min_parameter_count": 3,
-                "max_parameter_count": 6,
-                "min_return_probability": 60,
-                "max_return_probability": 90
-            },
-            "clang_args": []
-        }
-        files = ["cpp_files/injector"]
-
-        cpp_injector = CppInjector(config)
-        cpp_injector.inject_files(files)
+    # def test_inject_dir(self):
+    #     config = {
+    #         "probability":100,
+    #         "obf_tpl_dir": "../data/template/obf",
+    #         "cpp_tpl_dir": "../data/template/cpp",
+    #         "class": {
+    #             "min_field_count": 3,
+    #             "max_field_count": 6,
+    #             "min_method_count": 3,
+    #             "max_method_count": 6,
+    #             "min_parameter_count": 3,
+    #             "max_parameter_count": 6,
+    #             "min_return_probability": 60,
+    #             "max_return_probability": 90
+    #         },
+    #         "clang_args": []
+    #     }
+    #     files = ["cpp_files/injector"]
+    #
+    #     cpp_injector = CppInjector(config)
+    #     cpp_injector.inject_files(files)
 
 
 if __name__ == '__main__':

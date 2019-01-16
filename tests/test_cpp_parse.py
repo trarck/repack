@@ -1,7 +1,7 @@
 import unittest
 from cparser.parser import Parser
 from pprint import pprint
-
+from garbage_code.gc_utils import group_functions
 
 class CppParseTest(unittest.TestCase):
     @classmethod
@@ -26,10 +26,29 @@ class CppParseTest(unittest.TestCase):
             ]
         })
 
-        ast = parser.get_ast("./cpp_files/injector/a.cpp",False,10,False)
-        self.assertIsNotNone(ast)
+        parser.parse_file("./cpp_files/c.cpp")
 
-        # pprint(('nodes', ast))
+        groups=group_functions(parser.functions)
+
+        for k,v in groups.items():
+            print k
+            for f in v["functions"]:
+                print f.name
+
+    # def test_get_ast_simple(self):
+    #     parser = Parser({
+    #         "clang_args": [
+    #             "-x", "c++",
+    #             "-I./cpp_files"
+    #         ]
+    #     })
+    #
+    #
+    #     ast = parser.get_ast("./cpp_files/c.cpp",False,10,False)
+    #     self.assertIsNotNone(ast)
+    #
+    #     pprint(('nodes', ast))
+
 
 if __name__ == '__main__':
     unittest.main()

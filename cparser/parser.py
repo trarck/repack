@@ -158,6 +158,7 @@ class Parser(object):
                 'kind': cursor.kind,
                 'usr': cursor.get_usr(),
                 'spelling': cursor.spelling,
+                'displayname': cursor.displayname,
                 'location': cursor.location,
                 'extent.start': cursor.extent.start,
                 'extent.end': cursor.extent.end,

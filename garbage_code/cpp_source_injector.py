@@ -8,6 +8,7 @@ from cpp_generator import CppGenerator
 import gc_utils
 import utils
 
+
 class InsertInfo:
     @staticmethod
     def sort_cmp(a, b):
@@ -112,7 +113,7 @@ class ClassCallInsertion(BaseInsertion):
     在函数之间插入类的方法。并把调用代码插入源函数中。
     """
 
-    def spread(self, functions, cpp_class):
+    def spread(self, functions, cpp_class, lexical_parent):
         """
         把类的代码分散到源函数之间
         :param functions:
@@ -124,8 +125,10 @@ class ClassCallInsertion(BaseInsertion):
                 start = function_info.get_extent_start()
                 self.append_inert_info(start.line - 1, start.column - 1, method.get_code_string())
 
-            # 把类的声明插入最上面
-            self.append_inert_info(0, 0, cpp_class.get_def_string())
+            # 把类的声明插入块人最上面
+            begin_line, begin_column = gc_utils.get_cursor_children_start(lexical_parent)
+            self.append_inert_info(begin_line - 1, begin_column - 1, cpp_class.get_def_string())
+            # 把引用头插入文件开始处
             self.append_inert_info(0, 0, cpp_class.get_need_includes(), -1000)
 
     def inject(self, functions, cpp_class):
@@ -216,13 +219,19 @@ class CppSourceInjector:
             sci = SegmentCodeInsertion(self.obf_tpl_folder_path)
             sci.inject(gc_utils.get_all_implement_functions(cpp_parser, self.ruler))
 
-            cpp_class = self.gen_cpp_class(len(cpp_parser.functions))
+            inserts = sci.inserts
             print("===>inject class call")
-            cci = ClassCallInsertion(self.cpp_tpl_folder_path)
-            cci.spread(gc_utils.get_all_implement_functions(cpp_parser, self.ruler), cpp_class)
-            cci.inject(gc_utils.get_implement_functions(cpp_parser, self.ruler), cpp_class)
+            # get impl functions
+            impl_functions = gc_utils.get_implement_functions(cpp_parser, self.ruler)
+            # group by namespace
+            groups = gc_utils.group_functions(impl_functions)
+            for key, group in groups.items():
+                cpp_class = self.gen_cpp_class(len(group["functions"]))
+                cci = ClassCallInsertion(self.cpp_tpl_folder_path)
+                cci.spread(group["functions"], cpp_class, group["cursor"])
+                cci.inject(group["functions"], cpp_class)
 
-            inserts = sci.inserts + cci.inserts
+                inserts = inserts + cci.inserts
 
             self._do_inserts(source_file, inserts, out_file)
         else:

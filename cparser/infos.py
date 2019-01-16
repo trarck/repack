@@ -572,6 +572,8 @@ class ClassInfo(object):
 class NamespaceInfo(object):
     def __init__(self, cursor):
         self.cursor = cursor
+        self.functions = []
+        self.classes = []
 
 
 class ObjcProperty(object):

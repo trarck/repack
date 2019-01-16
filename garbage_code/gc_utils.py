@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import random
+from clang import cindex
 
 
 def get_range_count(name, config, default_min=1):
@@ -67,3 +68,33 @@ def get_all_implement_functions(parser, ruler):
                 else:
                     impl_funcs.append(func)
     return impl_funcs
+
+
+def group_functions(functions):
+    groups = {}
+
+    for func in functions:
+        if func.is_implement:
+            if func.cursor.lexical_parent.kind == cindex.CursorKind.NAMESPACE \
+                    or func.cursor.lexical_parent.kind == cindex.CursorKind.TRANSLATION_UNIT:
+                key = func.cursor.lexical_parent.spelling
+                if key in groups:
+                    group = groups[key]
+                else:
+                    group = {
+                        "cursor": func.cursor.lexical_parent,
+                        "functions": []
+                    }
+                    groups[key] = group
+                group["functions"].append(func)
+
+    return groups
+
+
+def get_cursor_children_start(cursor):
+
+    if cursor.kind == cindex.CursorKind.TRANSLATION_UNIT:
+        return cursor.extent.start.line, cursor.extent.start.column
+    else:
+        for c in cursor.get_children():
+            return c.extent.start.line, c.extent.start.column
