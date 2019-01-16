@@ -15,7 +15,7 @@ class Action:
         return self.runner.translate_string(s)
 
     def get_full_path(self, file_path, root_path):
-        file_path = self.translate_string(file_path)
+        file_path = self.translate_string(file_path).encode("utf-8")
         if not os.path.isabs(file_path):
             file_path = os.path.join(root_path, file_path)
         return file_path
