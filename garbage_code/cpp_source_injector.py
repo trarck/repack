@@ -6,7 +6,7 @@ from cparser.parser import Parser
 from template_manager import TemplateManager
 from cpp_generator import CppGenerator
 import gc_utils
-
+import utils
 
 class InsertInfo:
     @staticmethod
@@ -209,7 +209,7 @@ class CppSourceInjector:
         self.source_file = source_file
 
         cpp_parser = Parser(opts)
-        cpp_parser.parse_file(source_file)
+        cpp_parser.parse_file(source_file, utils.is_debug)
 
         if cpp_parser.is_success and cpp_parser.functions:
             print("===>inject segment code")

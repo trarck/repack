@@ -299,9 +299,18 @@ def main():
     parser.add_argument('-i', '--ignore-steps', dest='ignore_steps',
                         help="actions not run")
 
+    parser.add_argument('--debug', dest='debug',action='store_true',
+                        help="is debug")
+    parser.set_defaults(debug=False)
+
     args = parser.parse_args()
 
     print("=======================================================")
+
+    if 'debug' in args:
+        utils.set_debug(args.debug)
+    else:
+        utils.set_debug(False)
 
     # 检查基本路径
     if not os.path.isabs(args.src_project):

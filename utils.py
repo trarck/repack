@@ -4,6 +4,13 @@ import sys
 import zipfile
 from rules import *
 
+is_debug = False
+
+
+def set_debug(val):
+    global is_debug
+    is_debug = val
+
 
 def in_rules(rel_path, rules):
     ret = False
