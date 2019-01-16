@@ -92,9 +92,28 @@ def group_functions(functions):
 
 
 def get_cursor_children_start(cursor):
-
     if cursor.kind == cindex.CursorKind.TRANSLATION_UNIT:
         return cursor.extent.start.line, cursor.extent.start.column
     else:
-        for c in cursor.get_children():
-            return c.extent.start.line, c.extent.start.column
+        min_line = -1
+        min_column = -1
+
+        check_list = [cursor]
+
+        while len(check_list) > 0:
+            p = check_list.pop()
+            for c in p.get_children():
+                check_list.append(c)
+
+                if min_line == -1:
+                    min_line = c.extent.start.line
+                    min_column = c.extent.start.column
+                else:
+                    if min_line > c.extent.start.line:
+                        min_line = c.extent.start.line
+                        min_column = c.extent.start.column
+                    elif min_line == c.extent.start.line:
+                        if min_column > c.extent.start.column:
+                            min_column = c.extent.start.column
+
+        return min_line, min_column

@@ -18,24 +18,7 @@ class CppParseTest(unittest.TestCase):
     def tearDown(self):
         print("in tear down")
 
-    def test_parse_simple(self):
-        parser = Parser({
-            "clang_args": [
-                "-x", "c++",
-                "-I./cpp_files"
-            ]
-        })
-
-        parser.parse_file("./cpp_files/c.cpp")
-
-        groups=group_functions(parser.functions)
-
-        for k,v in groups.items():
-            print k
-            for f in v["functions"]:
-                print f.name
-
-    # def test_get_ast_simple(self):
+    # def test_parse_simple(self):
     #     parser = Parser({
     #         "clang_args": [
     #             "-x", "c++",
@@ -43,11 +26,28 @@ class CppParseTest(unittest.TestCase):
     #         ]
     #     })
     #
+    #     parser.parse_file("./cpp_files/namespace.cpp")
     #
-    #     ast = parser.get_ast("./cpp_files/c.cpp",False,10,False)
-    #     self.assertIsNotNone(ast)
+    #     groups=group_functions(parser.functions)
     #
-    #     pprint(('nodes', ast))
+    #     for k,v in groups.items():
+    #         print k
+    #         for f in v["functions"]:
+    #             print f.name
+
+    def test_get_ast_simple(self):
+        parser = Parser({
+            "clang_args": [
+                "-x", "c++",
+                "-I./cpp_files"
+            ]
+        })
+
+
+        ast = parser.get_ast("./cpp_files/namespace.cpp",False,10,False)
+        self.assertIsNotNone(ast)
+
+        pprint(('nodes', ast))
 
 
 if __name__ == '__main__':

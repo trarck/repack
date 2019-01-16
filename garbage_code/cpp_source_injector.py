@@ -126,7 +126,7 @@ class ClassCallInsertion(BaseInsertion):
                 start = function_info.get_extent_start()
                 self.append_inert_info(start.line - 1, start.column - 1, method.get_code_string())
 
-            # 把类的声明插入块人最上面
+            # 把类的声明插入块的最上面
             begin_line, begin_column = gc_utils.get_cursor_children_start(lexical_parent)
             self.append_inert_info(begin_line - 1, begin_column - 1, cpp_class.get_def_string())
             # 把引用头插入文件开始处
@@ -227,7 +227,12 @@ class CppSourceInjector:
         backup_file_path = source_file + ".bak"
         shutil.copyfile(source_file, backup_file_path)
 
-        if cpp_parser.is_success and cpp_parser.functions:
+        if cpp_parser.is_success:
+            if not cpp_parser.functions:
+                # nothing to injector
+                print("===>nothing to injector")
+                return CppSourceInjector.Inject_Success
+
             print("===>inject segment code")
             sci = SegmentCodeInsertion(self.obf_tpl_folder_path)
             sci.inject(gc_utils.get_all_implement_functions(cpp_parser, self.ruler))
@@ -251,11 +256,13 @@ class CppSourceInjector:
             # check injected file
             if not cpp_parser.check(out_file):
                 # have error.restore to source tile
-                os.rename(backup_file_path, out_file)
+                print("===>restore to origin")
+                shutil.move(backup_file_path, out_file)
                 return self.Inject_Fail
             else:
                 os.remove(backup_file_path)
                 return self.Inject_Success
         else:
             print("===>inject fall")
+            os.remove(backup_file_path)
             return self.Inject_Parse_Error
