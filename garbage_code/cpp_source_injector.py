@@ -118,14 +118,15 @@ class ClassCallInsertion(BaseInsertion):
         :param functions:
         :param cpp_class:
         """
-        for method in cpp_class.methods:
-            function_info = random.choice(functions)
-            start = function_info.get_extent_start()
-            self.append_inert_info(start.line - 1, start.column - 1, method.get_code_string())
+        if functions:
+            for method in cpp_class.methods:
+                function_info = random.choice(functions)
+                start = function_info.get_extent_start()
+                self.append_inert_info(start.line - 1, start.column - 1, method.get_code_string())
 
-        # 把类的声明插入最上面
-        self.append_inert_info(0, 0, cpp_class.get_def_string())
-        self.append_inert_info(0, 0, cpp_class.get_need_includes(), -1000)
+            # 把类的声明插入最上面
+            self.append_inert_info(0, 0, cpp_class.get_def_string())
+            self.append_inert_info(0, 0, cpp_class.get_need_includes(), -1000)
 
     def inject(self, functions, cpp_class):
         """
@@ -208,19 +209,22 @@ class CppSourceInjector:
         self.source_file = source_file
 
         cpp_parser = Parser(opts)
-        cpp_parser.parse_file(source_file)
 
-        print("===>inject segment code")
-        sci = SegmentCodeInsertion(self.obf_tpl_folder_path)
-        sci.inject(gc_utils.get_all_implement_functions(cpp_parser, self.ruler))
+        if cpp_parser.is_success and cpp_parser.functions:
+            cpp_parser.parse_file(source_file)
 
-        cpp_class = self.gen_cpp_class(len(cpp_parser.functions))
+            print("===>inject segment code")
+            sci = SegmentCodeInsertion(self.obf_tpl_folder_path)
+            sci.inject(gc_utils.get_all_implement_functions(cpp_parser, self.ruler))
 
-        print("===>inject class call")
-        cci = ClassCallInsertion(self.cpp_tpl_folder_path)
-        cci.spread(gc_utils.get_all_implement_functions(cpp_parser, self.ruler), cpp_class)
-        cci.inject(gc_utils.get_implement_functions(cpp_parser, self.ruler), cpp_class)
+            cpp_class = self.gen_cpp_class(len(cpp_parser.functions))
+            print("===>inject class call")
+            cci = ClassCallInsertion(self.cpp_tpl_folder_path)
+            cci.spread(gc_utils.get_all_implement_functions(cpp_parser, self.ruler), cpp_class)
+            cci.inject(gc_utils.get_implement_functions(cpp_parser, self.ruler), cpp_class)
 
-        inserts = sci.inserts + cci.inserts
+            inserts = sci.inserts + cci.inserts
 
-        self._do_inserts(source_file, inserts, out_file)
+            self._do_inserts(source_file, inserts, out_file)
+        else:
+            print("===>inject fall")

@@ -24,6 +24,8 @@ class Parser(object):
 
         self.current_namespace = None
         self._parsing_file = None
+        self.errors = None
+        self.is_fatal = False
 
         extend_clang_args = []
 
@@ -80,23 +82,24 @@ class Parser(object):
             print "%s. <severity = %s,\n    location = %r,\n    details = %r>" % (
                 idx + 1, severities[d.severity], d.location, d.spelling)
         print("====\n")
+        return errors
 
     # must read the yaml file first
     def parse_file(self, file_path, ignore_error=False):
+        self.errors = None
         tu = self.index.parse(file_path, self.clang_args)
         if len(tu.diagnostics) > 0:
-            self._check_diagnostics(tu.diagnostics)
-            is_fatal = False
+            self.errors = self._check_diagnostics(tu.diagnostics)
+            self.is_fatal = False
             for d in tu.diagnostics:
                 if d.severity >= cindex.Diagnostic.Error:
-                    is_fatal = True
-            if is_fatal:
+                    self.is_fatal = True
+            if self.is_fatal:
                 if ignore_error:
                     print("*** Found errors - but continue")
                 else:
                     print("*** Found errors - can not continue")
                     raise Exception("Fatal error in parsing file %s" % file_path)
-
 
         self._parsing_file = file_path.replace("\\", "/")
 
@@ -106,7 +109,7 @@ class Parser(object):
             for cursor in tu.cursor.get_children():
                 self._traverse(cursor)
 
-    def get_ast(self, file_path, error_stop=False, max_depth=10,all=False):
+    def get_ast(self, file_path, error_stop=False, max_depth=10, all=False):
         tu = self.index.parse(file_path, self.clang_args)
         if len(tu.diagnostics) > 0:
             self._check_diagnostics(tu.diagnostics)
@@ -122,7 +125,7 @@ class Parser(object):
         self._parsing_file = file_path.replace("\\", "/")
         self.max_depth = max_depth
 
-        return self.get_cursor_info(tu.cursor, 0,all)
+        return self.get_cursor_info(tu.cursor, 0, all)
 
     def get_cursor_id(self, cursor, cursor_list=[]):
 
@@ -137,7 +140,7 @@ class Parser(object):
         cursor_list.append(cursor)
         return len(cursor_list) - 1
 
-    def get_cursor_info(self, cursor, depth,all=False):
+    def get_cursor_info(self, cursor, depth, all=False):
 
         if not all and not Parser.in_parse_file(cursor, self._parsing_file):
             return None
@@ -147,7 +150,7 @@ class Parser(object):
         else:
             children = []
             for c in cursor.get_children():
-                child=self.get_cursor_info(c, depth + 1,all)
+                child = self.get_cursor_info(c, depth + 1, all)
                 if child:
                     children.append(child)
 
@@ -160,8 +163,8 @@ class Parser(object):
                 'extent.end': cursor.extent.end,
                 'is_definition': cursor.is_definition(),
                 'definition id': self.get_cursor_id(cursor.get_definition()),
-                'brief_comment':cursor.brief_comment,
-                'raw_comment':cursor.raw_comment,
+                'brief_comment': cursor.brief_comment,
+                'raw_comment': cursor.raw_comment,
                 'children': children}
 
     @staticmethod
@@ -255,3 +258,7 @@ class Parser(object):
         if nclass.class_name in self.parsed_classes.keys():
             sorted_parents.append(nclass.class_name)
         return sorted_parents
+
+    @property
+    def is_success(self):
+        return not self.is_fatal
