@@ -72,7 +72,7 @@ class CGarbageCode(object):
             call_generate_codes.append(call_generate_func)
             class_index += 1
 
-        auto_all_name, auto_all_function = self.generate_call_file_for_files(self, out_folder_path, call_generate_codes)
+        auto_all_name, auto_all_function = self.generate_call_file_for_files(out_folder_path, call_generate_codes)
 
         return self.add_generated_files_to_xcode_project(generate_config, exec_code_file_path, auto_all_name,
                                                          auto_all_function, xcode_project_path)
