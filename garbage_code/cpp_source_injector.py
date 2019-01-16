@@ -209,10 +209,9 @@ class CppSourceInjector:
         self.source_file = source_file
 
         cpp_parser = Parser(opts)
+        cpp_parser.parse_file(source_file)
 
         if cpp_parser.is_success and cpp_parser.functions:
-            cpp_parser.parse_file(source_file)
-
             print("===>inject segment code")
             sci = SegmentCodeInsertion(self.obf_tpl_folder_path)
             sci.inject(gc_utils.get_all_implement_functions(cpp_parser, self.ruler))
