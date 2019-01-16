@@ -77,13 +77,11 @@ class InjectCppCodeAction(Action):
                 file_path = os.path.join(self.runner.project_root_path, file_path)
             checked_files.append(file_path)
 
-        tpl_folder_path = self.translate_string(config["tpl_dir"])
-        if not os.path.isabs(tpl_folder_path):
-            tpl_folder_path = os.path.join(self.runner.global_data_dir, tpl_folder_path)
+        obf_tpl_folder_path = self.get_full_path_from_config("obf_tpl_dir", self.runner.global_data_dir)
+        cpp_tpl_dir = self.get_full_path_from_config("cpp_tpl_dir", self.runner.global_data_dir)
 
-        tpl_folder_path = tpl_folder_path.encode("utf-8")
-
-        config["tpl_dir"] = tpl_folder_path
+        config["obf_tpl_dir"] = obf_tpl_folder_path
+        config["cpp_tpl_dir"] = cpp_tpl_dir
 
         if "clang_args" in config:
             clang_args = config["clang_args"]
