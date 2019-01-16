@@ -32,6 +32,9 @@ class CppInjector:
         self.skips = {}
         self.clang_args = options["clang_args"] if "clang_args" in options else []
         self._success_injected_files = []
+        self._parse_error_files = []
+        self._inject_fail_files = []
+
         if "class" in self.options:
             self.class_options = self.options["class"]
         else:
@@ -121,10 +124,14 @@ class CppInjector:
             cpp_source_injector = CppSourceInjector(self.class_options, self, self.clang_args, self.cpp_tpl_folder_path,
                                                     self.obf_tpl_folder_path)
 
-            cpp_source_injector.inject(file_path)
             try:
-                # cpp_source_injector.inject(file_path)
-                self._success_injected_files.append(file_path)
+                ret = cpp_source_injector.inject(file_path)
+                if ret == CppSourceInjector.Inject_Success:
+                    self._success_injected_files.append(file_path)
+                elif ret == CppSourceInjector.Inject_Parse_Error:
+                    self._parse_error_files.append(file_path)
+                elif ret == CppSourceInjector.Inject_Fail:
+                    self._inject_fail_files.append(file_path)
             except Exception, e:
                 # warnings.warn(e.message)
                 raise e
@@ -156,4 +163,10 @@ class CppInjector:
 
         print("inject %d files" % len(self._success_injected_files))
         for f in self._success_injected_files:
-            print("==> inject %s" % f)
+            print("==> inject: %s" % f)
+
+        for f in self._parse_error_files:
+            print("==> parser error: %s" % f)
+
+        for f in self._inject_fail_files:
+            print("==> inject fail: %s" % f)

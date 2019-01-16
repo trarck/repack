@@ -127,6 +127,18 @@ class Parser(object):
 
         return self.get_cursor_info(tu.cursor, 0, all)
 
+    def check(self, file_path):
+        tu = self.index.parse(file_path, self.clang_args)
+        if len(tu.diagnostics) > 0:
+            self._check_diagnostics(tu.diagnostics)
+            is_fatal = False
+            for d in tu.diagnostics:
+                if d.severity >= cindex.Diagnostic.Error:
+                    is_fatal = True
+            if is_fatal:
+                return False
+        return True
+
     def get_cursor_id(self, cursor, cursor_list=[]):
 
         if cursor is None:

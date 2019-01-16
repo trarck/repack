@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import random
+import shutil
 from generater import RandomGenerater
 from cparser.parser import Parser
 from template_manager import TemplateManager
@@ -147,6 +148,10 @@ class ClassCallInsertion(BaseInsertion):
 
 
 class CppSourceInjector:
+    Inject_Success = 0
+    Inject_Parse_Error = -1,
+    Inject_Fail = -2
+
     def __init__(self, cpp_class_options, ruler, clang_args, cpp_tpl_folder_path, obf_tpl_folder_path):
         """
         对c++源文件进行注入。
@@ -209,10 +214,18 @@ class CppSourceInjector:
         opts = {
             "clang_args": self.clang_args
         }
+
         self.source_file = source_file
+
+        if not out_file:
+            out_file = source_file
 
         cpp_parser = Parser(opts)
         cpp_parser.parse_file(source_file, not utils.is_debug)
+
+        # backup source file
+        backup_file_path = source_file + ".bak"
+        shutil.copyfile(source_file, backup_file_path)
 
         if cpp_parser.is_success and cpp_parser.functions:
             print("===>inject segment code")
@@ -234,5 +247,15 @@ class CppSourceInjector:
                 inserts = inserts + cci.inserts
 
             self._do_inserts(source_file, inserts, out_file)
+
+            # check injected file
+            if not cpp_parser.check(out_file):
+                # have error.restore to source tile
+                os.rename(backup_file_path, out_file)
+                return self.Inject_Fail
+            else:
+                os.remove(backup_file_path)
+                return self.Inject_Success
         else:
             print("===>inject fall")
+            return self.Inject_Parse_Error
