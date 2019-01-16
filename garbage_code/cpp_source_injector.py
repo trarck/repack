@@ -257,6 +257,8 @@ class CppSourceInjector:
             if not cpp_parser.check(out_file):
                 # have error.restore to source tile
                 print("===>restore to origin")
+                if utils.is_debug:
+                    shutil.move(out_file, out_file+".inj")
                 shutil.move(backup_file_path, out_file)
                 return self.Inject_Fail
             else:
