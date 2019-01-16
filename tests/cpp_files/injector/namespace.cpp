@@ -6,4 +6,14 @@ typedef struct
         const unsigned char * data;
         unsigned int size;
         int offset;
-    }tImageSource;}
+    }tImageSource;
+    
+    
+        void fun()
+        {
+            int i=0;
+            i+=2;
+            i*=3;
+            
+        }
+}
