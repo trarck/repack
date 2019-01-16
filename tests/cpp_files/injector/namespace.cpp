@@ -4,6 +4,6 @@ namespace foo    {
 typedef struct 
     {
         const unsigned char * data;
-        ssize_t size;
+        unsigned int size;
         int offset;
     }tImageSource;}
