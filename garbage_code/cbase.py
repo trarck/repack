@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import random
 from template_manager import TemplateManager
 from generater import RandomGenerater
 
@@ -41,9 +42,13 @@ class CField(object):
 
     def _init_template_files(self):
         self.def_template_file = os.path.join(self.tpl_folder_path, "field.tpl")
+        self.call_template_file = os.path.join(self.tpl_folder_path, "field_call.tpl")
 
     def to_string(self):
         return TemplateManager.get_data(self.def_template_file, [self])
+
+    def get_call_string(self, inst_name=None):
+        return TemplateManager.get_data(self.call_template_file, [self, {"class_inst": inst_name}])
 
 
 class CParameter(object):
@@ -89,8 +94,8 @@ class CFunction(object):
     def get_code_string(self):
         return TemplateManager.get_data(self.code_template_file, [self])
 
-    def get_call_string(self):
-        return TemplateManager.get_data(self.call_template_file, [self])
+    def get_call_string(self, inst_name=None):
+        return TemplateManager.get_data(self.call_template_file, [self, {"class_inst": inst_name}])
 
 
 class CClass(object):
@@ -129,3 +134,40 @@ class CClass(object):
 
     def get_need_includes(self):
         return TemplateManager.get_data(self.need_includes_template_file, [self])
+
+    def get_call_field_codes(self, inst_name, count):
+        """
+        随机生成指定条访问类的属性的指令
+        :param inst_name:
+        :param count:
+        :return:
+        """
+        codes = []
+        for _ in range(count):
+            codes.append(random.choice(self.fields).get_call_string(inst_name))
+
+    def get_call_methods_codes(self, inst_name, count):
+        """
+        随机生成指定条访问类的属性和方法的指令
+        :param inst_name:
+        :param count:
+        :return:
+        """
+        codes = []
+        for _ in range(count):
+            codes.append(random.choice(self.fields).get_call_string(inst_name))
+
+    def get_call_codes(self, inst_name, count):
+        """
+        随机生成指定条访问类的属性和方法的指令
+        :param inst_name:
+        :param count:
+        :return:
+        """
+        codes = []
+        for _ in range(count):
+            if random.randint(0, 9) > 4:
+                codes.append(random.choice(self.fields).get_call_string(inst_name))
+            else:
+                codes.append(random.choice(self.methods).get_call_string(inst_name))
+        return codes

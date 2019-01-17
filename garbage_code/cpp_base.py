@@ -14,9 +14,6 @@ class CppMethod(CFunction):
         else:
             return self.name
 
-    def get_call_string(self, inst_name=None):
-        return TemplateManager.get_data(self.call_template_file, [self, {"class_inst": inst_name}])
-
 
 class CppClass(CClass):
     def __init__(self, name, fields, methods, tpl_folder_path, namespace):

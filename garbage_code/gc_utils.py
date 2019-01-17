@@ -30,6 +30,12 @@ def get_range_count(name, config, default_min=1):
     return random.randint(min_value, max_value)
 
 
+def get_children_array_from_cursor(cursor):
+    children = []
+    for child in cursor.get_children():
+        children.append(child)
+    return children
+
 def get_implement_functions(parser, ruler):
     """
     取得函数,包括普通函数和类的方法。不包含定义在类的内部的方法。

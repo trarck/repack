@@ -37,8 +37,8 @@ class CppInjectTest(unittest.TestCase):
         clang_args = ["-x", "c++",
                 "-I./cpp_files","-I./cpp_files/injector"]
         cpp_injector = CppSourceInjector(cpp_class_options, None, clang_args, self.cpp_tpl_folder_path,
-                                         self.obf_tpl_folder_path)
-        cpp_injector.inject("cpp_files/injector/namespace.cpp")
+                                         self.obf_tpl_folder_path,3)
+        cpp_injector.inject("cpp_files/injector/a.cpp")
 
     # def test_inject_dir(self):
     #     config = {

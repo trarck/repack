@@ -42,7 +42,39 @@ class BaseInsertion:
     def append_inert_info(self, line, column, code, priority=0):
         self.inserts.append(InsertInfo(line, column, code, priority))
 
-    def _inject_function(self, function_info, var_declare, inject_code):
+    def _inject_function_more(self, function_info, var_declare, inject_codes, percent=1):
+        """
+        向函数中插入多段代码。
+        把变量的定义放在最开始，防止C函数，变量定义放在中间出错。
+        :param function_info:
+        :param var_declare:
+        :param inject_codes:
+        :param percent:插入比例。
+        :return:
+        """
+        if function_info.root_statement:
+            inject_positions = function_info.get_top_statement_start_positions()
+            if inject_positions:
+                while percent > 1:
+                    percent -= 1
+                    # 每个位置都插入代码
+                    for inject_pos in inject_positions:
+                        inject_code = random.choice(inject_codes)
+                        self.append_inert_info(inject_pos[0] - 1, inject_pos[1] - 1, inject_code)
+
+                # 插入剩下的
+                left_count = int(len(inject_positions) * percent)
+                left_positions = random.sample(inject_positions, left_count)
+                for inject_pos in left_positions:
+                    inject_code = random.choice(inject_codes)
+                    self.append_inert_info(inject_pos[0] - 1, inject_pos[1] - 1, inject_code)
+
+                # 插入定义变量
+                begin_line = function_info.root_statement.location.line - 1
+                begin_column = function_info.root_statement.location.column
+                self.append_inert_info(begin_line, begin_column, var_declare)
+
+    def _inject_function_one(self, function_info, var_declare, inject_code):
         """
         向函数中插入代码。
         把变量的定义放在最开始，防止C函数，变量定义放在中间出错。
@@ -72,7 +104,7 @@ class SegmentCodeInsertion(BaseInsertion):
     def inject(self, functions):
         for func in functions:
             var_declare, inject_code = self._gen_inject_code()
-            self._inject_function(func, var_declare, inject_code)
+            self._inject_function_one(func, var_declare, inject_code)
 
     def _gen_inject_code(self):
         """
@@ -132,7 +164,7 @@ class ClassCallInsertion(BaseInsertion):
             # 把引用头插入文件开始处
             self.append_inert_info(0, 0, cpp_class.get_need_includes(), -1000)
 
-    def inject(self, functions, cpp_class):
+    def inject(self, functions, cpp_class, percent=1, code_times=6):
         """
         把调用类的方法和属性的代码插入源函数的代码之间
         :param functions:
@@ -143,8 +175,10 @@ class ClassCallInsertion(BaseInsertion):
         var_declare = cpp_class.get_stack_instance_def(inst_name)
         for function_info in functions:
             if function_info.root_statement:
-                method = random.choice(cpp_class.methods)
-                self._inject_function(function_info, var_declare, method.get_call_string(inst_name))
+                code_count = int(
+                    len(gc_utils.get_children_array_from_cursor(function_info.root_statement)) * percent * code_times)
+                codes = cpp_class.get_call_codes(inst_name, code_count)
+                self._inject_function_more(function_info, var_declare, codes, percent)
 
 
 class CppSourceInjector:
@@ -152,7 +186,8 @@ class CppSourceInjector:
     Inject_Parse_Error = -1,
     Inject_Fail = -2
 
-    def __init__(self, cpp_class_options, ruler, clang_args, cpp_tpl_folder_path, obf_tpl_folder_path):
+    def __init__(self, cpp_class_options, ruler, clang_args, cpp_tpl_folder_path, obf_tpl_folder_path,
+                 inject_percent=1):
         """
         对c++源文件进行注入。
         :param cpp_class_options:生成的c++类的配置
@@ -166,6 +201,7 @@ class CppSourceInjector:
         self.clang_args = clang_args
         self.cpp_tpl_folder_path = cpp_tpl_folder_path
         self.obf_tpl_folder_path = obf_tpl_folder_path
+        self.inject_percent = inject_percent
 
         self.source_file = None
 
@@ -248,7 +284,7 @@ class CppSourceInjector:
                 cpp_class = self.gen_cpp_class(len(group["functions"]))
                 cci = ClassCallInsertion(self.cpp_tpl_folder_path)
                 cci.spread(group["functions"], cpp_class, group["cursor"])
-                cci.inject(group["functions"], cpp_class)
+                cci.inject(group["functions"], cpp_class, self.inject_percent)
 
                 inserts = inserts + cci.inserts
 
@@ -259,7 +295,7 @@ class CppSourceInjector:
                 # have error.restore to source tile
                 print("===>restore to origin")
                 if utils.is_debug:
-                    shutil.move(out_file, out_file+".inj")
+                    shutil.move(out_file, out_file + ".inj")
                 shutil.move(backup_file_path, out_file)
                 return self.Inject_Fail
             else:

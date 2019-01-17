@@ -89,6 +89,8 @@ int A::aia()
 {
 int i=0;
 int j=0;
+bar::D d;
+d.ia();
     i+=3;
 j*=4;
     return i;

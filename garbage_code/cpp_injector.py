@@ -29,6 +29,7 @@ class CppInjector:
         self._injected_files = None
         self.obf_tpl_folder_path = options["obf_tpl_dir"]
         self.cpp_tpl_folder_path = options["cpp_tpl_dir"]
+        self.inject_percent = options["percent"] if "percent" in options else 0.5
         self.skips = {}
         self.clang_args = options["clang_args"] if "clang_args" in options else []
         self._success_injected_files = []
@@ -122,7 +123,7 @@ class CppInjector:
 
         if need_inject:
             cpp_source_injector = CppSourceInjector(self.class_options, self, self.clang_args, self.cpp_tpl_folder_path,
-                                                    self.obf_tpl_folder_path)
+                                                    self.obf_tpl_folder_path, self.inject_percent)
 
             try:
                 ret = cpp_source_injector.inject(file_path)
@@ -162,7 +163,7 @@ class CppInjector:
                 self._inject_file(file_path, True)
 
         print("inject success %d,parse error %d,fail %d" % (
-        len(self._success_injected_files), len(self._parse_error_files), len(self._inject_fail_files)))
+            len(self._success_injected_files), len(self._parse_error_files), len(self._inject_fail_files)))
         for f in self._success_injected_files:
             print("==> inject: %s" % f)
 

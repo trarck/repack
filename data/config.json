@@ -533,6 +533,7 @@
                     "name":"inject_cpp_code",
                     "discription":"插入垃圾代码",
                     "probability":80,
+                    "percent":1,
                     "files":["frameworks/cocos2d-x/cocos"],
                     "exclude":["*CCRef","*HttpClient","*CCUserDefault.h","*/math/*","*/allocator/*"],
                     "obf_tpl_dir":"${GLOBAL_DATA_DIR}/template/obf",

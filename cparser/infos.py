@@ -320,7 +320,7 @@ class FunctionInfo(object):
                 return None
             positions = []
             for stmt in self.root_statement.get_children():
-                if stmt.kind != cindex.CursorKind.NULL_STMT:
+                if stmt.kind != cindex.CursorKind.NULL_STMT and stmt.kind != cindex.CursorKind.DECL_STMT:
                     positions.append([stmt.location.line, stmt.location.column])
             return positions
         else:
