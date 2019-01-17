@@ -42,9 +42,6 @@ class ConfigCreator:
         project_data["gen_cpp_dir"] = RandomGenerater.generate_string(6, 12)
         project_data["gen_objc_dir"] = RandomGenerater.generate_string(6, 12)
 
-        project_data["origin_xcode_project_name"] = project_name
-        project_data["xcode_project_name"] = project_name + ".ipa"
-
         return project_data
 
     def save_project(self, project_data, out_file_path):
