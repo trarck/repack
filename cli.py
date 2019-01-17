@@ -41,7 +41,7 @@ def main():
 
     if pos > -1:
         src_project = xcode_project_file_path[:pos - 1]
-        xcode_project_path = xcode_project_file_path[pos:]
+        xcode_project_path = os.path.dirname(xcode_project_file_path[pos:])
     else:
         raise Exception("not a cocos project")
 
@@ -60,15 +60,15 @@ def main():
 
     project_data["build_scheme"] = args.scheme
 
-    if "out" in args and args["out"]:
+    if "out" in args and args.out:
         out_path = args.out
         if not os.path.isabs(out_path):
             out_path = os.path.join(work_path, out_path)
-        project_data["origin_xcode_project_name"] = os.path.join(out_path, project_name)
-        project_data["xcode_project_name"] = os.path.join(out_path, project_name + ".ipa")
+        project_data["archive_file_path_name"] = os.path.join(out_path, project_name)
+        project_data["app_file_path_name"] = os.path.join(out_path, project_name + ".ipa")
     else:
-        project_data["origin_xcode_project_name"] = project_name
-        project_data["xcode_project_name"] =  project_name + ".ipa"
+        project_data["archive_file_path_name"] = project_name
+        project_data["app_file_path_name"] =  project_name + ".ipa"
 
     # 打包的其它目录
     resource_dir = os.path.join(repack_project_path, "../resources")
@@ -90,7 +90,7 @@ def main():
 
     # 进行打包
     repack.repack_project(src_project, out_dir, resource_dir, data_dir, project_data,
-                          step_config, None, None, None, 1)
+                          step_config["steps"], None, None, None, 1)
 
 if __name__ == '__main__':
     try:
