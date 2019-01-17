@@ -1,0 +1,219 @@
+{
+    "projects":
+    [
+        {
+            "name":"g36",
+            "resource_path":"g36",
+            "project_path":"g36",
+            "need_copy":false,
+            "crypt":{
+                "key":"helloworld",
+                "type":"md5",
+                "with_ext":false
+            },
+            "xcode_project_path":"frameworks/runtime-src/proj.ios_mac",
+            "origin_xcode_project_name":"MyGame.xcodeproj",
+            "xcode_project_name":"g36.xcodeproj",
+            "target_name":"g36",
+            "package_id":"com.blzz.bb",
+            "display_name":"Hello1",
+            "xxtea_key":"newkey",
+            "xxtea_sign":"XXTEAXX",
+            "gen_cpp_dir":"g36cc",
+            "gen_objc_dir":"g36oc",
+            "archive_file_path_name":"g36.archive",
+            "app_file_path_name":"g36.ipa"
+        }
+    ],
+    
+    "steps":[
+        {
+            "name":"backup_files",
+            "description":"backup files",
+            "actions":[
+                {
+                    "name":"copy_files",
+                    "from":"${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/cocos",
+                    "to":"frameworks/cocos2d-x/cocos"
+                },
+                {
+                    "name":"copy_files",
+                    "from":"${MATRIX_PROJECT_ROOT}/frameworks/runtime-src/Classes",
+                    "to":"frameworks/runtime-src/Classes"
+                },
+                {
+                    "name":"copy_files",
+                    "from":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_ORIGIN_XCODE_PROJECT_NAME}",
+                    "to":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_XCODE_PROJECT_NAME}"
+                }
+            ]
+        },
+        {
+            "name":"generate garbage code",
+            "actions":[
+                {
+                    "name":"generate_cpp_code",
+                    "discription":"生成c++垃圾类",
+                    "out_dir":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_CPP_DIR}",
+                    "tpl_dir":"${GLOBAL_DATA_DIR}/template/cpp",
+                    "xcode_project_path":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_XCODE_PROJECT_NAME}",
+					"min_generate_file_count":7,
+                    "max_generate_file_count":8,      
+                    "min_field_count":3,
+                    "max_field_count":8,
+                    "min_method_count":30,
+                    "max_method_count":60,
+                    "min_parameter_count":3,
+                    "max_parameter_count":6,
+                    "min_return_probability":60,
+                    "max_return_probability":90,
+                    "exec_code_file_path":"${MATRIX_PROJECT_ROOT}/frameworks/runtime-src/Classes/AppDelegate.cpp",
+                    "include_insert_keys":["#include \"cocos2d.h\""],
+                    "code_insert_keys":["AppDelegate::~AppDelegate()","{"]
+                }
+            ]
+        },
+        {
+            "name":"generate garbage code",
+            "actions":[
+                {
+                    "name":"generate_objc_code",
+                    "discription":"生成objc垃圾类",
+                    "out_dir":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_OBJC_DIR}",
+                    "tpl_dir":"${GLOBAL_DATA_DIR}/template/objc",
+                    "xcode_project_path":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_XCODE_PROJECT_NAME}",
+					"min_generate_file_count":7,
+                    "max_generate_file_count":8,      
+                    "min_field_count":3,
+                    "max_field_count":8,
+                    "min_method_count":30,
+                    "max_method_count":60,
+                    "min_parameter_count":3,
+                    "max_parameter_count":6,
+                    "min_return_probability":60,
+                    "max_return_probability":90,
+                    "exec_code_file_path":"${MATRIX_PROJECT_ROOT}/frameworks/runtime-src/Classes/AppDelegate.cpp",
+                    "include_insert_keys":["#include \"cocos2d.h\""],
+                    "code_insert_keys":["AppDelegate::~AppDelegate()","{"]
+                }
+            ]
+        },
+        {
+            "name":"generate garbage code",
+            "actions":[
+                {
+                    "name":"inject_cpp_code",
+                    "probability":80,
+                    "files":["${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/cocos/2d","${MATRIX_PROJECT_ROOT}/frameworks/runtime-src/Classes"],
+                    "exclude":[ "*CCDraw*","*scripting*","*-android","*-tizen","*UIWebView*","*editor-support*","*CCObjLoader*"],
+                    "obf_tpl_dir":"${GLOBAL_DATA_DIR}/template/obf",
+                    "cpp_tpl_dir":"${GLOBAL_DATA_DIR}/template/cpp",
+                    "class": {
+                        "min_field_count": 3,
+                        "max_field_count": 8,
+                        "min_method_count": 30,
+                        "max_method_count": 60,
+                        "min_parameter_count": 3,
+                        "max_parameter_count": 8,
+                        "min_return_probability": 60,
+                        "max_return_probability": 90
+                    },
+                    "clang_args": [
+                        "-x", "c++",
+                        "-arch","arm64",
+                        "-std=c++11", "-stdlib=libc++",
+                        "-isysroot","/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdkiPhoneOS.sdk",
+                        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
+                        "-I/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/usr/include",
+                        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/include",
+                        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+                        "-I/usr/include",
+                        "-F/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/cocos",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/cocos/editor-support",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/chipmunk/include",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/extensions",                        
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/external/poly2tri",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/poly2tri/common",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/poly2tri/sweep",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/chipmunk/include",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/chipmunk/include",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/freetype2/include/ios",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/curl/include/ios",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/webp/include/ios",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/tiff/include/ios",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/jpeg/include/ios",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/png/include/ios",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/websockets/include/ios",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/freetype2/include/ios/freetype2",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/fmod/include",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/external/tinyxml2",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/runtime-src/Classes/protobuf-lite",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/runtime-src/Classes",
+                        "-I${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/tools/simulator/libsimulator/lib",
+                        
+                        "-DCC_TARGET_OS_IPHONE", "-DCC_ENABLE_CHIPMUNK_INTEGRATION=1", "-DNDEBUG", "-DUSE_FILE32API"
+                    ]
+                }
+            ]
+        },
+        {
+            "name":"build xcode",
+            "_actions":[
+                {
+                    "name":"xcode_build_archive",
+                    "xcode_project_path":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_XCODE_PROJECT_NAME}",
+                    "scheme":"DHDiOS",
+                    "configuration":"Release",
+                    "sdk":"iphoneos",
+                    "out_put":"${PROJECT_ARCHIVE_FILE_PATH_NAME}",
+                    "out_app":"${PROJECT_APP_FILE_PATH_NAME}"
+                }
+            ]
+        },
+        {
+            "name":"restore_files",
+            "description":"restore files",
+            "actions":[
+                {
+                    "name":"copy_files",
+                    "from":"${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/cocos",
+                    "to":"frameworks/cocos2d-x/cocos_obf"
+                },
+                {
+                    "name":"copy_files",
+                    "from":"${PROJECT_ROOT}/frameworks/cocos2d-x/cocos",
+                    "to":"${MATRIX_PROJECT_ROOT}/frameworks/cocos2d-x/cocos"
+                },
+                {
+                    "name":"copy_files",
+                    "from":"${MATRIX_PROJECT_ROOT}/frameworks/runtime-src/Classes",
+                    "to":"frameworks/runtime-src/Classes_obf"
+                },
+                {
+                    "name":"copy_files",
+                    "from":"${PROJECT_ROOT}/frameworks/runtime-src/Classes",
+                    "to":"${MATRIX_PROJECT_ROOT}/frameworks/runtime-src/Classes"
+                },
+                {
+                    "name":"copy_files",
+                    "from":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_CPP_DIR}",
+                    "to":"${PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_CPP_DIR}"
+                },
+                {
+                    "name":"copy_files",
+                    "from":"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_OBJC_DIR}",
+                    "to":"${PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_OBJC_DIR}"
+                },
+                {
+                    "name":"delete_files",
+                    "files":[
+						"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_CPP_DIR}",
+						"${MATRIX_PROJECT_ROOT}/${PROJECT_XCODE_PROJECT_PATH}/${PROJECT_GEN_OBJC_DIR}"
+					]
+                }
+            ]
+        }
+    ]
+}
