@@ -1,2 +1,2 @@
 
-\#import <Foundation/NSString.h>
+\#import <Foundation/Foundation.h>
