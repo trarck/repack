@@ -34,6 +34,8 @@ def main():
     if not os.path.isabs(xcode_project_file_path):
         xcode_project_file_path = os.path.join(work_path, xcode_project_file_path)
 
+
+
     # 分析cocos路径
     pos = xcode_project_file_path.find("frameworks")
 
@@ -59,8 +61,11 @@ def main():
     project_data["build_scheme"] = args.scheme
 
     if "out" in args and args["out"]:
-        project_data["origin_xcode_project_name"] = os.path.join(args.out, project_name)
-        project_data["xcode_project_name"] = os.path.join(args.out, project_name + ".ipa")
+        out_path = args.out
+        if not os.path.isabs(out_path):
+            out_path = os.path.join(work_path, out_path)
+        project_data["origin_xcode_project_name"] = os.path.join(out_path, project_name)
+        project_data["xcode_project_name"] = os.path.join(out_path, project_name + ".ipa")
     else:
         project_data["origin_xcode_project_name"] = project_name
         project_data["xcode_project_name"] =  project_name + ".ipa"
