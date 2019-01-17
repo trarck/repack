@@ -231,6 +231,7 @@ class CppSourceInjector:
             if not cpp_parser.functions:
                 # nothing to injector
                 print("===>nothing to injector")
+                os.remove(backup_file_path)
                 return CppSourceInjector.Inject_Success
 
             print("===>inject segment code")
