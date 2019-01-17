@@ -168,7 +168,11 @@ class Repack:
             if ignores and step_id in ignores:
                 continue
             if step_id in steps:
-                self.do_step(steps[step_id])
+                # use try catch let step do complete
+                try:
+                    self.do_step(steps[step_id])
+                except Exception, e:
+                    print e
 
     def do_step(self, step_data):
         print("===> do step %s" % step_data["name"])
@@ -299,7 +303,7 @@ def main():
     parser.add_argument('-i', '--ignore-steps', dest='ignore_steps',
                         help="actions not run")
 
-    parser.add_argument('--debug', dest='debug',action='store_true',
+    parser.add_argument('--debug', dest='debug', action='store_true',
                         help="is debug")
     parser.set_defaults(debug=False)
 
