@@ -100,20 +100,22 @@ def get_cursor_children_start(cursor):
 
         check_list = [cursor]
 
+        current_file = cursor.extent.start.file.name
+
         while len(check_list) > 0:
             p = check_list.pop()
             for c in p.get_children():
-                check_list.append(c)
-
-                if min_line == -1:
-                    min_line = c.extent.start.line
-                    min_column = c.extent.start.column
-                else:
-                    if min_line > c.extent.start.line:
+                if c.extent.start.file and c.extent.start.file.name == current_file:
+                    check_list.append(c)
+                    if min_line == -1:
                         min_line = c.extent.start.line
                         min_column = c.extent.start.column
-                    elif min_line == c.extent.start.line:
-                        if min_column > c.extent.start.column:
+                    else:
+                        if min_line > c.extent.start.line:
+                            min_line = c.extent.start.line
                             min_column = c.extent.start.column
+                        elif min_line == c.extent.start.line:
+                            if min_column > c.extent.start.column:
+                                min_column = c.extent.start.column
 
         return min_line, min_column
