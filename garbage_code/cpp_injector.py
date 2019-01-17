@@ -161,7 +161,8 @@ class CppInjector:
                 # config file force inject
                 self._inject_file(file_path, True)
 
-        print("inject %d files" % len(self._success_injected_files))
+        print("inject success %d,parse error %d,fail %d" % (
+        len(self._success_injected_files), len(self._parse_error_files), len(self._inject_fail_files)))
         for f in self._success_injected_files:
             print("==> inject: %s" % f)
 
