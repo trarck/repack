@@ -14,6 +14,67 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 
+class StepRunner:
+    def __init__(self, step_configs):
+        self.step_configs = step_configs
+        self._parse_config()
+
+    def _parse_config(self):
+        if isinstance(self.step_configs, list):
+            self.steps = {}
+            for step_data in self.step_configs:
+                self.steps[step_data["name"]] = step_data
+        else:
+            self.steps = self.step_configs
+
+    def run(self, executes=None, ignores=None):
+        """
+        新的执行步骤方法。更加灵活。
+        配置信息不在使用数组，即使使用数组也会转成字典。
+        每个步骤都有一个id，执行的时候不按配置数据执行，按每个步骤的id组成的数组执行。
+        这样执行重复的步骤时不需要配置多份，而仅引用多个id就可以。
+        :param steps:步骤的配置信息。含有主键。
+        :param executes:执行步骤名。
+        :return:
+        """
+
+        self._execute(executes, ignores)
+
+    def _execute(self, executes, ignores):
+        for step_id in executes:
+            if ignores and step_id in ignores:
+                continue
+            if step_id in self.steps:
+                # use try catch let step do complete
+                try:
+                    self.execute_step()
+                except Exception, e:
+                    print e
+
+    def execute_step(self, step_name):
+        print("===> start step %s" % step_name)
+        if step_name in self.steps:
+            step_data=self.steps[step_name]
+            if "actions" in step_data:
+                self.execute_actions(step_data["actions"])
+
+            print("===> finish step %s" % step_name)
+        else:
+            print("===>step fail %s" % step_name)
+
+    def execute_actions(self, actions):
+        for action_data in actions:
+            self.execute_action(action_data)
+
+    def execute_action(self, action_data):
+        print("===> do action %s" % action_data["name"])
+        if action_data["name"] in self.action_classes:
+            action = self.action_classes[action_data["name"]](self, action_data)
+            action.run(None)
+        else:
+            raise Exception("Can't find action %s" % action_data["name"])
+
+
 class Repack:
     def __init__(self, matrix_project_root_path, project_root_path, pack_resource_path, global_data_dir, name):
         self.matrix_project_root_path = matrix_project_root_path
