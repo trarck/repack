@@ -160,7 +160,7 @@ class ClassCallInsertion(BaseInsertion):
 
             # 把类的声明插入块的最上面
             begin_line, begin_column = gc_utils.get_cursor_children_start(lexical_parent)
-            self.append_inert_info(begin_line - 1, begin_column - 1, cpp_class.get_def_string())
+            self.append_inert_info(begin_line - 1, begin_column - 1, cpp_class.get_def_string(True))
             # 把引用头插入文件开始处
             self.append_inert_info(0, 0, cpp_class.get_need_includes(), -1000)
 
