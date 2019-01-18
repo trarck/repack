@@ -102,6 +102,7 @@ class CClass(object):
     def __init__(self, name, fields, methods, tpl_folder_path):
         self.name = name
         self.fields = fields if fields else []
+        # 不包含类的构造函数和析构函数。
         self.methods = methods if methods else []
         self.tpl_folder_path = tpl_folder_path
         self._init_template_files()
@@ -123,8 +124,8 @@ class CClass(object):
     def to_string(self):
         return "class " + self.name
 
-    def get_def_string(self):
-        return TemplateManager.get_data(self.def_template_file, [self])
+    def get_def_string(self,implement_construct_destruct=False):
+        return TemplateManager.get_data(self.def_template_file, [self,{"implement_construct_destruct":implement_construct_destruct}])
 
     def get_code_string(self, contain_methods=True):
         return TemplateManager.get_data(self.code_template_file, [self, {"contain_methods": contain_methods}])
