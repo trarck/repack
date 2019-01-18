@@ -9,10 +9,16 @@ public:
     #end for
 #end if
 
+#if $implement_construct_destruct
+public:
+	${name}(){};
+	virtual ~${name}(){};
+#else
 public:
 	${name}();
 	virtual ~${name}();
-
+#end if
+    
 ## ===== methods 
 #set $length = len($methods)
 #if $length > 0
