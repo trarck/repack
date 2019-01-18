@@ -105,7 +105,7 @@ class CGarbageCode(object):
         auto_all_name = RandomGenerater.generate_string(20, 30)
         auto_all_function = RandomGenerater.generate_string(20, 30)
         auto_all_head_file = os.path.join(out_folder_path, auto_all_name + ".h")
-        auto_all_source_file = os.path.join(out_folder_path, auto_all_name + ".cpp")
+        auto_all_source_file = os.path.join(out_folder_path, auto_all_name + self.source_file_ext)
         self.generated_files.append(auto_all_head_file)
         self.generated_files.append(auto_all_source_file)
 

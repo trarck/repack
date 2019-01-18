@@ -520,9 +520,9 @@
                     "max_parameter_count":6,
                     "min_return_probability":60,
                     "max_return_probability":90,
-                    "exec_code_file_path":"frameworks/runtime-src/Classes/AppDelegate.cpp",
+                    "exec_code_file_path":"frameworks/runtime-src/proj.ios_mac/ios/AppController.mm",
                     "include_insert_keys":["#include \"cocos2d.h\""],
-                    "code_insert_keys":["AppDelegate::~AppDelegate()","{"]
+                    "code_insert_keys":["[window release];"]
                 }
             ]
         },
