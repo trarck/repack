@@ -172,6 +172,7 @@ class CGarbageCode(object):
         group = pbx_project.add_group(group_name)
         # add files
         for file_path in self.generated_files:
+            print("===>add file %s to xcode" % (file_path))
             pbx_project.add_file(file_path, group)
         pbx_project.save()
 

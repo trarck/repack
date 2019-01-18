@@ -65,7 +65,7 @@ def create_rules(include_rules, exclude_rules):
 
 def copy_files(src, dst):
     if not os.path.exists(src):
-        return 
+        return
 
     if not os.path.exists(dst):
         os.makedirs(dst)
@@ -101,7 +101,7 @@ def copy_files_with_config(config):
 
 def copy_files_with_rules(src_root, src, dst, include=None, exclude=None):
     if os.path.isfile(src):
-        dst_dir=os.path.dirname(dst)
+        dst_dir = os.path.dirname(dst)
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
         shutil.copy(src, dst)
