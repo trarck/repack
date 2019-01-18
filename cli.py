@@ -27,6 +27,9 @@ def main():
     parser.add_argument('-o', '--out', dest='out',
                         help="out put path")
 
+    parser.add_argument('steps', nargs='*',
+                        help="steps to run")
+
     args = parser.parse_args()
 
     xcode_project_file_path = args.project
@@ -90,7 +93,7 @@ def main():
 
     # 进行打包
     repack.repack_project(src_project, out_dir, resource_dir, data_dir, project_data,
-                          step_config["steps"], None, None, None, 1)
+                          step_config["steps"], None, args.steps, None, 1)
 
 if __name__ == '__main__':
     try:
