@@ -177,6 +177,8 @@ class ClassCallInsertion(BaseInsertion):
             if function_info.root_statement:
                 code_count = int(
                     len(gc_utils.get_children_array_from_cursor(function_info.root_statement)) * percent * code_times)
+                if code_count < 1:
+                    code_count = 1
                 codes = cpp_class.get_call_codes(inst_name, code_count)
                 self._inject_function_more(function_info, var_declare, codes, percent)
 
@@ -236,6 +238,8 @@ class CppSourceInjector:
         else:
             if not method_count:
                 method_count = gc_utils.get_range_count("method_count", self.cpp_class_options, 5)
+            else:
+                method_count *= 3
 
         field_count = gc_utils.get_range_count("field_count", self.cpp_class_options, 3)
         parameter_count = gc_utils.get_range_count("parameter_count", self.cpp_class_options, 3)
