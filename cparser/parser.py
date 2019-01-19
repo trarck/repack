@@ -1,6 +1,6 @@
 import sys
 import os
-from infos import *
+from cparser.infos import *
 from clang import cindex
 
 clang_lib_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../libclang')
@@ -79,8 +79,8 @@ class Parser(object):
         print("====\nErrors in parsing headers:")
         severities = ['Ignored', 'Note', 'Warning', 'Error', 'Fatal']
         for idx, d in enumerate(errors):
-            print "%s. <severity = %s,\n    location = %r,\n    details = %r>" % (
-                idx + 1, severities[d.severity], d.location, d.spelling)
+            print("%s. <severity = %s,\n    location = %r,\n    details = %r>" % (
+                idx + 1, severities[d.severity], d.location, d.spelling))
         print("====\n")
         return errors
 
@@ -244,6 +244,8 @@ class Parser(object):
             self.functions.append(method)
         elif cursor.kind == cindex.CursorKind.UNEXPOSED_DECL:
             print("find UNEXPOSED_DECL")
+            for sub_cursor in cursor.get_children():
+                self._traverse(sub_cursor)
         else:
             print("find %s" % cursor.kind)
 

@@ -36,6 +36,7 @@ def get_children_array_from_cursor(cursor):
         children.append(child)
     return children
 
+
 def get_implement_functions(parser, ruler):
     """
     取得函数,包括普通函数和类的方法。不包含定义在类的内部的方法。
@@ -82,8 +83,14 @@ def group_functions(functions):
     for func in functions:
         if func.is_implement:
             if func.cursor.lexical_parent.kind == cindex.CursorKind.NAMESPACE \
-                    or func.cursor.lexical_parent.kind == cindex.CursorKind.TRANSLATION_UNIT:
-                key = func.cursor.lexical_parent.spelling
+                    or func.cursor.lexical_parent.kind == cindex.CursorKind.TRANSLATION_UNIT \
+                    or func.cursor.lexical_parent.kind == cindex.CursorKind.UNEXPOSED_DECL:
+
+                if func.cursor.lexical_parent.kind == cindex.CursorKind.UNEXPOSED_DECL:
+                    key = func.cursor.translation_unit.cursor.spelling
+                else:
+                    key = func.cursor.lexical_parent.spelling
+
                 if key in groups:
                     group = groups[key]
                 else:
@@ -98,16 +105,25 @@ def group_functions(functions):
 
 
 def get_cursor_children_start(cursor):
+    min_line = -1
+    min_column = -1
+    current_file = cursor.extent.start.file.name
+
     if cursor.kind == cindex.CursorKind.TRANSLATION_UNIT:
-        return cursor.extent.start.line, cursor.extent.start.column
+        for c in cursor.get_children():
+            if c.extent.start.file and c.extent.start.file.name == current_file:
+                if min_line == -1:
+                    min_line = c.extent.start.line
+                    min_column = c.extent.start.column
+                else:
+                    if min_line > c.extent.start.line:
+                        min_line = c.extent.start.line
+                        min_column = c.extent.start.column
+                    elif min_line == c.extent.start.line:
+                        if min_column > c.extent.start.column:
+                            min_column = c.extent.start.column
     else:
-        min_line = -1
-        min_column = -1
-
         check_list = [cursor]
-
-        current_file = cursor.extent.start.file.name
-
         while len(check_list) > 0:
             p = check_list.pop()
             for c in p.get_children():
@@ -124,4 +140,4 @@ def get_cursor_children_start(cursor):
                             if min_column > c.extent.start.column:
                                 min_column = c.extent.start.column
 
-        return min_line, min_column
+    return min_line, min_column

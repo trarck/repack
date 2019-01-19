@@ -614,4 +614,4 @@ class ObjcClassInfo(ClassInfo):
         elif cursor.kind == cindex.CursorKind.OBJC_CLASS_REF:
             self.associated_class_displayname = cursor.displayname
         else:
-            print "unknown cursor: %s - %s" % (cursor.kind, cursor.displayname)
+            print("unknown cursor: %s - %s" % (cursor.kind, cursor.displayname))
