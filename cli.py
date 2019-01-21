@@ -52,7 +52,7 @@ def main():
 
     origin_xcode_project_name = os.path.basename(xcode_project_file_path)
     project_name = os.path.splitext(origin_xcode_project_name)[0]
-    xcode_project_name = project_name + "_obf.xcodeproj"
+    xcode_project_name = project_name + ".xcodeproj"
 
     # 生成配置
     crypt_key = RandomGenerater.generate_string(6, 10)
