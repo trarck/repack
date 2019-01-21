@@ -66,7 +66,9 @@ def create_rules(include_rules, exclude_rules):
 def copy_files(src, dst):
     if not os.path.exists(src):
         return
-
+    if src==dst:
+        return
+    
     if not os.path.exists(dst):
         os.makedirs(dst)
 
