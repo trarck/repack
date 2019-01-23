@@ -155,15 +155,17 @@ class ClassCallInsertion(BaseInsertion):
         if functions:
             for method in cpp_class.methods:
                 function_info = random.choice(functions)
-                start = function_info.get_extent_start()
+                # 检查函数是不是定义在extern C中。如果是返回extern C块的开头。
+                # 类的方法定义不能放在extern C中。
+                start = gc_utils.get_function_start(function_info.cursor)
                 self.append_inert_info(start.line - 1, start.column - 1, method.get_code_string())
 
-            # 把类的声明插入块的最上面
-            begin_line, begin_column = gc_utils.get_cursor_children_start(lexical_parent)
-            self.append_inert_info(begin_line - 1, begin_column - 1, cpp_class.get_def_string(True))
-            # 把引用头插入tu子结点开始前
-            first_line, first_column = gc_utils.get_cursor_children_start(lexical_parent.translation_unit.cursor)
-            self.append_inert_info(first_line-1, first_column-1, cpp_class.get_need_includes(), -1000)
+                # 把类的声明插入块的最上面
+                begin_line, begin_column = gc_utils.get_cursor_children_start(lexical_parent)
+                self.append_inert_info(begin_line - 1, begin_column - 1, cpp_class.get_def_string(True))
+                # 把引用头插入tu子结点开始前
+                first_line, first_column = gc_utils.get_cursor_children_start(lexical_parent.translation_unit.cursor)
+                self.append_inert_info(first_line - 1, first_column - 1, cpp_class.get_need_includes(), -1000)
 
     def inject(self, functions, cpp_class, percent=1, code_times=6):
         """

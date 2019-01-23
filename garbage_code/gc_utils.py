@@ -141,3 +141,11 @@ def get_cursor_children_start(cursor):
                                 min_column = c.extent.start.column
 
     return min_line, min_column
+
+
+def get_function_start(cursor):
+    # 检查函数是不是定义在extern C中。如果是返回extern C块的开头。
+    if cursor.lexical_parent.kind == cindex.CursorKind.UNEXPOSED_DECL:
+        return cursor.lexical_parent.extent.start
+    else:
+        return cursor.extent.start

@@ -44,7 +44,7 @@ class CppParseTest(unittest.TestCase):
         })
 
 
-        ast = parser.get_ast("./cpp_files/c.cpp",False,10,False)
+        ast = parser.get_ast("./cpp_files/a.cpp",False,10,False)
         self.assertIsNotNone(ast)
 
         pprint(('nodes', ast))

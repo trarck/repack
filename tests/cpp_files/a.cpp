@@ -33,6 +33,13 @@ int funb()
     return i;
 }
 
+extern "C"{ int* func(int* p){
+    int i=0;
+    int j=0;
+
+    return p;
+}}
+
 int main()
 {
     return 0;
